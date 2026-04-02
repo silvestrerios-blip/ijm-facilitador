@@ -46,35 +46,32 @@ body{
   border-bottom:1px solid rgba(84,201,153,.2);
 }
 
-/* Logo botón */
-#btn-aleatoria{
+/* Logo IJM */
+#ijm-logo{
   display:flex;align-items:center;gap:8px;
-  background:none;border:none;cursor:pointer;
-  padding:6px 10px;border-radius:8px;
-  transition:background .15s;
-  flex-shrink:0;
+  flex-shrink:0;padding:0 4px;
+  user-select:none;
 }
-#btn-aleatoria:hover{background:rgba(84,201,153,.12)}
-#btn-aleatoria:active{background:rgba(84,201,153,.22);transform:scale(.97)}
-
 .ijm-spiral{
-  width:32px;height:32px;flex-shrink:0;
+  width:30px;height:30px;flex-shrink:0;
 }
-
-#btn-aleatoria span{
-  font-size:11px;font-weight:700;
-  text-transform:uppercase;letter-spacing:1.5px;
-  color:var(--v);
+#ijm-logo .ijm-text{
+  font-size:11px;font-weight:800;
+  letter-spacing:1.5px;
+  line-height:1.2;
 }
+#ijm-logo .ijm-text .t1{color:rgba(255,255,255,.7)}
+#ijm-logo .ijm-text .t2{color:var(--v)}
+#ijm-logo .ijm-text .t3{color:rgba(255,255,255,.7)}
 
 /* Separador */
 .sep{width:1px;height:28px;background:rgba(255,255,255,.1);flex-shrink:0}
 
-/* Chips de mazo */
+/* Chips de mazo — ahora son disparadores */
 .chips{display:flex;gap:5px;flex:1;overflow-x:auto;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{
-  padding:5px 12px;border-radius:16px;
+  padding:6px 14px;border-radius:16px;
   border:1.5px solid rgba(255,255,255,.15);
   background:transparent;
   font-size:10px;font-weight:700;cursor:pointer;
@@ -83,7 +80,8 @@ body{
   font-family:'Outfit',sans-serif;
   letter-spacing:.5px;
 }
-.chip:hover{border-color:var(--v);color:var(--v)}
+.chip:hover{border-color:var(--v);color:var(--v);background:rgba(84,201,153,.08)}
+.chip:active{transform:scale(.95);background:rgba(84,201,153,.18)}
 .chip.on{border-color:var(--v);background:var(--v);color:#fff}
 
 /* Botones derecha */
@@ -340,8 +338,8 @@ body{
 <!-- ══ TOOLBAR ══ -->
 <div id="toolbar">
 
-  <!-- Logo + botón aleatoria -->
-  <button id="btn-aleatoria" onclick="sacarCarta()">
+  <!-- Logo IJM -->
+  <div id="ijm-logo">
     <svg class="ijm-spiral" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M50 15 C50 15, 78 18, 82 45 C86 72, 62 85, 42 78 C22 71, 18 52, 28 38 C38 24, 58 26, 64 40 C70 54, 58 65, 46 62 C34 59, 32 48, 38 42 C44 36, 52 40, 52 47" stroke="#54C999" stroke-width="4" stroke-linecap="round" fill="none"/>
       <circle cx="72" cy="22" r="2" fill="#54C999" opacity=".7"/>
@@ -351,24 +349,26 @@ body{
       <path d="M65 18 L67 14 M67 14 L71 16 M71 16 L69 20 M69 20 L65 18" stroke="#54C999" stroke-width="1.5" stroke-linecap="round" opacity=".6"/>
       <path d="M20 72 L22 68 M22 68 L26 70 M26 70 L24 74 M24 74 L20 72" stroke="#54C999" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
     </svg>
-    <span>Aleatoria</span>
-  </button>
+    <div class="ijm-text">
+      <div><span class="t1">INNER</span><span class="t2">JOURNEY</span><span class="t3">METHOD™</span></div>
+    </div>
+  </div>
 
   <div class="sep"></div>
 
-  <!-- Chips mazo -->
+  <!-- Chips mazo — cada uno dispara una carta -->
   <div class="chips">
-    <div class="chip on" onclick="setMazo('general',this)">General (107)</div>
-    <div class="chip"    onclick="setMazo('s',this)">S — Sentimientos (54)</div>
-    <div class="chip"    onclick="setMazo('n',this)">N — Necesidades (54)</div>
-    <div class="chip"    onclick="setMazo('pal',this)">PAL — Equilibradores (33)</div>
-    <div class="chip"    onclick="setMazo('ic',this)">IC — Iconos (37)</div>
+    <div class="chip on"  onclick="sacarCarta('general',this)">General</div>
+    <div class="chip"     onclick="sacarCarta('s',this)">S — Sentimientos</div>
+    <div class="chip"     onclick="sacarCarta('n',this)">N — Necesidades</div>
+    <div class="chip"     onclick="sacarCarta('pal',this)">PAL — Equilibradores</div>
+    <div class="chip"     onclick="sacarCarta('ic',this)">IC — Iconos</div>
   </div>
 
   <div class="sep"></div>
 
   <div class="tb-right">
-    <span id="contador">0 cartas</span>
+    <span id="contador"></span>
     <button id="btn-limpiar" onclick="pedirLimpiar()">🗑 Limpiar mesa</button>
   </div>
 </div>
@@ -429,7 +429,6 @@ const MAZOS = {
 // ═══════════════════════════════════════════
 // 🧠  ESTADO
 // ═══════════════════════════════════════════
-let mazoActual = 'general';
 let cartas = [];
 let zMax = 10;
 let cardCount = 0;
@@ -438,39 +437,26 @@ let cartaSeleccionada = null;
 // ═══════════════════════════════════════════
 // 🃏  SACAR CARTA
 // ═══════════════════════════════════════════
-function setMazo(key, el) {
-  mazoActual = key;
+function sacarCarta(mazo, el) {
+  // Resaltar chip activo
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
+  if (el) el.classList.add('on');
+
+  const m = MAZOS[mazo];
+  const n = Math.floor(Math.random() * m.n) + 1;
+  const wrap = document.getElementById('mesa-wrap');
+
+  // Posición fija: esquina superior izquierda bajo la barra, con pequeño offset aleatorio
+  const offsetX = 16 + Math.random() * 24;
+  const offsetY = 16 + wrap.scrollTop + Math.random() * 20;
+
+  crearCarta(mazo, n, offsetX, offsetY);
+  document.getElementById('empty').classList.add('hidden');
 }
 
 function imgUrl(mazo, n) {
   const m = MAZOS[mazo];
   return `${SB_URL}/storage/v1/object/public/${m.bucket}/${n}${m.ext}`;
-}
-
-function sacarCarta() {
-  const m = MAZOS[mazoActual];
-  const n = Math.floor(Math.random() * m.n) + 1;
-  const mesa = document.getElementById('mesa');
-  const wrap = document.getElementById('mesa-wrap');
-
-  // Posición aleatoria en el área visible
-  const scrollTop = wrap.scrollTop;
-  const ww = mesa.offsetWidth;
-  const vh = wrap.offsetHeight;
-
-  let cw, ch;
-  if (m.tipo === 'foto')  { cw = 180; ch = 120; }
-  if (m.tipo === 'pal')   { cw = 220; ch = 44;  }
-  if (m.tipo === 'ic')    { cw = 120; ch = 120; }
-
-  const margin = 20;
-  const x = margin + Math.random() * (ww - cw - margin * 2);
-  const y = scrollTop + margin + Math.random() * (vh - ch - margin * 2);
-
-  crearCarta(mazoActual, n, x, y);
-  document.getElementById('empty').classList.add('hidden');
 }
 
 function crearCarta(mazo, n, x, y) {
