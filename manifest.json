@@ -1,0 +1,17 @@
+{
+  "name": "IJM Facilitador",
+  "short_name": "IJM",
+  "description": "Inner Journey Method™ — Herramienta de facilitación con baraja y dinámicas",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#54C999",
+  "theme_color": "#54C999",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": []
+}
