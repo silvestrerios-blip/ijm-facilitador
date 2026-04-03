@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{--v:#54C999;--vd:#3aaa7f;--mesa:#606060;--tb:50px;--safe-b:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -39,19 +40,25 @@ body{background:var(--mesa);color:#fff}
 .sep{width:1px;height:24px;background:rgba(255,255,255,.1);flex-shrink:0}
 .chips{display:flex;gap:5px;flex:1;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .chips::-webkit-scrollbar{display:none}
-.chip{padding:5px 12px;border-radius:14px;border:1.5px solid rgba(255,255,255,.12);background:transparent;font-size:9.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;color:rgba(255,255,255,.4);font-family:'Outfit',sans-serif;letter-spacing:.4px;flex-shrink:0}
-.chip:hover{border-color:var(--v);color:var(--v);background:rgba(84,201,153,.07)}
+.chip{padding:5px 12px;border-radius:14px;border:1.5px solid rgba(255,255,255,.2);background:transparent;font-size:9.5px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .15s;color:#fff;font-family:'Outfit',sans-serif;letter-spacing:.4px;flex-shrink:0}
+.chip:hover{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.07)}
 .chip:active{transform:scale(.93)}
 .chip.on{border-color:var(--v);background:var(--v);color:#fff}
-.tb-right{display:flex;gap:6px;align-items:center;flex-shrink:0}
+/* Colores iniciales chips */
+.chip .cs{color:#d42020;font-weight:900}
+.chip .cn{color:#1a55cc;font-weight:900}
+.chip .cpal{color:#54C999;font-weight:900}
+.chip .cic{color:#F4A020;font-weight:900}
+.chip.on .cs,.chip.on .cn,.chip.on .cpal,.chip.on .cic{color:#fff}
+.tb-right{display:flex;gap:8px;align-items:center;flex-shrink:0}
 #user-badge{font-size:9px;font-weight:700;color:rgba(255,255,255,.45);white-space:nowrap;letter-spacing:.3px;padding:3px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.1)}
 #user-badge .ub-name{color:var(--v)}
-.tb-btn{width:30px;height:30px;border-radius:7px;border:1.5px solid rgba(84,201,153,.28);background:transparent;color:var(--v);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tb-btn{width:30px;height:30px;border-radius:7px;border:1.5px solid rgba(84,201,153,.28);background:transparent;color:var(--v);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .tb-btn:hover{background:rgba(84,201,153,.1)}
 .tb-btn svg{width:14px;height:14px}
 #btn-stats{display:none}
 #btn-stats.visible{display:flex}
-#btn-limpiar{padding:5px 11px;border-radius:7px;border:1.5px solid rgba(255,80,80,.22);background:transparent;color:rgba(255,100,100,.55);font-size:9.5px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;white-space:nowrap}
+#btn-limpiar{padding:5px 11px;border-radius:7px;border:1.5px solid rgba(255,80,80,.22);background:transparent;color:rgba(255,100,100,.55);font-size:9.5px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;white-space:nowrap;flex-shrink:0}
 #btn-limpiar:hover{border-color:#ff5050;color:#ff5050}
 #contador{font-size:9.5px;color:rgba(255,255,255,.22);font-weight:600;white-space:nowrap;min-width:44px;text-align:right}
 /* MESA */
@@ -91,7 +98,7 @@ body{background:var(--mesa);color:#fff}
 .carta:hover .btn-del,.carta.selected .btn-del{display:flex}
 .btn-del:hover{transform:scale(1.15)}
 /* PANEL */
-#panel{position:fixed;top:var(--tb);right:0;bottom:0;width:320px;max-width:92vw;background:rgba(22,22,22,.98);backdrop-filter:blur(14px);border-left:1px solid rgba(84,201,153,.18);z-index:150;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+#panel{position:fixed;top:var(--tb);right:0;bottom:0;width:340px;max-width:94vw;background:rgba(22,22,22,.98);backdrop-filter:blur(14px);border-left:1px solid rgba(84,201,153,.18);z-index:150;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
 #panel.open{transform:translateX(0)}
 #panel-hdr{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0}
 #panel-title{font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--v);flex:1}
@@ -113,10 +120,23 @@ body{background:var(--mesa);color:#fff}
 #sesion-activa-info small{font-size:10px;color:rgba(255,255,255,.4)}
 #btn-cerrar-sesion{width:100%;padding:8px;border-radius:7px;background:transparent;border:1.5px solid rgba(255,80,80,.3);color:rgba(255,100,100,.7);font-size:10px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:all .15s;margin-top:8px;text-transform:uppercase}
 #btn-cerrar-sesion:hover{border-color:#ff5050;color:#ff5050}
-.h-item{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06)}
+/* Historial */
+#h-search{width:100%;padding:8px 12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12px;font-family:'Outfit',sans-serif;outline:none;margin-bottom:10px;transition:border-color .2s}
+#h-search:focus{border-color:var(--v)}
+#h-search::placeholder{color:rgba(255,255,255,.25)}
+.h-item{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:border-color .15s}
+.h-item:hover{border-color:rgba(84,201,153,.3)}
 .h-item h4{font-size:12px;font-weight:700;color:#fff;margin-bottom:3px}
 .h-item p{font-size:10px;color:rgba(255,255,255,.4)}
 .h-badge{display:inline-block;background:rgba(84,201,153,.15);color:var(--v);font-size:9px;font-weight:700;padding:2px 7px;border-radius:6px;margin-top:5px}
+/* Detalle sesión en historial */
+.h-detail{margin-top:8px;display:none}
+.h-detail.open{display:block}
+.h-thumbs{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.h-thumb{width:50px;height:34px;border-radius:4px;object-fit:cover;cursor:pointer;transition:transform .1s}
+.h-thumb:hover{transform:scale(1.08)}
+.h-notas{margin-top:8px;font-size:11px;color:rgba(255,255,255,.5);font-style:italic;line-height:1.4;background:rgba(255,255,255,.04);border-radius:6px;padding:6px 8px}
+/* Stats */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
 .sg-card{background:rgba(84,201,153,.07);border-radius:8px;padding:12px;text-align:center;border:1px solid rgba(84,201,153,.15)}
 .sg-n{font-size:22px;font-weight:900;color:var(--v)}
@@ -195,10 +215,13 @@ body{background:var(--mesa);color:#fff}
   <div class="sep"></div>
   <div class="chips">
     <div class="chip on" onclick="sacarCarta('general',this)">General</div>
-    <div class="chip"    onclick="sacarCarta('s',this)">S &#8212; Sentimientos</div>
-    <div class="chip"    onclick="sacarCarta('n',this)">N &#8212; Necesidades</div>
-    <div class="chip"    onclick="sacarCarta('pal',this)">PAL &#8212; Equilibradores</div>
-    <div class="chip"    onclick="sacarCarta('ic',this)">IC &#8212; Iconos</div>
+    <div class="chip" onclick="sacarCarta('s',this)"><span class="cs">S</span> &#8212; Sentimientos</div>
+    <div class="chip" onclick="sacarCarta('n',this)"><span class="cn">N</span> &#8212; Necesidades</div>
+    <div class="chip" onclick="sacarCarta('pal',this)"><span class="cpal">PAL</span> &#8212; Equilibradores</div>
+    <div class="chip" onclick="sacarCarta('ic',this)"><span class="cic">IC</span> &#8212; Iconos</div>
+    <div class="chip" onclick="crearNota()">
+      <svg style="width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;margin-right:3px" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>Nota
+    </div>
   </div>
   <div class="sep"></div>
   <div class="tb-right">
@@ -208,9 +231,6 @@ body{background:var(--mesa);color:#fff}
     </button>
     <button class="tb-btn" title="Sesiones" onclick="abrirPanel('sesion')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-    </button>
-    <button class="tb-btn" onclick="crearNota()" title="Nota">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
     </button>
     <span id="contador"></span>
     <button id="btn-limpiar" onclick="pedirLimpiar()">&#128465; Limpiar</button>
@@ -227,7 +247,7 @@ body{background:var(--mesa);color:#fff}
 <div id="panel">
   <div id="panel-hdr"><span id="panel-title">Sesiones</span><button id="panel-close" onclick="cerrarPanel()">&#10005;</button></div>
   <div id="panel-tabs">
-    <div class="ptab on" id="ptab-sesion" onclick="switchTab('sesion')">Sesi&#243;n actual</div>
+    <div class="ptab on" id="ptab-sesion" onclick="switchTab('sesion')">Sesi&#243;n</div>
     <div class="ptab" id="ptab-historial" onclick="switchTab('historial')">Historial</div>
     <div class="ptab" id="ptab-stats" style="display:none" onclick="switchTab('stats')">Estad&#237;sticas</div>
   </div>
@@ -245,7 +265,10 @@ body{background:var(--mesa);color:#fff}
         <button id="btn-cerrar-sesion" onclick="cerrarSesion()">Cerrar y guardar sesi&#243;n</button>
       </div>
     </div>
-    <div id="tc-historial" style="display:none"><div id="historial-list"><div class="empty-p"><div class="ei">&#128203;</div>Cargando...</div></div></div>
+    <div id="tc-historial" style="display:none">
+      <input id="h-search" type="text" placeholder="&#128269; Buscar participante..." oninput="filtrarHistorial(this.value)">
+      <div id="historial-list"><div class="empty-p"><div class="ei">&#128203;</div>Cargando...</div></div>
+    </div>
     <div id="tc-stats" style="display:none"><div id="stats-content"><div class="empty-p"><div class="ei">&#128202;</div>Cargando...</div></div></div>
   </div>
 </div>
@@ -282,13 +305,14 @@ const MAZOS={
 const NOMBRES={1:"Abuso",2:"Logro",3:"Acci\u00f3n",4:"Aventura",5:"Alerta",6:"Casi",7:"Apego",8:"Conciencia",9:"Equilibrio",10:"Barrera",11:"Base",12:"Creencias",13:"Nacimiento",14:"L\u00edmites",15:"Cuidado",16:"Celebraci\u00f3n",17:"Claridad",18:"Confrontaci\u00f3n",19:"Conexi\u00f3n",20:"Plenitud",21:"Conveniencia",22:"Creatividad",23:"Crisis",24:"Muerte",25:"Decisi\u00f3n",26:"Dedicaci\u00f3n",27:"Defensa",28:"Determinaci\u00f3n",29:"Distracci\u00f3n",30:"Sue\u00f1o",31:"Eficiencia",32:"Esfuerzo",33:"Ego",34:"Elasticidad",35:"Empoderamiento",36:"Vac\u00edo",37:"Final",38:"Exceso",39:"Salida",40:"Fantas\u00eda",41:"Miedo",42:"Lucha",43:"Flexibilidad",44:"Fluir",45:"Foco",46:"Amistad",47:"Futuro",48:"Objetivo",49:"Gratitud",50:"Escondite",51:"Esperanza",52:"Identidad",53:"Impulso",54:"Iniciativa",55:"Intimidad",56:"Introspecci\u00f3n",57:"Liderazgo",58:"Legado",59:"Liberaci\u00f3n",60:"Vida",61:"Ligereza",62:"Escucha",63:"Carga",64:"Amor",65:"Suerte",66:"M\u00e1scara",67:"Medir",68:"Memoria",69:"Momento",70:"Descuidar",71:"Oportunidad",72:"Sobrecarga",73:"Pasi\u00f3n",74:"Paciencia",75:"Pausa",76:"Perspectiva",77:"Proceso",78:"Proyecciones",79:"Reflejo",80:"Renovaci\u00f3n",81:"Resistencia",82:"Descanso",83:"Resultados",84:"Ritmo",85:"Tristeza",86:"Escasez",87:"Singularidad",88:"Velocidad",89:"Espontaneidad",90:"Estancamiento",91:"Inicio",92:"Fuerza",93:"Bloqueo",94:"\u00c9xito",95:"Equipo",96:"Tentaci\u00f3n",97:"Ataduras",98:"Tiempo",99:"Transformaci\u00f3n",100:"Transici\u00f3n",101:"Confianza",102:"Unidad",103:"Valor",104:"Visi\u00f3n",105:"Voz",106:"Espera",107:"Anhelo"};
 
 let usuario=null,sesionActual=null,cartasMesa=[],zMax=10,cartaSeleccionada=null,miniTarget=null,panelTab='sesion';
+let historialData=[];
 
+// ── AUTH ──
 async function doLogin(){
   const email=document.getElementById('inp-email').value.trim();
   const pass=document.getElementById('inp-pass').value;
   const errEl=document.getElementById('login-error');
-  errEl.textContent='';
-  document.getElementById('btn-login').textContent='Entrando...';
+  errEl.textContent='';document.getElementById('btn-login').textContent='Entrando...';
   try{
     const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const d=await r.json();
@@ -314,6 +338,7 @@ async function sbAuth(path,opts={}){
 }
 function imgUrl(mazo,n){const m=MAZOS[mazo];return `${SB_URL}/storage/v1/object/public/${m.bucket}/${n}${m.ext}`;}
 
+// ── SESIÓN ──
 async function iniciarSesion(){
   const participante=document.getElementById('inp-participante').value.trim();
   const fecha=document.getElementById('inp-fecha').value;
@@ -329,17 +354,145 @@ async function iniciarSesion(){
   document.getElementById('info-fecha').textContent=fFecha(fecha);
   toast(`Sesi\u00f3n iniciada con ${participante}`);
 }
+
 async function cerrarSesion(){
-  if(sesionActual?.id){try{await sbAuth(`sesiones?id=eq.${sesionActual.id}`,{method:'PATCH',prefer:'return=minimal',body:{n_cartas:cartasMesa.length}});}catch(e){}}
+  if(!sesionActual){toast('No hay sesi\u00f3n activa');return;}
+  toast('Guardando sesi\u00f3n...');
+
+  // Recoger cartas de la mesa
+  const cartasData = cartasMesa
+    .filter(c=>c._mazo && c._n)
+    .map(c=>({mazo:c._mazo, numero:c._n, nombre:c._mazo==='general'?NOMBRES[c._n]||null:null}));
+
+  // Recoger notas de post-its
+  const notas = cartasMesa
+    .filter(c=>c.classList.contains('carta-nota'))
+    .map(c=>{const ta=c.querySelector('textarea');return ta?ta.value.trim():''})
+    .filter(t=>t.length>0);
+
+  // Guardar en Supabase
+  if(sesionActual.id){
+    try{
+      await sbAuth(`sesiones?id=eq.${sesionActual.id}`,{method:'PATCH',prefer:'return=minimal',body:{n_cartas:cartasData.length}});
+      if(cartasData.length>0){
+        const rows=cartasData.map(c=>({sesion_id:sesionActual.id,...c}));
+        await sbAuth('cartas_sesion',{method:'POST',prefer:'return=minimal',body:rows});
+      }
+    }catch(e){console.warn('Supabase error:',e);}
+  }
+
+  // Generar PDF
+  await generarPDF(sesionActual, cartasData, notas);
+
   sesionActual=null;
   document.getElementById('sesion-form').style.display='block';
   document.getElementById('sesion-activa-info').style.display='none';
-  toast('Sesi\u00f3n cerrada y guardada');
-}
-function actualizarInfoSesion(){
-  if(sesionActual) document.getElementById('info-cartas').textContent=`${cartasMesa.length} carta${cartasMesa.length!==1?'s':''} en mesa`;
+  toast('Sesi\u00f3n guardada \u2705 PDF descargado');
 }
 
+// ── PDF ──
+async function generarPDF(sesion, cartas, notas){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+  const W=210,M=15;
+  let y=M;
+
+  // Header
+  doc.setFillColor(84,201,153);
+  doc.rect(0,0,W,28,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('INNER JOURNEY METHOD\u2122',M,12);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.text('Informe de Sesi\u00f3n',M,20);
+  y=38;
+
+  // Info sesión
+  doc.setTextColor(50,50,50);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.text(`Participante: ${sesion.participante}`,M,y); y+=7;
+  doc.text(`Facilitador: ${usuario.nombre}`,M,y); y+=7;
+  doc.text(`Fecha: ${fFecha(sesion.fecha)}`,M,y); y+=7;
+  doc.text(`Cartas en mesa: ${cartas.length}`,M,y); y+=10;
+
+  // Línea separadora
+  doc.setDrawColor(84,201,153);
+  doc.setLineWidth(0.5);
+  doc.line(M,y,W-M,y); y+=8;
+
+  // Cartas
+  if(cartas.length>0){
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(50,50,50);
+    doc.text('Cartas de la sesi\u00f3n',M,y); y+=7;
+
+    const cols=4, tw=(W-M*2-cols*3)/cols, th=tw*0.67;
+    let col=0;
+    for(const carta of cartas){
+      const cx=M+col*(tw+3), cy=y;
+      // Intentar cargar imagen
+      try{
+        const url=imgUrl(carta.mazo,carta.numero);
+        const imgData=await fetchImageAsBase64(url);
+        if(imgData) doc.addImage(imgData,'JPEG',cx,cy,tw,th);
+        else{doc.setFillColor(240,240,240);doc.rect(cx,cy,tw,th,'F');}
+      }catch(e){doc.setFillColor(240,240,240);doc.rect(cx,cy,tw,th,'F');}
+      // Nombre
+      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
+      const label=carta.nombre||`${carta.mazo} ${carta.numero}`;
+      doc.text(label,cx+tw/2,cy+th+4,{align:'center',maxWidth:tw});
+      col++;
+      if(col>=cols){col=0;y+=th+10;if(y>260){doc.addPage();y=M;}}
+    }
+    if(col>0) y+=th+10;
+    y+=5;
+  }
+
+  // Notas
+  if(notas.length>0){
+    if(y>250){doc.addPage();y=M;}
+    doc.setDrawColor(84,201,153);doc.line(M,y,W-M,y);y+=8;
+    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(50,50,50);
+    doc.text('Notas de la sesi\u00f3n',M,y);y+=7;
+    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(60,60,60);
+    notas.forEach((nota,i)=>{
+      const lines=doc.splitTextToSize(`${i+1}. ${nota}`,W-M*2);
+      lines.forEach(l=>{if(y>280){doc.addPage();y=M;}doc.text(l,M,y);y+=6;});
+      y+=2;
+    });
+  }
+
+  // Footer
+  doc.setFontSize(8);doc.setTextColor(150,150,150);
+  doc.text(`Generado por IJM Facilitador \u00b7 ${new Date().toLocaleDateString('es-ES')}`,W/2,290,{align:'center'});
+
+  const fname=`IJM_${sesion.participante.replace(/\s+/g,'_')}_${sesion.fecha}.pdf`;
+  doc.save(fname);
+}
+
+async function fetchImageAsBase64(url){
+  return new Promise((resolve)=>{
+    const img=new Image();img.crossOrigin='anonymous';
+    img.onload=()=>{
+      const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
+      c.getContext('2d').drawImage(img,0,0);
+      resolve(c.toDataURL('image/jpeg',0.8));
+    };
+    img.onerror=()=>resolve(null);
+    img.src=url+'?t='+Date.now();
+  });
+}
+
+function actualizarInfoSesion(){
+  if(sesionActual){
+    const n=cartasMesa.filter(c=>c._mazo).length;
+    document.getElementById('info-cartas').textContent=`${n} carta${n!==1?'s':''} en mesa`;
+  }
+}
+
+// ── CARTAS ──
 function sacarCarta(mazo,el){
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
   if(el) el.classList.add('on');
@@ -354,6 +507,8 @@ function crearCarta(mazo,n,x,y){
   const div=document.createElement('div');
   div.className=`carta carta-${m.tipo==='foto'?'foto':m.tipo}`;
   div.style.cssText=`left:${x}px;top:${y}px;z-index:${++zMax}`;
+  div._mazo=mazo; div._n=n;
+
   if(m.tipo==='foto'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
@@ -364,8 +519,9 @@ function crearCarta(mazo,n,x,y){
       f.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();f.classList.toggle('on');},{passive:false});
       div.appendChild(f);
     }
-  }else if(m.tipo==='pal'){const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);}
-  else if(m.tipo==='ic'){
+  }else if(m.tipo==='pal'){
+    const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
+  }else if(m.tipo==='ic'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     const inp=document.createElement('input');inp.className='ic-input';inp.placeholder='\u00bfQu\u00e9 pregunta te sugiere?';
     inp.onmousedown=e=>e.stopPropagation();inp.ontouchstart=e=>e.stopPropagation();div.appendChild(inp);
@@ -437,6 +593,7 @@ function drag(el){
   },{passive:true});
 }
 
+// ── MINI MENU ──
 function mostrarMM(cx,cy,el){miniTarget=el;sel(el);const mm=document.getElementById('mini-menu');mm.style.left=Math.min(cx,window.innerWidth-160)+'px';mm.style.top=Math.max(8,cy-76)+'px';mm.classList.add('on');}
 function cerrarMiniMenu(){document.getElementById('mini-menu').classList.remove('on');miniTarget=null;}
 function eliminarSeleccionada(){if(miniTarget)elimCarta(miniTarget);cerrarMiniMenu();}
@@ -448,29 +605,63 @@ function pedirLimpiar(){if(cartasMesa.length===0){toast('La mesa ya est\u00e1 va
 function cerrarModal(){document.getElementById('modal').classList.remove('on');}
 function limpiarMesa(){cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');toast('Mesa limpiada');}
 
+// ── PANEL ──
 function abrirPanel(tab){const p=document.getElementById('panel');if(p.classList.contains('open')&&panelTab===tab){cerrarPanel();return;}p.classList.add('open');switchTab(tab);}
 function cerrarPanel(){document.getElementById('panel').classList.remove('open');}
 function switchTab(tab){
   panelTab=tab;
   ['sesion','historial','stats'].forEach(t=>{document.getElementById(`tc-${t}`).style.display=t===tab?'block':'none';const el=document.getElementById(`ptab-${t}`);if(el)el.classList.toggle('on',t===tab);});
-  document.getElementById('panel-title').textContent=tab==='sesion'?'Sesiones':tab==='historial'?'Historial':'Estad\u00edsticas';
+  document.getElementById('panel-title').textContent=tab==='sesion'?'Sesi\u00f3n':tab==='historial'?'Historial':'Estad\u00edsticas';
   if(tab==='historial')cargarHistorial();if(tab==='stats')cargarStats();
 }
+
+// ── HISTORIAL ──
 async function cargarHistorial(){
   const el=document.getElementById('historial-list');el.innerHTML='<div class="empty-p"><div class="ei">\u23f3</div>Cargando...</div>';
-  try{const filtro=usuario.esAdmin?'':`&facilitador_id=eq.${usuario.id}`;const rows=await sbAuth(`sesiones?order=created_at.desc&limit=50${filtro}`);
-    if(!rows||rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin sesiones a\u00fan</div>';return;}
-    el.innerHTML=rows.map(s=>`<div class="h-item"><h4>${s.participante}</h4><p>${fFecha(s.fecha)}${usuario.esAdmin&&s.facilitador_nombre?' \u00b7 '+s.facilitador_nombre:''}</p><span class="h-badge">${s.n_cartas||0} carta${s.n_cartas!==1?'s':''}</span></div>`).join('');
+  try{
+    const filtro=usuario.esAdmin?'':`&facilitador_id=eq.${usuario.id}`;
+    historialData=await sbAuth(`sesiones?order=created_at.desc&limit=100${filtro}`)||[];
+    renderHistorial(historialData);
   }catch(e){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udce1</div>Sin conexi\u00f3n</div>';}
 }
+
+function renderHistorial(rows){
+  const el=document.getElementById('historial-list');
+  if(!rows||rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin sesiones a\u00fan</div>';return;}
+  el.innerHTML=rows.map(s=>`
+    <div class="h-item" onclick="toggleDetalle('${s.id}')">
+      <h4>${s.participante}</h4>
+      <p>${fFecha(s.fecha)}${usuario.esAdmin&&s.facilitador_nombre?' \u00b7 '+s.facilitador_nombre:''}</p>
+      <span class="h-badge">${s.n_cartas||0} carta${s.n_cartas!==1?'s':''}</span>
+      <div class="h-detail" id="det-${s.id}"><div class="empty-p" style="padding:10px 0"><div class="ei" style="font-size:20px">\u23f3</div></div></div>
+    </div>`).join('');
+}
+
+function filtrarHistorial(q){
+  if(!q.trim()){renderHistorial(historialData);return;}
+  const f=q.toLowerCase();renderHistorial(historialData.filter(s=>s.participante.toLowerCase().includes(f)));
+}
+
+async function toggleDetalle(sesionId){
+  const det=document.getElementById(`det-${sesionId}`);if(!det)return;
+  if(det.classList.contains('open')){det.classList.remove('open');return;}
+  det.classList.add('open');
+  try{
+    const cartas=await sbAuth(`cartas_sesion?sesion_id=eq.${sesionId}&order=created_at.asc`)||[];
+    if(cartas.length===0){det.innerHTML='<p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px">Sin cartas registradas</p>';return;}
+    det.innerHTML=`<div class="h-thumbs">${cartas.map(c=>`<img class="h-thumb" src="${imgUrl(c.mazo,c.numero)}" title="${c.nombre||c.mazo+' '+c.numero}" onclick="verAmpliada('${c.mazo}',${c.numero});event.stopPropagation()">`).join('')}</div>`;
+  }catch(e){det.innerHTML='<p style="font-size:11px;color:rgba(255,80,80,.5);margin-top:6px">Error al cargar cartas</p>';}
+}
+
 async function cargarStats(){
   if(!usuario.esAdmin){document.getElementById('stats-content').innerHTML='<div class="empty-p"><div class="ei">\ud83d\udd12</div>Solo administrador</div>';return;}
   const el=document.getElementById('stats-content');el.innerHTML='<div class="empty-p"><div class="ei">\u23f3</div>Calculando...</div>';
-  try{const rows=await sbAuth('sesiones?select=*&order=created_at.desc&limit=500');
-    if(!rows||rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin datos a\u00fan</div>';return;}
+  try{
+    const rows=await sbAuth('sesiones?select=*&order=created_at.desc&limit=500')||[];
+    if(rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin datos a\u00fan</div>';return;}
     const totalSes=rows.length,totalCartas=rows.reduce((a,r)=>a+(r.n_cartas||0),0),mediaCartas=totalSes>0?(totalCartas/totalSes).toFixed(1):0,participantes=new Set(rows.map(r=>r.participante)).size;
-    const porFac={};rows.forEach(r=>{const f=r.facilitador_nombre||'—';if(!porFac[f])porFac[f]={ses:0,parts:new Set()};porFac[f].ses++;porFac[f].parts.add(r.participante);});
-    el.innerHTML=`<div class="stats-grid"><div class="sg-card"><div class="sg-n">${totalSes}</div><div class="sg-l">Sesiones</div></div><div class="sg-card"><div class="sg-n">${participantes}</div><div class="sg-l">Participantes</div></div><div class="sg-card"><div class="sg-n">${mediaCartas}</div><div class="sg-l">Cartas / sesi\u00f3n</div></div><div class="sg-card"><div class="sg-n">${Object.keys(porFac).length}</div><div class="sg-l">Facilitadores</div></div></div><div class="stat-card"><h3>Por facilitador</h3>${Object.entries(porFac).sort((a,b)=>b[1].ses-a[1].ses).map(([n,d])=>`<div class="stat-row"><span class="sr-name">${n}</span><span class="sr-val">${d.ses} ses \u00b7 ${d.parts.size} part.</span></div>`).join('')}</div>`;
+    const porFac={};rows.forEach(r=>{const f=r.facilitador_nombre||'\u2014';if(!porFac[f])porFac[f]={ses:0,parts:new Set()};porFac[f].ses++;porFac[f].parts.add(r.participante);});
+    el.innerHTML=`<div class="stats-grid"><div class="sg-card"><div class="sg-n">${totalSes}</div><div class="sg-l">Sesiones</div></div><div class="sg-card"><div class="sg-n">${participantes}</div><div class="sg-l">Participantes</div></div><div class="sg-card"><div class="sg-n">${mediaCartas}</div><div class="sg-l">Cartas/sesi\u00f3n</div></div><div class="sg-card"><div class="sg-n">${Object.keys(porFac).length}</div><div class="sg-l">Facilitadores</div></div></div><div class="stat-card"><h3>Por facilitador</h3>${Object.entries(porFac).sort((a,b)=>b[1].ses-a[1].ses).map(([n,d])=>`<div class="stat-row"><span class="sr-name">${n}</span><span class="sr-val">${d.ses} ses \u00b7 ${d.parts.size} part.</span></div>`).join('')}</div>`;
   }catch(e){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udce1</div>Sin conexi\u00f3n</div>';}
 }
 
