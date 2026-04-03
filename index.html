@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{--v:#54C999;--vd:#3aaa7f;--mesa:#606060;--tb:50px;--safe-b:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -390,99 +391,74 @@ async function cerrarSesion(){
   toast('Sesi\u00f3n guardada \u2705 PDF descargado');
 }
 
-// ── PDF ──
+// ── PDF (captura completa de mesa) ──
 async function generarPDF(sesion, cartas, notas){
   const {jsPDF}=window.jspdf;
-  const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-  const W=210,M=15;
-  let y=M;
+  const mesa=document.getElementById('mesa');
+  const wrap=document.getElementById('mesa-wrap');
+  const scrollTop=wrap.scrollTop;
+  wrap.scrollTop=0;
 
-  // Header
-  doc.setFillColor(84,201,153);
-  doc.rect(0,0,W,28,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(16);
-  doc.text('INNER JOURNEY METHOD\u2122',M,12);
-  doc.setFontSize(9);
-  doc.setFont('helvetica','normal');
-  doc.text('Informe de Sesi\u00f3n',M,20);
-  y=38;
-
-  // Info sesión
-  doc.setTextColor(50,50,50);
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
-  doc.text(`Participante: ${sesion.participante}`,M,y); y+=7;
-  doc.text(`Facilitador: ${usuario.nombre}`,M,y); y+=7;
-  doc.text(`Fecha: ${fFecha(sesion.fecha)}`,M,y); y+=7;
-  doc.text(`Cartas en mesa: ${cartas.length}`,M,y); y+=10;
-
-  // Línea separadora
-  doc.setDrawColor(84,201,153);
-  doc.setLineWidth(0.5);
-  doc.line(M,y,W-M,y); y+=8;
-
-  // Cartas
-  if(cartas.length>0){
-    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(50,50,50);
-    doc.text('Cartas de la sesi\u00f3n',M,y); y+=7;
-
-    const cols=4, tw=(W-M*2-cols*3)/cols, th=tw*0.67;
-    let col=0;
-    for(const carta of cartas){
-      const cx=M+col*(tw+3), cy=y;
-      // Intentar cargar imagen
-      try{
-        const url=imgUrl(carta.mazo,carta.numero);
-        const imgData=await fetchImageAsBase64(url);
-        if(imgData) doc.addImage(imgData,'JPEG',cx,cy,tw,th);
-        else{doc.setFillColor(240,240,240);doc.rect(cx,cy,tw,th,'F');}
-      }catch(e){doc.setFillColor(240,240,240);doc.rect(cx,cy,tw,th,'F');}
-      // Nombre
-      doc.setFontSize(7);doc.setFont('helvetica','normal');doc.setTextColor(80,80,80);
-      const label=carta.nombre||`${carta.mazo} ${carta.numero}`;
-      doc.text(label,cx+tw/2,cy+th+4,{align:'center',maxWidth:tw});
-      col++;
-      if(col>=cols){col=0;y+=th+10;if(y>260){doc.addPage();y=M;}}
-    }
-    if(col>0) y+=th+10;
-    y+=5;
-  }
-
-  // Notas
-  if(notas.length>0){
-    if(y>250){doc.addPage();y=M;}
-    doc.setDrawColor(84,201,153);doc.line(M,y,W-M,y);y+=8;
-    doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(50,50,50);
-    doc.text('Notas de la sesi\u00f3n',M,y);y+=7;
-    doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(60,60,60);
-    notas.forEach((nota,i)=>{
-      const lines=doc.splitTextToSize(`${i+1}. ${nota}`,W-M*2);
-      lines.forEach(l=>{if(y>280){doc.addPage();y=M;}doc.text(l,M,y);y+=6;});
-      y+=2;
-    });
-  }
-
-  // Footer
-  doc.setFontSize(8);doc.setTextColor(150,150,150);
-  doc.text(`Generado por IJM Facilitador \u00b7 ${new Date().toLocaleDateString('es-ES')}`,W/2,290,{align:'center'});
-
-  const fname=`IJM_${sesion.participante.replace(/\s+/g,'_')}_${sesion.fecha}.pdf`;
-  doc.save(fname);
-}
-
-async function fetchImageAsBase64(url){
-  return new Promise((resolve)=>{
-    const img=new Image();img.crossOrigin='anonymous';
-    img.onload=()=>{
-      const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
-      c.getContext('2d').drawImage(img,0,0);
-      resolve(c.toDataURL('image/jpeg',0.8));
-    };
-    img.onerror=()=>resolve(null);
-    img.src=url+'?t='+Date.now();
+  // Calcular altura real ocupada por las cartas
+  let maxY=0;
+  cartasMesa.forEach(c=>{
+    const t=parseInt(c.style.top)||0;
+    const h=c.offsetHeight||120;
+    if(t+h>maxY) maxY=t+h;
   });
+  if(maxY===0) maxY=400;
+  const captureH=maxY+40;
+
+  try{
+    toast('Capturando mesa...');
+    const canvas=await html2canvas(mesa,{
+      useCORS:true,
+      allowTaint:false,
+      scale:1.2,
+      width:mesa.offsetWidth,
+      height:captureH,
+      y:0,
+      scrollY:0,
+      backgroundColor:'#606060',
+      logging:false
+    });
+
+    // PDF landscape A4
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const PW=297,PH=210,M=10,HDR=16;
+
+    // Cabecera verde
+    doc.setFillColor(84,201,153);
+    doc.rect(0,0,PW,HDR,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(11);
+    doc.text('INNER JOURNEY METHOD\u2122',M,7);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.text(`Participante: ${sesion.participante}  \u00b7  Facilitador: ${usuario.nombre}  \u00b7  Fecha: ${fFecha(sesion.fecha)}  \u00b7  ${cartas.length} cartas`,M,13);
+
+    // Imagen de la mesa centrada
+    const imgData=canvas.toDataURL('image/jpeg',0.85);
+    const availW=PW-M*2;
+    const availH=PH-HDR-M-5;
+    const ratio=canvas.width/canvas.height;
+    let iw=availW,ih=availW/ratio;
+    if(ih>availH){ih=availH;iw=availH*ratio;}
+    doc.addImage(imgData,'JPEG',M+(availW-iw)/2,HDR+3,iw,ih);
+
+    // Footer
+    doc.setFontSize(7);doc.setTextColor(160,160,160);
+    doc.text(`IJM Facilitador \u00b7 ${new Date().toLocaleDateString('es-ES')}`,PW/2,PH-2,{align:'center'});
+
+    const fname=`IJM_${sesion.participante.replace(/\s+/g,'_')}_${sesion.fecha}.pdf`;
+    doc.save(fname);
+  }catch(e){
+    console.error('PDF error:',e);
+    toast('Error al generar PDF \u2014 revisa la consola');
+  }finally{
+    wrap.scrollTop=scrollTop;
+  }
 }
 
 function actualizarInfoSesion(){
