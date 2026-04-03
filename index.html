@@ -121,6 +121,31 @@ body{background:var(--mesa);color:#fff}
 .banda-s{background:#d42020}
 .banda-n{background:#1a55cc}
 
+/* Franja nombre carta */
+.franja-nombre{
+  position:absolute;bottom:0;left:0;right:0;
+  height:8px;
+  background:rgba(84,201,153,.18);
+  cursor:pointer;transition:height .2s,background .2s;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.franja-nombre:hover{background:rgba(84,201,153,.28);height:10px}
+.franja-nombre.on{
+  height:28px;
+  background:rgba(0,0,0,.62);
+  backdrop-filter:blur(4px);
+}
+.franja-nombre .fn-txt{
+  color:#fff;font-size:11px;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;
+  opacity:0;transition:opacity .18s;
+  white-space:nowrap;pointer-events:none;
+  text-shadow:0 1px 4px rgba(0,0,0,.5);
+}
+.franja-nombre.on .fn-txt{opacity:1}
+
+
 /* PAL */
 .carta-pal{width:220px;height:44px}
 .carta-pal img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
@@ -137,15 +162,20 @@ body{background:var(--mesa);color:#fff}
 .ic-input::placeholder{color:#ccc}
 
 /* Nota/post-it */
-.carta-nota{width:160px;min-height:116px;background:#fff;border:2px solid var(--v);display:flex;flex-direction:column}
-.nota-hdr{display:flex;align-items:center;gap:4px;padding:6px 8px 4px;border-bottom:1px solid rgba(84,201,153,.18)}
+.carta-nota{width:160px;min-height:60px;background:#fff;border:2px solid var(--v);display:flex;flex-direction:column}
+.nota-hdr{
+  display:flex;align-items:center;gap:4px;padding:6px 8px 4px;
+  border-bottom:1px solid rgba(84,201,153,.18);
+  cursor:grab;user-select:none;
+}
+.nota-hdr:active{cursor:grabbing}
 .nota-hdr svg{width:10px;height:10px;stroke:var(--v);flex-shrink:0}
 .nota-hdr span{font-size:8.5px;color:var(--v);font-weight:800;letter-spacing:.6px;text-transform:uppercase}
 .nota-body{
   flex:1;width:100%;border:none;outline:none;resize:none;
   font-size:11.5px;color:#333;font-family:'Outfit',sans-serif;
   line-height:1.5;background:transparent;padding:7px 8px;
-  min-height:80px;cursor:text;
+  min-height:36px;cursor:text;
 }
 .nota-body::placeholder{color:#ccc}
 
@@ -343,6 +373,28 @@ const MAZOS = {
   ic:      { n: 37, bucket:'imagenes-IC',  ext:'.png', tipo:'ic',    banda:null      },
 };
 
+
+// ─── NOMBRES DE CARTAS (General) ───
+const NOMBRES = {
+  1:"Abuso",2:"Logro",3:"Acción",4:"Aventura",5:"Alerta",6:"Casi",7:"Apego",8:"Conciencia",
+  9:"Equilibrio",10:"Barrera",11:"Base",12:"Creencias",13:"Nacimiento",14:"Límites",15:"Cuidado",
+  16:"Celebración",17:"Claridad",18:"Confrontación",19:"Conexión",20:"Plenitud",21:"Conveniencia",
+  22:"Creatividad",23:"Crisis",24:"Muerte",25:"Decisión",26:"Dedicación",27:"Defensa",
+  28:"Determinación",29:"Distracción",30:"Sueño",31:"Eficiencia",32:"Esfuerzo",33:"Ego",
+  34:"Elasticidad",35:"Empoderamiento",36:"Vacío",37:"Final",38:"Exceso",39:"Salida",40:"Fantasía",
+  41:"Miedo",42:"Lucha",43:"Flexibilidad",44:"Fluir",45:"Foco",46:"Amistad",47:"Futuro",
+  48:"Objetivo",49:"Gratitud",50:"Escondite",51:"Esperanza",52:"Identidad",53:"Impulso",
+  54:"Iniciativa",55:"Intimidad",56:"Introspección",57:"Liderazgo",58:"Legado",59:"Liberación",
+  60:"Vida",61:"Ligereza",62:"Escucha",63:"Carga",64:"Amor",65:"Suerte",66:"Máscara",
+  67:"Medir",68:"Memoria",69:"Momento",70:"Descuidar",71:"Oportunidad",72:"Sobrecarga",
+  73:"Pasión",74:"Paciencia",75:"Pausa",76:"Perspectiva",77:"Proceso",78:"Proyecciones",
+  79:"Reflejo",80:"Renovación",81:"Resistencia",82:"Descanso",83:"Resultados",84:"Ritmo",
+  85:"Tristeza",86:"Escasez",87:"Singularidad",88:"Velocidad",89:"Espontaneidad",90:"Estancamiento",
+  91:"Inicio",92:"Fuerza",93:"Bloqueo",94:"Éxito",95:"Equipo",96:"Tentación",97:"Ataduras",
+  98:"Tiempo",99:"Transformación",100:"Transición",101:"Confianza",102:"Unidad",103:"Valor",
+  104:"Visión",105:"Voz",106:"Espera",107:"Anhelo"
+};
+
 // ═══════════════════════════════════════════
 let cartas=[], zMax=10, cardCount=0;
 let cartaSeleccionada=null, miniTarget=null;
@@ -381,6 +433,23 @@ function crearCarta(mazo,n,x,y){
       const b=document.createElement('div');
       b.className=`banda ${m.banda}`; div.appendChild(b);
     }
+    // Franja nombre (solo cartas generales con nombre conocido)
+    if(NOMBRES[n]){
+      const franja=document.createElement('div');
+      franja.className='franja-nombre';
+      const txt=document.createElement('span');
+      txt.className='fn-txt'; txt.textContent=NOMBRES[n];
+      franja.appendChild(txt);
+      franja.addEventListener('click', e=>{
+        e.stopPropagation();
+        franja.classList.toggle('on');
+      });
+      franja.addEventListener('touchend', e=>{
+        e.stopPropagation(); e.preventDefault();
+        franja.classList.toggle('on');
+      },{passive:false});
+      div.appendChild(franja);
+    }
   } else if(m.tipo==='pal'){
     const img=document.createElement('img');
     img.src=imgUrl(mazo,n); img.draggable=false; img.alt='';
@@ -414,10 +483,10 @@ function crearNota(){
 
   div.innerHTML=`
     <div class="nota-hdr">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#54C999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
       </svg>
-      <span>Nota</span>
+      <span>Nota — arrastra aquí</span>
     </div>
     <textarea class="nota-body" placeholder="Escribe aquí..."></textarea>
   `;
@@ -426,8 +495,20 @@ function crearNota(){
   ta.onmousedown=e=>e.stopPropagation();
   ta.ontouchstart=e=>e.stopPropagation();
 
+  // Drag desde el header
+  const hdr=div.querySelector('.nota-hdr');
+  makeDraggable(div, hdr);
+
   añadirBtnDel(div);
-  añadirGestos(div, null);
+
+  // Doble clic/toque → mini menú
+  div.addEventListener('dblclick',e=>{
+    if(e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON') return;
+    e.preventDefault(); mostrarMiniMenu(e.clientX,e.clientY,div);
+  });
+
+  div.addEventListener('mousedown',()=>{seleccionar(div);div.style.zIndex=++zMax;});
+
   document.getElementById('mesa').appendChild(div);
   cartas.push(div); actualizarContador();
   document.getElementById('empty').classList.add('hidden');
@@ -442,18 +523,16 @@ function añadirBtnDel(div){
   div.appendChild(del);
 }
 
-// ─── GESTOS (clic, doble, drag, touch) ───
+// ─── GESTOS cartas (clic, doble, drag) ───
 function añadirGestos(div, onSingleClick){
-  // Selección y subir z
   div.addEventListener('mousedown',()=>{
     seleccionar(div); div.style.zIndex=++zMax;
   });
-
-  // Clic simple → ver ampliada (con delay para distinguir de doble)
   if(onSingleClick){
     div._clickTimer=null;
     div.addEventListener('click',e=>{
       if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT') return;
+      if(e.target.classList.contains('franja-nombre')||e.target.classList.contains('fn-txt')) return;
       clearTimeout(div._clickTimer);
       div._clickTimer=setTimeout(()=>{
         if(!div._dbl) onSingleClick();
@@ -461,26 +540,25 @@ function añadirGestos(div, onSingleClick){
       },230);
     });
   }
-
-  // Doble clic → mini menú
   div.addEventListener('dblclick',e=>{
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON') return;
-    e.preventDefault();
-    div._dbl=true;
+    if(e.target.classList.contains('franja-nombre')||e.target.classList.contains('fn-txt')) return;
+    e.preventDefault(); div._dbl=true;
     clearTimeout(div._clickTimer);
     mostrarMiniMenu(e.clientX, e.clientY, div);
   });
-
-  makeDraggable(div);
+  makeDraggable(div, div);
 }
 
 // ─── DRAG ───
-function makeDraggable(el){
+function makeDraggable(el, handle){
+  const h = handle || el;
   let sx,sy,sl,st,moved;
 
-  el.addEventListener('mousedown',e=>{
+  h.addEventListener('mousedown',e=>{
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON') return;
     e.preventDefault();
+    seleccionar(el); el.style.zIndex=++zMax;
     const wrap=document.getElementById('mesa-wrap');
     sx=e.clientX; sy=e.clientY+wrap.scrollTop;
     sl=parseInt(el.style.left)||0; st=parseInt(el.style.top)||0;
@@ -505,9 +583,8 @@ function makeDraggable(el){
 
   // Touch
   let lastTap=0;
-  el.addEventListener('touchstart',e=>{
+  h.addEventListener('touchstart',e=>{
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON') return;
-    // Doble toque
     const now=Date.now();
     if(now-lastTap<280){
       e.preventDefault();
@@ -516,24 +593,23 @@ function makeDraggable(el){
       lastTap=0; return;
     }
     lastTap=now;
-
+    seleccionar(el); el.style.zIndex=++zMax;
     const wrap=document.getElementById('mesa-wrap');
     const t=e.touches[0];
     sx=t.clientX; sy=t.clientY+wrap.scrollTop;
     sl=parseInt(el.style.left)||0; st=parseInt(el.style.top)||0;
-    moved=false; el.classList.add('dragging'); el.style.zIndex=++zMax;
+    moved=false; el.classList.add('dragging');
 
     function tm(e){
-      e.preventDefault();
+      e.preventDefault(); moved=true;
       const t=e.touches[0];
-      moved=true;
       const mesa=document.getElementById('mesa');
       el.style.left=Math.max(0,Math.min(sl+(t.clientX-sx),mesa.offsetWidth-el.offsetWidth))+'px';
       el.style.top=Math.max(0,Math.min(st+(t.clientY+wrap.scrollTop-sy),mesa.offsetHeight-el.offsetHeight))+'px';
     }
-    function tu(){ el.classList.remove('dragging'); el.removeEventListener('touchmove',tm); el.removeEventListener('touchend',tu); }
-    el.addEventListener('touchmove',tm,{passive:false});
-    el.addEventListener('touchend',tu);
+    function tu(){ el.classList.remove('dragging'); h.removeEventListener('touchmove',tm); h.removeEventListener('touchend',tu); }
+    h.addEventListener('touchmove',tm,{passive:false});
+    h.addEventListener('touchend',tu);
   },{passive:true});
 }
 
