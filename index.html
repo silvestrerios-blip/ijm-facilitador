@@ -481,27 +481,60 @@ function crearNota(){
   div.style.left=x+'px'; div.style.top=y+'px';
   div.style.zIndex=++zMax;
 
-  div.innerHTML=`
-    <div class="nota-hdr">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#54C999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
-      </svg>
-      <span>Nota — arrastra aquí</span>
-    </div>
-    <textarea class="nota-body" placeholder="Escribe aquí..."></textarea>
-  `;
+  // Header (zona de arrastre)
+  const hdr=document.createElement('div');
+  hdr.className='nota-hdr';
+  hdr.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="#54C999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Nota</span>`;
 
-  const ta=div.querySelector('textarea');
-  ta.onmousedown=e=>e.stopPropagation();
-  ta.ontouchstart=e=>e.stopPropagation();
+  // Textarea
+  const ta=document.createElement('textarea');
+  ta.className='nota-body';
+  ta.placeholder='Escribe aquí...';
 
-  // Drag desde el header
-  const hdr=div.querySelector('.nota-hdr');
-  makeDraggable(div, hdr);
+  div.appendChild(hdr);
+  div.appendChild(ta);
 
-  añadirBtnDel(div);
+  // Drag SOLO desde el header — directo, sin pasar por makeDraggable
+  let sx,sy,sl,st;
+  hdr.addEventListener('mousedown',e=>{
+    e.preventDefault(); e.stopPropagation();
+    seleccionar(div); div.style.zIndex=++zMax;
+    const w=document.getElementById('mesa-wrap');
+    sx=e.clientX; sy=e.clientY+w.scrollTop;
+    sl=parseInt(div.style.left)||0; st=parseInt(div.style.top)||0;
+    div.classList.add('dragging');
+    function mv(e){
+      const mesa=document.getElementById('mesa');
+      div.style.left=Math.max(0,Math.min(sl+e.clientX-sx, mesa.offsetWidth-div.offsetWidth))+'px';
+      div.style.top=Math.max(0,Math.min(st+(e.clientY+w.scrollTop)-sy, mesa.offsetHeight-div.offsetHeight))+'px';
+    }
+    function up(){ div.classList.remove('dragging'); document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+    document.addEventListener('mousemove',mv);
+    document.addEventListener('mouseup',up);
+  });
 
-  // Doble clic/toque → mini menú
+  // Touch drag desde header
+  let lastTap=0;
+  hdr.addEventListener('touchstart',e=>{
+    const now=Date.now();
+    if(now-lastTap<280){ e.preventDefault(); mostrarMiniMenu(e.touches[0].clientX,e.touches[0].clientY,div); lastTap=0; return; }
+    lastTap=now;
+    seleccionar(div); div.style.zIndex=++zMax;
+    const w=document.getElementById('mesa-wrap');
+    const t=e.touches[0];
+    sx=t.clientX; sy=t.clientY+w.scrollTop;
+    sl=parseInt(div.style.left)||0; st=parseInt(div.style.top)||0;
+    div.classList.add('dragging');
+    function tm(e){ e.preventDefault(); const t=e.touches[0]; const mesa=document.getElementById('mesa');
+      div.style.left=Math.max(0,Math.min(sl+t.clientX-sx, mesa.offsetWidth-div.offsetWidth))+'px';
+      div.style.top=Math.max(0,Math.min(st+(t.clientY+w.scrollTop)-sy, mesa.offsetHeight-div.offsetHeight))+'px';
+    }
+    function tu(){ div.classList.remove('dragging'); hdr.removeEventListener('touchmove',tm); hdr.removeEventListener('touchend',tu); }
+    hdr.addEventListener('touchmove',tm,{passive:false});
+    hdr.addEventListener('touchend',tu);
+  },{passive:true});
+
+  // Doble clic → mini menú
   div.addEventListener('dblclick',e=>{
     if(e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON') return;
     e.preventDefault(); mostrarMiniMenu(e.clientX,e.clientY,div);
@@ -509,6 +542,7 @@ function crearNota(){
 
   div.addEventListener('mousedown',()=>{seleccionar(div);div.style.zIndex=++zMax;});
 
+  añadirBtnDel(div);
   document.getElementById('mesa').appendChild(div);
   cartas.push(div); actualizarContador();
   document.getElementById('empty').classList.add('hidden');
