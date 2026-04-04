@@ -250,25 +250,25 @@ body{background:var(--mesa);color:#fff}
         <circle cx="7" cy="16" r=".8" fill="#54C999" opacity=".5"/>
       </svg><span style="font-size:9px;font-weight:900;letter-spacing:.5px">IJM</span>
     </div>
-    <div class="chip" onclick="sacarCarta('s',this)" title="S — Sentimientos">
+    <div class="chip" onclick="sacarCarta('s',this)" title="S - Sentimientos">
       <svg style="width:16px;height:16px;vertical-align:middle;flex-shrink:0" viewBox="0 0 16 16">
         <rect x="0" y="0" width="16" height="16" rx="2.5" fill="#d42020"/>
         <text x="8" y="12" font-family="sans-serif" font-size="11" font-weight="900" fill="white" text-anchor="middle">S</text>
       </svg>
     </div>
-    <div class="chip" onclick="sacarCarta('n',this)" title="N — Necesidades">
+    <div class="chip" onclick="sacarCarta('n',this)" title="N - Necesidades">
       <svg style="width:16px;height:16px;vertical-align:middle;flex-shrink:0" viewBox="0 0 16 16">
         <rect x="0" y="0" width="16" height="16" rx="2.5" fill="#1a55cc"/>
         <text x="8" y="12" font-family="sans-serif" font-size="11" font-weight="900" fill="white" text-anchor="middle">N</text>
       </svg>
     </div>
-    <div class="chip" onclick="sacarCarta('pal',this)" title="PAL — Equilibradores">
+    <div class="chip" onclick="sacarCarta('pal',this)" title="PAL - Equilibradores">
       <svg style="width:36px;height:16px;vertical-align:middle;flex-shrink:0" viewBox="0 0 36 16">
         <rect x="0" y="2" width="36" height="12" rx="6" fill="#2a2a2a" stroke="#54C999" stroke-width="1"/>
         <text x="18" y="11.5" font-family="sans-serif" font-size="7.5" font-weight="700" fill="#54C999" text-anchor="middle">PAL</text>
       </svg>
     </div>
-    <div class="chip" onclick="sacarCarta('ic',this)" title="IC — Iconos">
+    <div class="chip" onclick="sacarCarta('ic',this)" title="IC - Iconos">
       <svg style="width:16px;height:18px;vertical-align:middle;flex-shrink:0" viewBox="0 0 16 18">
         <circle cx="9" cy="2.5" r="2" fill="#F4A020"/>
         <path d="M9 4.5L8 9L5.5 13" stroke="#F4A020" stroke-width="1.4" stroke-linecap="round" fill="none"/>
@@ -776,7 +776,7 @@ function dibujarRueda(W, H){
   const txt = 'rgba(255,255,255,0.65)';
   const txtBig = 'rgba(84,201,153,0.7)';
 
-  // 8 sectores — ángulos desde -90°
+  // 8 sectores - angulos desde -90
   const sectores = [
     'CRECIMIENTO|PERSONAL','SALUD','PAREJA','FAMILIA|AMIGOS',
     'OCIO|DIVERSION','ENTORNO|FISICO','DESARROLLO|PROFESIONAL','DINERO'
@@ -785,13 +785,13 @@ function dibujarRueda(W, H){
 
   let svg = `<g>`;
 
-  // Círculo exterior
+  // Circulo exterior
   svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="rgba(0,0,0,0.15)" stroke="${stroke}" stroke-width="1.5" fill-rule="evenodd"/>`;
 
-  // Círculo interior
+  // Circulo interior
   svg += `<circle cx="${cx}" cy="${cy}" r="${r2}" fill="rgba(0,0,0,0.2)" stroke="${stroke}" stroke-width="1"/>`;
 
-  // 8 líneas radiales
+  // 8 lineas radiales
   for(let i=0; i<8; i++){
     const a = (i*45 - 90) * Math.PI/180;
     const x1 = cx + r2*Math.cos(a), y1 = cy + r2*Math.sin(a);
