@@ -778,13 +778,8 @@ function dibujarRueda(W, H){
 
   // 8 sectores — ángulos desde -90°
   const sectores = [
-    'CRECIMIENTO
-PERSONAL','SALUD','PAREJA','FAMILIA
-AMIGOS',
-    'OCIO
-DIVERSIÓN','ENTORNO
-FÍSICO','DESARROLLO
-PROFESIONAL','DINERO'
+    'CRECIMIENTO|PERSONAL','SALUD','PAREJA','FAMILIA|AMIGOS',
+    'OCIO|DIVERSIÓN','ENTORNO|FÍSICO','DESARROLLO|PROFESIONAL','DINERO'
   ];
   const ejes = ['PERSONAL','SOCIAL','VITAL','ECONÓMICO'];
 
@@ -810,8 +805,7 @@ PROFESIONAL','DINERO'
     const rm = (R + r2) / 2;
     const tx = cx + rm*Math.cos(a);
     const ty = cy + rm*Math.sin(a);
-    const lines = sectores[i].split('
-');
+    const lines = sectores[i].split('|');
     const dy = lines.length > 1 ? -8 : 0;
     svg += `<text x="${tx}" y="${ty + dy}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${Math.max(10, R*0.072)}px" font-weight="700" fill="${txt}">`;
     lines.forEach((l,li) => {
