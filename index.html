@@ -68,13 +68,13 @@ body{background:var(--mesa);color:#fff}
 .carta.selected{outline:2.5px solid var(--v);outline-offset:2px}
 @keyframes cartaEntra{from{opacity:0;transform:scale(.8) rotate(-2.5deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 .carta{animation:cartaEntra .22s cubic-bezier(.34,1.56,.64,1)}
-.carta-foto{width:180px;height:120px}
+.carta-foto{width:calc(var(--cw,180px));height:calc(var(--ch,120px))}
 .carta-foto img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .banda{height:6px;width:100%;position:absolute;bottom:0;left:0}
 .banda-s{background:#d42020}.banda-n{background:#1a55cc}
-.carta-pal{width:300px;height:44px}
+.carta-pal{width:calc(var(--pw,300px));height:calc(var(--ph,44px))}
 .carta-pal img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-.carta-ic{width:120px;height:138px;background:#fff;display:flex;flex-direction:column}
+.carta-ic{width:calc(var(--cw,180px));height:calc(var(--ich,140px));background:#fff;display:flex;flex-direction:column}
 .carta-ic img{width:100%;flex:1;object-fit:contain;padding:10px;display:block;pointer-events:none}
 .ic-input{width:100%;border:none;outline:none;background:rgba(84,201,153,.07);border-top:1px solid rgba(84,201,153,.22);font-size:9px;color:#444;padding:5px 6px;font-family:'Outfit',sans-serif;text-align:center;cursor:text}
 .ic-input::placeholder{color:#ccc}
@@ -178,6 +178,57 @@ body{background:var(--mesa);color:#fff}
 #empty svg{width:52px;height:52px;margin-bottom:12px}
 #empty p{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--v)}
 #empty small{font-size:10px;color:rgba(255,255,255,.3);display:block;margin-top:3px}
+/* Slider escala cartas */
+#scale-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+#scale-wrap label{font-size:9px;color:rgba(255,255,255,.4);font-weight:700;white-space:nowrap}
+#scale-slider{
+  -webkit-appearance:none;appearance:none;
+  width:70px;height:4px;border-radius:2px;
+  background:rgba(255,255,255,.15);outline:none;cursor:pointer;
+}
+#scale-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--v);cursor:pointer;
+  box-shadow:0 0 4px rgba(84,201,153,.4);
+}
+#scale-val{font-size:9px;color:var(--v);font-weight:700;min-width:28px}
+
+/* Zoom buttons */
+.zoom-btn{
+  width:26px;height:26px;border-radius:6px;
+  border:1.5px solid rgba(255,255,255,.15);
+  background:transparent;color:rgba(255,255,255,.5);
+  cursor:pointer;font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;font-family:'Outfit',sans-serif;
+  flex-shrink:0;
+}
+.zoom-btn:hover{border-color:var(--v);color:var(--v)}
+
+/* Franja editable S/N/IC */
+.franja-edit{
+  position:absolute;bottom:0;left:0;right:0;
+  height:8px;
+  background:rgba(84,201,153,.18);
+  cursor:pointer;transition:height .2s,background .2s;
+  display:flex;align-items:center;overflow:hidden;
+}
+.franja-edit:hover{background:rgba(84,201,153,.28);height:10px}
+.franja-edit.on{
+  height:28px;
+  background:rgba(0,0,0,.7);
+}
+.franja-edit input{
+  width:100%;border:none;outline:none;
+  background:transparent;
+  color:#fff;font-size:10px;font-weight:600;
+  font-family:'Outfit',sans-serif;
+  text-align:center;padding:0 6px;
+  cursor:text;opacity:0;transition:opacity .15s;
+}
+.franja-edit.on input{opacity:1}
+
 /* ══ MANTELES ══ */
 #mantel-menu{
   position:fixed;z-index:300;
@@ -570,13 +621,14 @@ function crearCarta(mazo,n,x,y){
       f.addEventListener('click',e=>{e.stopPropagation();f.classList.toggle('on');});
       f.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();f.classList.toggle('on');},{passive:false});
       div.appendChild(f);
+    } else if(mazo==='s'||mazo==='n'){
+      div.appendChild(mkFranjaEdit());
     }
   }else if(m.tipo==='pal'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
   }else if(m.tipo==='ic'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
-    const inp=document.createElement('input');inp.className='ic-input';inp.placeholder='\u00bfQu\u00e9 pregunta te sugiere?';
-    inp.onmousedown=e=>e.stopPropagation();inp.ontouchstart=e=>e.stopPropagation();div.appendChild(inp);
+    div.appendChild(mkFranjaEdit('\u00bfQu\u00e9 te sugiere este icono?'));
   }
   addDel(div);addGestos(div,()=>verAmpliada(mazo,n));
   document.getElementById('mesa').appendChild(div);
@@ -879,6 +931,70 @@ document.addEventListener('click', e => {
 // Redibujar mantel al cambiar tamaño ventana
 window.addEventListener('resize', () => {
   if(mantelActual) setMantel(mantelActual);
+});
+
+
+// ═══════════════════════════════════════════
+// 📐 ESCALA Y ZOOM
+// ═══════════════════════════════════════════
+let escala = 75; // % default
+let mesaZoom = 1;
+
+function setScale(val){
+  escala = parseInt(val);
+  document.getElementById('scale-val').textContent = escala + '%';
+  document.getElementById('scale-slider').value = escala;
+  aplicarEscala();
+}
+
+function aplicarEscala(){
+  const s = escala / 100;
+  const cw = Math.round(180 * s) + 'px';
+  const ch = Math.round(120 * s) + 'px';
+  const pw = Math.round(300 * s) + 'px';
+  const ph = Math.round(44  * s) + 'px';
+  const ich = Math.round(140 * s) + 'px';
+  const r = document.documentElement;
+  r.style.setProperty('--cw', cw);
+  r.style.setProperty('--ch', ch);
+  r.style.setProperty('--pw', pw);
+  r.style.setProperty('--ph', ph);
+  r.style.setProperty('--ich', ich);
+}
+
+function zoomMesa(dir){
+  mesaZoom = Math.max(0.5, Math.min(2, mesaZoom + dir * 0.1));
+  document.getElementById('mesa').style.transform = `scale(${mesaZoom})`;
+  document.getElementById('mesa').style.transformOrigin = 'top left';
+}
+
+// ── FRANJA EDITABLE (S, N, IC) ──
+function mkFranjaEdit(placeholder){
+  const f = document.createElement('div');
+  f.className = 'franja-edit';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = placeholder || 'Escribe aqui...';
+  inp.onmousedown = e => e.stopPropagation();
+  inp.ontouchstart = e => e.stopPropagation();
+  inp.onclick = e => e.stopPropagation();
+  f.appendChild(inp);
+  f.addEventListener('click', e => {
+    e.stopPropagation();
+    f.classList.toggle('on');
+    if(f.classList.contains('on')) setTimeout(()=>inp.focus(), 50);
+  });
+  f.addEventListener('touchend', e => {
+    e.stopPropagation(); e.preventDefault();
+    f.classList.toggle('on');
+    if(f.classList.contains('on')) setTimeout(()=>inp.focus(), 50);
+  }, {passive:false});
+  return f;
+}
+
+// Aplicar escala inicial
+document.addEventListener('DOMContentLoaded', () => {
+  aplicarEscala();
 });
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarModal();cerrarMiniMenu();cerrarPanel();}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
