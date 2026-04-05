@@ -693,8 +693,8 @@ function crearNota(){
 function addDel(div){const d=document.createElement('button');d.className='btn-del';d.textContent='\u2715';d.onclick=e=>{e.stopPropagation();elimCarta(div);};div.appendChild(d);}
 function addGestos(div,onClic){
   div.addEventListener('mousedown',()=>{sel(div);div.style.zIndex=++zMax;});
-  if(onClic){div.addEventListener('click',e=>{if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT')return;if(e.target.classList.contains('franja-nombre')||e.target.classList.contains('fn-txt'))return;clearTimeout(div._ct);div._ct=setTimeout(()=>{if(!div._dbl)onClic();div._dbl=false;},230);});}
-  div.addEventListener('dblclick',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;if(e.target.classList.contains('franja-nombre')||e.target.classList.contains('fn-txt'))return;e.preventDefault();div._dbl=true;clearTimeout(div._ct);mostrarMM(e.clientX,e.clientY,div);});
+  if(onClic){div.addEventListener('click',e=>{if(e.target.tagName==='BUTTON'||e.target.tagName==='INPUT')return;if(e.target.classList.contains('franja-nombre')||e.target.classList.contains('fn-txt')||e.target.classList.contains('franja-edit'))return;clearTimeout(div._ct);div._ct=setTimeout(()=>{if(!div._dbl)onClic();div._dbl=false;},230);});}
+  div.addEventListener('dblclick',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON')return;if(e.target.classList.contains('franja-nombre')||e.target.classList.contains('fn-txt')||e.target.classList.contains('franja-edit'))return;e.preventDefault();div._dbl=true;clearTimeout(div._ct);mostrarMM(e.clientX,e.clientY,div);});
   drag(div);
 }
 function drag(el){
