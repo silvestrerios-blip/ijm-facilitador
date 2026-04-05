@@ -568,8 +568,7 @@ async function doLogin(){
     if(usuario.esAdmin){document.getElementById('btn-stats').classList.add('visible');document.getElementById('ptab-stats').style.display='block';}
     document.getElementById('inp-fecha').valueAsDate=new Date();
     toast(`Bienvenido, ${usuario.nombre} \u{1F44B}`);
-    // Pantalla completa
-    try{if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();}catch(e){}
+
   }catch(e){errEl.textContent=e.message;}
   document.getElementById('btn-login').textContent='Entrar';
 }
