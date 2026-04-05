@@ -78,7 +78,7 @@ body{background:var(--mesa);color:#fff}
 .carta-ic img{width:100%;height:calc(var(--ch,120px));object-fit:contain;padding:8px;display:block;pointer-events:none;flex-shrink:0}
 .ic-input{width:100%;border:none;outline:none;background:rgba(84,201,153,.07);border-top:1px solid rgba(84,201,153,.22);font-size:9px;color:#444;padding:5px 6px;font-family:'Outfit',sans-serif;text-align:center;cursor:text}
 .ic-input::placeholder{color:#ccc}
-.carta-nota{width:160px;min-height:60px;background:#fff;border:2px solid var(--v);display:flex;flex-direction:column}
+.carta-nota{width:calc(var(--cw,180px));min-height:50px;background:#fff;border:2px solid var(--v);display:flex;flex-direction:column}
 .nota-hdr{display:flex;align-items:center;gap:4px;padding:6px 8px 4px;border-bottom:1px solid rgba(84,201,153,.18);cursor:grab;user-select:none}
 .nota-hdr:active{cursor:grabbing}
 .nota-hdr svg{width:10px;height:10px;stroke:var(--v);flex-shrink:0}
@@ -178,6 +178,65 @@ body{background:var(--mesa);color:#fff}
 #empty svg{width:52px;height:52px;margin-bottom:12px}
 #empty p{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--v)}
 #empty small{font-size:10px;color:rgba(255,255,255,.3);display:block;margin-top:3px}
+/* ══ FLECHAS ══ */
+.carta-flecha{
+  position:absolute;cursor:grab;user-select:none;
+  touch-action:none;display:flex;flex-direction:column;
+  align-items:center;
+}
+.carta-flecha.dragging{cursor:grabbing;z-index:200!important;transition:none}
+.carta-flecha.selected .flecha-svg{filter:drop-shadow(0 0 4px rgba(84,201,153,.8))}
+.flecha-hdr{
+  width:100%;padding:3px 6px 2px;
+  background:rgba(84,201,153,.15);
+  border:1px solid rgba(84,201,153,.35);
+  border-radius:6px 6px 0 0;
+  cursor:grab;user-select:none;
+  display:flex;align-items:center;justify-content:center;
+  gap:4px;
+}
+.flecha-hdr:active{cursor:grabbing}
+.flecha-hdr svg{width:10px;height:10px;stroke:var(--v);flex-shrink:0}
+.flecha-hdr span{font-size:8px;color:var(--v);font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+.flecha-body{
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(30,30,30,.85);
+  border:1px solid rgba(84,201,153,.3);
+  border-top:none;border-radius:0 0 6px 6px;
+  padding:4px 8px;gap:6px;
+  width:100%;
+}
+.flecha-body svg{flex-shrink:0}
+.flecha-txt{
+  border:none;outline:none;background:transparent;
+  color:#fff;font-size:10px;font-weight:600;
+  font-family:'Outfit',sans-serif;
+  text-align:center;width:80px;
+  cursor:text;
+}
+.flecha-txt::placeholder{color:rgba(255,255,255,.3)}
+
+/* Menú flechas */
+#flecha-menu{
+  position:fixed;z-index:300;
+  background:rgba(22,22,22,.97);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;padding:6px;
+  display:none;flex-direction:column;gap:4px;
+  box-shadow:0 8px 28px rgba(0,0,0,.55);
+  backdrop-filter:blur(10px);min-width:130px;
+  bottom:calc(var(--tb) + 8px);
+}
+#flecha-menu.on{display:flex}
+.fm-btn{
+  padding:8px 12px;border-radius:7px;border:none;
+  font-size:12px;font-weight:700;cursor:pointer;
+  font-family:'Outfit',sans-serif;text-align:left;
+  background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);
+  transition:background .12s;display:flex;align-items:center;gap:8px;
+}
+.fm-btn:hover{background:rgba(84,201,153,.12);color:#fff}
+
 /* Slider escala cartas */
 #scale-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
 #scale-wrap label{font-size:9px;color:rgba(255,255,255,.4);font-weight:700;white-space:nowrap}
@@ -333,6 +392,13 @@ body{background:var(--mesa);color:#fff}
         <text x="11" y="14" font-family="sans-serif" font-size="13" font-weight="900" fill="#54C999" text-anchor="middle">T</text>
       </svg>
     </div>
+    <div class="chip" onclick="toggleFlechaMenu(event)" title="Añadir flecha">
+      <svg style="width:20px;height:14px;vertical-align:middle;flex-shrink:0" viewBox="0 0 20 14" fill="none">
+        <path d="M1 7 L19 7" stroke="#54C999" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M14 3 L19 7 L14 11" stroke="#54C999" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 3 L1 7 L6 11" stroke="#54C999" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
   </div>
   <div class="sep"></div>
   <div class="tb-right">
@@ -419,6 +485,12 @@ body{background:var(--mesa);color:#fff}
   <button class="mantel-opt" id="mo-rueda" onclick="setMantel('rueda')">🔵 Rueda de la Vida</button>
   <button class="mantel-opt" id="mo-dafo" onclick="setMantel('dafo')">⬡ DAFO</button>
   <button class="mantel-opt" onclick="setMantel(null)">✕ Sin mantel</button>
+</div>
+<div id="flecha-menu">
+  <button class="fm-btn" onclick="crearFlecha('der')">&#8594; Derecha</button>
+  <button class="fm-btn" onclick="crearFlecha('izq')">&#8592; Izquierda</button>
+  <button class="fm-btn" onclick="crearFlecha('arr')">&#8593; Arriba</button>
+  <button class="fm-btn" onclick="crearFlecha('aba')">&#8595; Abajo</button>
 </div>
 <div id="mini-menu">
   <button class="mm-btn" id="mm-del" onclick="eliminarSeleccionada()">&#128465; Eliminar</button>
@@ -1066,6 +1138,124 @@ document.addEventListener('DOMContentLoaded', () => {
   aplicarEscala();
 });
 
+
+// ═══════════════════════════════════════════
+// ↔ FLECHAS
+// ═══════════════════════════════════════════
+function toggleFlechaMenu(e){
+  e.stopPropagation();
+  const m=document.getElementById('flecha-menu');
+  const btn=e.currentTarget.getBoundingClientRect();
+  if(m.classList.contains('on')){m.classList.remove('on');return;}
+  m.style.left=(btn.left-10)+'px';
+  m.classList.add('on');
+}
+
+function crearFlecha(dir){
+  document.getElementById('flecha-menu').classList.remove('on');
+  const wrap=document.getElementById('mesa-wrap');
+  const x=30+Math.random()*20;
+  const y=20+wrap.scrollTop+Math.random()*16;
+
+  const div=document.createElement('div');
+  div.className='carta-flecha';
+  div.style.cssText=`left:${x}px;top:${y}px;z-index:${++zMax}`;
+
+  // Header (drag handle)
+  const hdr=document.createElement('div');
+  hdr.className='flecha-hdr';
+  hdr.innerHTML=`<svg viewBox="0 0 20 14" fill="none" stroke="#54C999" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7 L19 7"/><path d="M14 3 L19 7 L14 11"/><path d="M6 3 L1 7 L6 11"/></svg><span>Flecha</span>`;
+
+  // Body with arrow SVG + text
+  const body=document.createElement('div');
+  body.className='flecha-body';
+
+  const arrowSvg = {
+    der: `<svg width="60" height="20" viewBox="0 0 60 20" fill="none"><path d="M4 10 L52 10" stroke="#54C999" stroke-width="2" stroke-linecap="round" marker-end="url(#ah)"/><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#54C999" stroke-width="1.5" stroke-linecap="round"/></marker></defs></svg>`,
+    izq: `<svg width="60" height="20" viewBox="0 0 60 20" fill="none"><path d="M56 10 L8 10" stroke="#54C999" stroke-width="2" stroke-linecap="round" marker-end="url(#ah2)"/><defs><marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#54C999" stroke-width="1.5" stroke-linecap="round"/></marker></defs></svg>`,
+    arr: `<svg width="20" height="50" viewBox="0 0 20 50" fill="none"><path d="M10 46 L10 8" stroke="#54C999" stroke-width="2" stroke-linecap="round" marker-end="url(#ah3)"/><defs><marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#54C999" stroke-width="1.5" stroke-linecap="round"/></marker></defs></svg>`,
+    aba: `<svg width="20" height="50" viewBox="0 0 20 50" fill="none"><path d="M10 4 L10 42" stroke="#54C999" stroke-width="2" stroke-linecap="round" marker-end="url(#ah4)"/><defs><marker id="ah4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#54C999" stroke-width="1.5" stroke-linecap="round"/></marker></defs></svg>`
+  };
+
+  const isVertical = (dir==='arr'||dir==='aba');
+  if(isVertical){
+    // Vertical: arrow below text
+    const txt=document.createElement('input');
+    txt.type='text';txt.className='flecha-txt';txt.placeholder='Texto...';
+    txt.style.cssText='width:60px;display:block;margin:0 auto 4px';
+    txt.onmousedown=e=>e.stopPropagation();
+    txt.ontouchstart=e=>e.stopPropagation();
+    txt.onclick=e=>e.stopPropagation();
+    body.style.flexDirection='column';
+    body.appendChild(txt);
+    body.innerHTML+=arrowSvg[dir];
+  } else {
+    // Horizontal: arrow with text inside
+    body.innerHTML=arrowSvg[dir];
+    const txt=document.createElement('input');
+    txt.type='text';txt.className='flecha-txt';txt.placeholder='Texto...';
+    txt.onmousedown=e=>e.stopPropagation();
+    txt.ontouchstart=e=>e.stopPropagation();
+    txt.onclick=e=>e.stopPropagation();
+    body.insertBefore(txt, body.firstChild.nextSibling||null);
+    body.insertBefore(body.children[1], body.children[0]);
+  }
+
+  div.appendChild(hdr);
+  div.appendChild(body);
+
+  // Drag from header
+  let sx,sy,sl,st;
+  hdr.addEventListener('mousedown',e=>{
+    e.preventDefault();e.stopPropagation();
+    sel(div);div.style.zIndex=++zMax;
+    const w=document.getElementById('mesa-wrap');
+    sx=e.clientX;sy=e.clientY+w.scrollTop;
+    sl=parseInt(div.style.left)||0;st=parseInt(div.style.top)||0;
+    div.classList.add('dragging');
+    function mv(e){const mesa=document.getElementById('mesa');
+      div.style.left=Math.max(0,Math.min(sl+e.clientX-sx,mesa.offsetWidth-div.offsetWidth))+'px';
+      div.style.top=Math.max(0,Math.min(st+(e.clientY+w.scrollTop)-sy,mesa.offsetHeight-div.offsetHeight))+'px';}
+    function up(){div.classList.remove('dragging');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+  });
+
+  let lt=0;
+  hdr.addEventListener('touchstart',e=>{
+    const now=Date.now();
+    if(now-lt<280){e.preventDefault();mostrarMM(e.touches[0].clientX,e.touches[0].clientY,div);lt=0;return;}
+    lt=now;sel(div);div.style.zIndex=++zMax;
+    const w=document.getElementById('mesa-wrap');const t=e.touches[0];
+    sx=t.clientX;sy=t.clientY+w.scrollTop;
+    sl=parseInt(div.style.left)||0;st=parseInt(div.style.top)||0;div.classList.add('dragging');
+    function tm(e){e.preventDefault();const t=e.touches[0];const mesa=document.getElementById('mesa');
+      div.style.left=Math.max(0,Math.min(sl+t.clientX-sx,mesa.offsetWidth-div.offsetWidth))+'px';
+      div.style.top=Math.max(0,Math.min(st+(t.clientY+w.scrollTop)-sy,mesa.offsetHeight-div.offsetHeight))+'px';}
+    function tu(){div.classList.remove('dragging');hdr.removeEventListener('touchmove',tm);hdr.removeEventListener('touchend',tu);}
+    hdr.addEventListener('touchmove',tm,{passive:false});hdr.addEventListener('touchend',tu);
+  },{passive:true});
+
+  // Double click -> mini menu
+  div.addEventListener('dblclick',e=>{
+    if(e.target.tagName==='INPUT') return;
+    e.preventDefault();mostrarMM(e.clientX,e.clientY,div);
+  });
+  div.addEventListener('mousedown',()=>{sel(div);div.style.zIndex=++zMax;});
+
+  // Add delete button
+  addDel(div);
+
+  document.getElementById('mesa').appendChild(div);
+  cartasMesa.push(div);actualizarContador();
+  document.getElementById('empty').classList.add('hidden');
+}
+
+// Close flecha menu on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#flecha-menu')&&!e.target.closest('[title="Añadir flecha"]')){
+    document.getElementById('flecha-menu')?.classList.remove('on');
+  }
+});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarModal();cerrarMiniMenu();cerrarPanel();}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
 document.getElementById('mesa').addEventListener('mousedown',e=>{if(!e.target.closest('.carta')){cerrarMiniMenu();if(cartaSeleccionada){cartaSeleccionada.classList.remove('selected');cartaSeleccionada=null;}}});
 function actualizarContador(){const n=cartasMesa.length;document.getElementById('contador').textContent=n===0?'':n===1?'1 carta':`${n} cartas`;}
