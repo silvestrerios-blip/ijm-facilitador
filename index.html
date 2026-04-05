@@ -984,69 +984,82 @@ function setMantel(nombre){
 }
 
 function dibujarRueda(W, H){
-  // Use visible viewport height, not full mesa height
   const vh = document.getElementById('mesa-wrap').offsetHeight;
   const cx = W/2, cy = vh * 0.48;
   const R = Math.min(W * 0.85, vh * 0.82) * 0.42;
-  const r2 = R * 0.5; // radio interior
-  const col = 'rgba(84,201,153,0.18)';
+  const r2 = R * 0.5;
   const stroke = 'rgba(84,201,153,0.45)';
   const txt = 'rgba(255,255,255,0.65)';
-  const txtBig = 'rgba(84,201,153,0.7)';
+  const txtBig = 'rgba(84,201,153,0.8)';
 
-  // 8 sectores - angulos desde -90
   const sectores = [
     'CRECIMIENTO|PERSONAL','SALUD','PAREJA','FAMILIA|AMIGOS',
     'OCIO|DIVERSION','ENTORNO|FISICO','DESARROLLO|PROFESIONAL','DINERO'
   ];
-  const ejes = ['PERSONAL','SOCIAL','VITAL','ECONOMICO'];
+  // Ejes: rotados 45deg - entre sectores correctos
+  // PERSONAL entre Crecimiento Personal(0) y Salud(1) -> angulo -67.5deg
+  // SOCIAL entre Pareja(2) y Familia(3) -> angulo 22.5deg
+  // VITAL entre Ocio(4) y Entorno(5) -> angulo 112.5deg
+  // ECONOMICO entre Desarrollo(6) y Dinero(7) -> angulo 202.5deg
+  const ejes = [
+    {label:'PERSONAL',   a: -67.5},
+    {label:'SOCIAL',     a:  22.5},
+    {label:'VITAL',      a: 112.5},
+    {label:'ECON\u00d3MICO', a: 202.5},
+  ];
 
-  let svg = `<g>`;
+  let svg = '<g>';
 
   // Circulo exterior
-  svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="rgba(0,0,0,0.15)" stroke="${stroke}" stroke-width="1.5" fill-rule="evenodd"/>`;
-
+  svg += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="rgba(0,0,0,0.15)" stroke="${stroke}" stroke-width="1.5"/>`;
   // Circulo interior
   svg += `<circle cx="${cx}" cy="${cy}" r="${r2}" fill="rgba(0,0,0,0.2)" stroke="${stroke}" stroke-width="1"/>`;
 
-  // 8 lineas radiales
-  for(let i=0; i<8; i++){
-    const a = (i*45 - 90) * Math.PI/180;
-    const x1 = cx + r2*Math.cos(a), y1 = cy + r2*Math.sin(a);
-    const x2 = cx + R*Math.cos(a),  y2 = cy + R*Math.sin(a);
+  // 8 lineas radiales (sectores)
+  for(let i=0;i<8;i++){
+    const a=(i*45-90)*Math.PI/180;
+    const x1=cx+r2*Math.cos(a),y1=cy+r2*Math.sin(a);
+    const x2=cx+R*Math.cos(a), y2=cy+R*Math.sin(a);
     svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="1"/>`;
   }
 
+  // 4 ejes principales mas largos (3,6,9,12 del reloj = 0,90,180,270 = arriba,derecha,abajo,izq)
+  const ejesReloj = [-90, 0, 90, 180];
+  for(let i=0;i<4;i++){
+    const a=ejesReloj[i]*Math.PI/180;
+    const x1=cx+r2*Math.cos(a),y1=cy+r2*Math.sin(a);
+    const x2=cx+(R*1.15)*Math.cos(a), y2=cy+(R*1.15)*Math.sin(a);
+    svg += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="rgba(84,201,153,0.7)" stroke-width="1.8"/>`;
+  }
+
   // Etiquetas sectores
-  for(let i=0; i<8; i++){
-    const a = ((i*45) + 22.5 - 90) * Math.PI/180;
-    const rm = (R + r2) / 2;
-    const tx = cx + rm*Math.cos(a);
-    const ty = cy + rm*Math.sin(a);
-    const lines = sectores[i].split('|');
-    const dy = lines.length > 1 ? -8 : 0;
-    svg += `<text x="${tx}" y="${ty + dy}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${Math.max(10, R*0.072)}px" font-weight="700" fill="${txt}">`;
-    lines.forEach((l,li) => {
-      svg += `<tspan x="${tx}" dy="${li===0?0:16}">${l}</tspan>`;
-    });
-    svg += `</text>`;
+  for(let i=0;i<8;i++){
+    const a=((i*45)+22.5-90)*Math.PI/180;
+    const rm=(R+r2)/2;
+    const tx=cx+rm*Math.cos(a);
+    const ty=cy+rm*Math.sin(a);
+    const lines=sectores[i].split('|');
+    const dy=lines.length>1?-7:0;
+    svg+=`<text x="${tx}" y="${ty+dy}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${Math.max(10,R*0.072)}px" font-weight="700" fill="${txt}">`;
+    lines.forEach((l,li)=>{svg+=`<tspan x="${tx}" dy="${li===0?0:15}">${l}</tspan>`;});
+    svg+=`</text>`;
   }
 
-  // 4 ejes externos
-  const ejeR = R * 1.12;
-  for(let i=0; i<4; i++){
-    const a = (i*90 - 90) * Math.PI/180;
-    const tx = cx + ejeR*Math.cos(a);
-    const ty = cy + ejeR*Math.sin(a);
-    svg += `<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${Math.max(11, R*0.085)}px" font-weight="900" fill="${txtBig}" letter-spacing="2">${ejes[i]}</text>`;
-  }
+  // Etiquetas ejes exteriores (rotadas 45deg)
+  const ejeR = R * 1.28;
+  ejes.forEach(e=>{
+    const a=e.a*Math.PI/180;
+    const tx=cx+ejeR*Math.cos(a);
+    const ty=cy+ejeR*Math.sin(a);
+    svg+=`<text x="${tx}" y="${ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${Math.max(11,R*0.085)}px" font-weight="900" fill="${txtBig}" letter-spacing="1.5">${e.label}</text>`;
+  });
 
-  // Punto central con espiral IJM
+  // Centro espiral
   svg += `<circle cx="${cx}" cy="${cy}" r="${R*0.08}" fill="rgba(84,201,153,0.2)" stroke="rgba(84,201,153,0.6)" stroke-width="1.2"/>`;
-  const ss = R*0.05;
+  const ss=R*0.05;
   svg += `<path d="M${cx} ${cy-ss} C${cx} ${cy-ss},${cx+ss*1.8} ${cy-ss*0.7},${cx+ss*2} ${cy+ss*0.5} C${cx+ss*2.2} ${cy+ss*1.7},${cx+ss*0.5} ${cy+ss*2.2},${cx-ss*0.8} ${cy+ss*1.5} C${cx-ss*2} ${cy+ss*0.8},${cx-ss*1.9} ${cy-ss*0.5},${cx-ss*0.5} ${cy-ss*1.2} C${cx+ss*0.8} ${cy-ss*1.9},${cx+ss*1.4} ${cy-ss*0.8},${cx+ss*1.4} ${cy+ss*0.3}" stroke="#54C999" stroke-width="${R*0.018}" stroke-linecap="round" fill="none"/>`;
 
-  svg += `</g>`;
+  svg += '</g>';
   return svg;
 }
 
