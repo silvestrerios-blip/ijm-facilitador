@@ -178,32 +178,6 @@ body{background:var(--mesa);color:#fff}
 #empty svg{width:52px;height:52px;margin-bottom:12px}
 #empty p{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--v)}
 #empty small{font-size:10px;color:rgba(255,255,255,.3);display:block;margin-top:3px}
-/* Botón nombre carta General */
-.btn-nombre{
-  position:absolute;top:5px;left:5px;
-  width:20px;height:20px;border-radius:50%;
-  background:rgba(84,201,153,.85);
-  border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-size:9px;font-weight:900;color:#fff;
-  font-family:'Outfit',sans-serif;
-  z-index:5;transition:all .15s;
-  line-height:1;
-}
-.btn-nombre:hover{background:var(--v);transform:scale(1.1)}
-.tooltip-nombre{
-  position:absolute;top:28px;left:0;
-  background:rgba(0,0,0,.88);color:#fff;
-  font-size:10px;font-weight:700;
-  padding:5px 10px;border-radius:6px;
-  white-space:nowrap;z-index:20;
-  border:1px solid rgba(84,201,153,.4);
-  pointer-events:none;
-  opacity:0;transition:opacity .18s;
-  letter-spacing:.8px;text-transform:uppercase;
-}
-.tooltip-nombre.on{opacity:1}
-
 /* ══ FLECHAS ══ */
 .carta-flecha{
   position:absolute;cursor:grab;user-select:none;
@@ -568,7 +542,6 @@ async function doLogin(){
     if(usuario.esAdmin){document.getElementById('btn-stats').classList.add('visible');document.getElementById('ptab-stats').style.display='block';}
     document.getElementById('inp-fecha').valueAsDate=new Date();
     toast(`Bienvenido, ${usuario.nombre} \u{1F44B}`);
-
   }catch(e){errEl.textContent=e.message;}
   document.getElementById('btn-login').textContent='Entrar';
 }
@@ -734,17 +707,14 @@ function crearCarta(mazo,n,x,y){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
     if(mazo==='general'){
-      if(NOMBRES[n]){
-        const btn=document.createElement('button');btn.className='btn-nombre';btn.textContent='i';
-        const tip=document.createElement('div');tip.className='tooltip-nombre';tip.textContent=NOMBRES[n];
-        btn.onclick=e=>{e.stopPropagation();tip.classList.toggle('on');};
-        btn.ontouchend=e=>{e.stopPropagation();e.preventDefault();tip.classList.toggle('on');};
-        div.appendChild(btn);div.appendChild(tip);
-      }
-      const fi=document.createElement('input');
-      fi.type='text';fi.placeholder='Nota...';fi.className='franja-edit';
-      fi.onmousedown=e=>e.stopPropagation();fi.ontouchstart=e=>e.stopPropagation();fi.onclick=e=>e.stopPropagation();
-      div.appendChild(fi);
+      const fg=document.createElement('div');fg.className='franja-general';div.appendChild(fg);
+    }
+    if(mazo==='general'&&NOMBRES[n]){
+      const fnombre=document.createElement('div');fnombre.className='franja-nombre';
+      const ftxt=document.createElement('span');ftxt.className='fn-txt';ftxt.textContent=NOMBRES[n];fnombre.appendChild(ftxt);
+      fnombre.addEventListener('click',e=>{e.stopPropagation();fnombre.classList.toggle('on');});
+      fnombre.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();fnombre.classList.toggle('on');},{passive:false});
+      div.appendChild(fnombre);
     } else if(mazo==='s'||mazo==='n'){
       const fi=document.createElement('input');
       fi.type='text';fi.placeholder='Nota...';
@@ -985,114 +955,246 @@ function setMantel(nombre){
 }
 
 function dibujarRueda(W, H){
-  const vh = document.getElementById('mesa-wrap').offsetHeight;
-  const cx = W/2, cy = vh * 0.48;
-  const R = Math.min(W * 0.85, vh * 0.82) * 0.38;
-  const r2 = R * 0.5;
-  const stroke = 'rgba(84,201,153,0.45)';
-  const strokeLine = 'rgba(84,201,153,0.25)';
-  const txt = 'rgba(255,255,255,0.6)';
-  const txtBig = 'rgba(84,201,153,0.55)';
-
-  const sectores = [
-    'CRECIMIENTO|PERSONAL','SALUD','PAREJA','FAMILIA|AMIGOS',
-    'OCIO|DIVERSION','ENTORNO|FISICO','DESARROLLO|PROFESIONAL','DINERO'
-  ];
-
-  // Cuadrantes: lineas que cruzan toda la pantalla (vertical y horizontal)
-  // Vertical: de top a bottom pasando por cy
-  // Horizontal: de left a right pasando por cx
-  const margin = 10;
-
-  let svg = '<g>';
-
-  // Zonas de cuadrante (fondo muy suave)
-  const quads = [
-    {label:'PERSONAL',   tx:cx+(W-cx)/2,    ty:cy/2},
-    {label:'SOCIAL',     tx:cx+(W-cx)/2,    ty:cy+(vh-cy)/2},
-    {label:'VITAL',      tx:cx/2,           ty:cy+(vh-cy)/2},
-    {label:'ECON\u00d3MICO', tx:cx/2,      ty:cy/2},
-  ];
-
-  quads.forEach(q=>{
-    svg+=`<text x="${q.tx}" y="${q.ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${Math.max(16,R*0.14)}px" font-weight="900" fill="${txtBig}" letter-spacing="2">${q.label}</text>`;
-  });
-
-  // Lineas que cruzan toda la pantalla
-  // Horizontal
-  svg+=`<line x1="${margin}" y1="${cy}" x2="${W-margin}" y2="${cy}" stroke="rgba(84,201,153,0.7)" stroke-width="4"/>`;
-  // Vertical
-  svg+=`<line x1="${cx}" y1="${margin}" x2="${cx}" y2="${vh-margin}" stroke="rgba(84,201,153,0.7)" stroke-width="4"/>`;
-
-  // Circulo exterior
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="rgba(0,0,0,0.18)" stroke="${stroke}" stroke-width="1.8"/>`;
-  // Circulo interior
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${r2}" fill="rgba(0,0,0,0.22)" stroke="${stroke}" stroke-width="1"/>`;
-
-  // 8 lineas radiales sectores
-  for(let i=0;i<8;i++){
-    const a=(i*45-90)*Math.PI/180;
-    // Los ejes principales (0,2,4,6 = las 12,3,6,9) llegan al borde del circulo exterior solo
-    const x1=cx+r2*Math.cos(a), y1=cy+r2*Math.sin(a);
-    const x2=cx+R*Math.cos(a),  y2=cy+R*Math.sin(a);
-    svg+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="1"/>`;
-  }
-
-  // Etiquetas sectores
-  for(let i=0;i<8;i++){
-    const a=((i*45)+22.5-90)*Math.PI/180;
-    const rm=(R+r2)/2;
-    const tx=cx+rm*Math.cos(a), ty=cy+rm*Math.sin(a);
-    const lines=sectores[i].split('|');
-    const dy=lines.length>1?-7:0;
-    const fs=Math.max(9,R*0.068);
-    svg+=`<text x="${tx}" y="${ty+dy}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${fs}px" font-weight="700" fill="${txt}">`;
-    lines.forEach((l,li)=>{svg+=`<tspan x="${tx}" dy="${li===0?0:14}">${l}</tspan>`;});
-    svg+=`</text>`;
-  }
-
-  // Centro espiral
-  svg+=`<circle cx="${cx}" cy="${cy}" r="${R*0.08}" fill="rgba(84,201,153,0.2)" stroke="rgba(84,201,153,0.6)" stroke-width="1.2"/>`;
+  const vh=document.getElementById('mesa-wrap').offsetHeight;
+  const cx=W/2,cy=vh*0.48;
+  const R=Math.min(W*0.85,vh*0.82)*0.38,r2=R*0.5;
+  const stroke='rgba(84,201,153,0.45)',strokeL='rgba(84,201,153,0.7)';
+  const txt='rgba(255,255,255,0.6)',txtB='rgba(84,201,153,0.55)';
+  const M=10,fs=Math.max(16,R*0.14);
+  const sectores=['CRECIMIENTO|PERSONAL','SALUD','PAREJA','FAMILIA|AMIGOS','OCIO|DIVERSION','ENTORNO|FISICO','DESARROLLO|PROFESIONAL','DINERO'];
+  const quads=[{l:'PERSONAL',tx:cx+(W-cx)/2,ty:cy/2},{l:'SOCIAL',tx:cx+(W-cx)/2,ty:cy+(vh-cy)/2},{l:'VITAL',tx:cx/2,ty:cy+(vh-cy)/2},{l:'ECONOMICO',tx:cx/2,ty:cy/2}];
+  let s='<g>';
+  quads.forEach(q=>{s+=`<text x="${q.tx}" y="${q.ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${fs}px" font-weight="900" fill="${txtB}" letter-spacing="2">${q.l}</text>`;});
+  s+=`<line x1="${M}" y1="${cy}" x2="${W-M}" y2="${cy}" stroke="${strokeL}" stroke-width="4"/>`;
+  s+=`<line x1="${cx}" y1="${M}" x2="${cx}" y2="${vh-M}" stroke="${strokeL}" stroke-width="4"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="rgba(0,0,0,0.18)" stroke="${stroke}" stroke-width="1.8"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${r2}" fill="rgba(0,0,0,0.22)" stroke="${stroke}" stroke-width="1"/>`;
+  for(let i=0;i<8;i++){const a=(i*45-90)*Math.PI/180;s+=`<line x1="${cx+r2*Math.cos(a)}" y1="${cy+r2*Math.sin(a)}" x2="${cx+R*Math.cos(a)}" y2="${cy+R*Math.sin(a)}" stroke="${stroke}" stroke-width="1"/>`;}
+  for(let i=0;i<8;i++){const a=((i*45)+22.5-90)*Math.PI/180,rm=(R+r2)/2,tx=cx+rm*Math.cos(a),ty=cy+rm*Math.sin(a),lines=sectores[i].split('|'),fss=Math.max(9,R*0.068);s+=`<text x="${tx}" y="${ty+(lines.length>1?-7:0)}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${fss}px" font-weight="700" fill="${txt}">`;lines.forEach((l,li)=>{s+=`<tspan x="${tx}" dy="${li===0?0:14}">${l}</tspan>`;});s+=`</text>`;}
   const ss=R*0.05;
-  svg+=`<path d="M${cx} ${cy-ss} C${cx} ${cy-ss},${cx+ss*1.8} ${cy-ss*0.7},${cx+ss*2} ${cy+ss*0.5} C${cx+ss*2.2} ${cy+ss*1.7},${cx+ss*0.5} ${cy+ss*2.2},${cx-ss*0.8} ${cy+ss*1.5} C${cx-ss*2} ${cy+ss*0.8},${cx-ss*1.9} ${cy-ss*0.5},${cx-ss*0.5} ${cy-ss*1.2} C${cx+ss*0.8} ${cy-ss*1.9},${cx+ss*1.4} ${cy-ss*0.8},${cx+ss*1.4} ${cy+ss*0.3}" stroke="#54C999" stroke-width="${R*0.018}" stroke-linecap="round" fill="none"/>`;
-
-  svg+='</g>';
-  return svg;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${R*0.08}" fill="rgba(84,201,153,0.2)" stroke="rgba(84,201,153,0.6)" stroke-width="1.2"/>`;
+  s+=`<path d="M${cx} ${cy-ss} C${cx} ${cy-ss},${cx+ss*1.8} ${cy-ss*0.7},${cx+ss*2} ${cy+ss*0.5} C${cx+ss*2.2} ${cy+ss*1.7},${cx+ss*0.5} ${cy+ss*2.2},${cx-ss*0.8} ${cy+ss*1.5} C${cx-ss*2} ${cy+ss*0.8},${cx-ss*1.9} ${cy-ss*0.5},${cx-ss*0.5} ${cy-ss*1.2} C${cx+ss*0.8} ${cy-ss*1.9},${cx+ss*1.4} ${cy-ss*0.8},${cx+ss*1.4} ${cy+ss*0.3}" stroke="#54C999" stroke-width="${ss*0.35}" stroke-linecap="round" fill="none"/>`;
+  s+='</g>';return s;
 }
 
 function dibujarDafo(W, H){
-  const vh = document.getElementById('mesa-wrap').offsetHeight;
-  const cx = W/2, cy = vh * 0.48;
-  const stroke = 'rgba(84,201,153,0.7)';
-  const txtBig = 'rgba(84,201,153,0.55)';
-  const margin = 10;
-  const fs = Math.max(16, W * 0.028);
+  const vh=document.getElementById('mesa-wrap').offsetHeight;
+  const cx=W/2,cy=vh*0.48;
+  const strokeL='rgba(84,201,153,0.7)',txtB='rgba(84,201,153,0.55)';
+  const M=10,fs=Math.max(16,W*0.028);
+  const quads=[{l:'FORTALEZAS',tx:cx+(W-cx)/2,ty:cy/2},{l:'OPORTUNIDADES',tx:cx/2,ty:cy/2},{l:'DEBILIDADES',tx:cx+(W-cx)/2,ty:cy+(vh-cy)/2},{l:'AMENAZAS',tx:cx/2,ty:cy+(vh-cy)/2}];
+  let s='<g>';
+  quads.forEach(q=>{s+=`<text x="${q.tx}" y="${q.ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${fs}px" font-weight="900" fill="${txtB}" letter-spacing="2">${q.l}</text>`;});
+  s+=`<line x1="${M}" y1="${cy}" x2="${W-M}" y2="${cy}" stroke="${strokeL}" stroke-width="4"/>`;
+  s+=`<line x1="${cx}" y1="${M}" x2="${cx}" y2="${vh-M}" stroke="${strokeL}" stroke-width="4"/>`;
+  const ss=Math.min(W,vh)*0.04,r=ss*1.6;
+  s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(20,20,20,0.85)" stroke="rgba(84,201,153,0.6)" stroke-width="1.5"/>`;
+  s+=`<path d="M${cx} ${cy-ss} C${cx} ${cy-ss},${cx+ss*1.8} ${cy-ss*0.7},${cx+ss*2} ${cy+ss*0.5} C${cx+ss*2.2} ${cy+ss*1.7},${cx+ss*0.5} ${cy+ss*2.2},${cx-ss*0.8} ${cy+ss*1.5} C${cx-ss*2} ${cy+ss*0.8},${cx-ss*1.9} ${cy-ss*0.5},${cx-ss*0.5} ${cy-ss*1.2} C${cx+ss*0.8} ${cy-ss*1.9},${cx+ss*1.4} ${cy-ss*0.8},${cx+ss*1.4} ${cy+ss*0.3}" stroke="#54C999" stroke-width="${ss*0.35}" stroke-linecap="round" fill="none"/>`;
+  s+='</g>';return s;
+}
 
-  let svg = '<g>';
+// Cerrar menú mantel al clicar fuera
+document.addEventListener('click', e => {
+  if(!e.target.closest('#mantel-menu') && !e.target.closest('#btn-mantel')){
+    document.getElementById('mantel-menu').classList.remove('on');
+  }
+});
 
-  // Lineas que cruzan toda la pantalla
-  svg += `<line x1="${margin}" y1="${cy}" x2="${W-margin}" y2="${cy}" stroke="${stroke}" stroke-width="4"/>`;
-  svg += `<line x1="${cx}" y1="${margin}" x2="${cx}" y2="${vh-margin}" stroke="${stroke}" stroke-width="4"/>`;
+// Redibujar mantel al cambiar tamaño ventana
+window.addEventListener('resize', () => {
+  if(mantelActual) setMantel(mantelActual);
+});
 
-  // Titulos centrados en cada cuadrante
-  const quads = [
-    {label:'FORTALEZAS',   tx:cx+(W-cx)/2, ty:cy/2},
-    {label:'OPORTUNIDADES', tx:cx/2,        ty:cy/2},
-    {label:'DEBILIDADES',  tx:cx+(W-cx)/2, ty:cy+(vh-cy)/2},
-    {label:'AMENAZAS',     tx:cx/2,        ty:cy+(vh-cy)/2},
-  ];
-  quads.forEach(q=>{
-    svg += `<text x="${q.tx}" y="${q.ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${fs}px" font-weight="900" fill="${txtBig}" letter-spacing="2">${q.label}</text>`;
+
+// ═══════════════════════════════════════════
+// 📐 ESCALA Y ZOOM
+// ═══════════════════════════════════════════
+let escala = 75; // % default
+let mesaZoom = 1;
+
+function setScale(val){
+  escala = parseInt(val);
+  document.getElementById('scale-val').textContent = escala + '%';
+  document.getElementById('scale-slider').value = escala;
+  aplicarEscala();
+}
+
+function aplicarEscala(){
+  const s = escala / 100;
+  const cw = Math.round(180 * s) + 'px';
+  const ch = Math.round(120 * s) + 'px';
+  const pw = Math.round(300 * s) + 'px';
+  const ph = Math.round(44  * s) + 'px';
+  const ich = Math.round(140 * s) + 'px';
+  const r = document.documentElement;
+  r.style.setProperty('--cw', cw);
+  r.style.setProperty('--ch', ch);
+  r.style.setProperty('--pw', pw);
+  r.style.setProperty('--ph', ph);
+  r.style.setProperty('--ich', ich);
+}
+
+function zoomMesa(dir){
+  mesaZoom = Math.max(0.5, Math.min(2, Math.round((mesaZoom + dir * 0.1)*10)/10));
+  document.getElementById('mesa').style.transform = `scale(${mesaZoom})`;
+  document.getElementById('mesa').style.transformOrigin = 'top left';
+  const zv = document.getElementById('zoom-val');
+  if(zv) zv.textContent = Math.round(mesaZoom*100) + '%';
+}
+
+// ── FRANJA EDITABLE (S, N, IC) ──
+function mkFranjaEdit(placeholder, bottomOffset){
+  const f = document.createElement('div');
+  f.className = 'franja-edit';
+  if(bottomOffset) f.style.bottom = bottomOffset;
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = placeholder || 'Escribe aqui...';
+  inp.onmousedown = e => e.stopPropagation();
+  inp.ontouchstart = e => e.stopPropagation();
+  inp.onclick = e => e.stopPropagation();
+  f.appendChild(inp);
+  f.addEventListener('click', e => {
+    e.stopPropagation();
+    f.classList.toggle('on');
+    if(f.classList.contains('on')) setTimeout(()=>inp.focus(), 50);
+  });
+  f.addEventListener('touchend', e => {
+    e.stopPropagation(); e.preventDefault();
+    f.classList.toggle('on');
+    if(f.classList.contains('on')) setTimeout(()=>inp.focus(), 50);
+  }, {passive:false});
+  return f;
+}
+
+// Aplicar escala inicial
+document.addEventListener('DOMContentLoaded', () => {
+  aplicarEscala();
+});
+
+
+// ═══════════════════════════════════════════
+// ↔ FLECHAS
+// ═══════════════════════════════════════════
+function toggleFlechaMenu(e){
+  e.stopPropagation();
+  const m=document.getElementById('flecha-menu');
+  const btn=e.currentTarget.getBoundingClientRect();
+  if(m.classList.contains('on')){m.classList.remove('on');return;}
+  m.style.left=(btn.left-10)+'px';
+  m.classList.add('on');
+}
+
+function crearFlecha(dir){
+  document.getElementById('flecha-menu').classList.remove('on');
+  const wrap=document.getElementById('mesa-wrap');
+  const x=30+Math.random()*20;
+  const y=20+wrap.scrollTop+Math.random()*16;
+
+  const div=document.createElement('div');
+  div.className='carta-flecha';
+  div.style.cssText=`left:${x}px;top:${y}px;z-index:${++zMax}`;
+
+  // Header (drag handle)
+  const hdr=document.createElement('div');
+  hdr.className='flecha-hdr';
+  hdr.innerHTML=`<svg viewBox="0 0 20 14" fill="none" stroke="#54C999" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 7 L19 7"/><path d="M14 3 L19 7 L14 11"/><path d="M6 3 L1 7 L6 11"/></svg><span>Flecha</span>`;
+
+  // Body with arrow SVG + text
+  const body=document.createElement('div');
+  body.className='flecha-body';
+
+  const arrowSvg = {
+    der: `<svg width="60" height="20" viewBox="0 0 60 20" fill="none"><path d="M4 10 L52 10" stroke="#54C999" stroke-width="2" stroke-linecap="round" marker-end="url(#ah)"/><defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#54C999" stroke-width="1.5" stroke-linecap="round"/></marker></defs></svg>`,
+    izq: `<svg width="60" height="20" viewBox="0 0 60 20" fill="none"><path d="M56 10 L8 10" stroke="#54C999" stroke-width="2" stroke-linecap="round" marker-end="url(#ah2)"/><defs><marker id="ah2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#54C999" stroke-width="1.5" stroke-linecap="round"/></marker></defs></svg>`,
+    arr: `<svg width="20" height="50" viewBox="0 0 20 50" fill="none"><path d="M10 46 L10 8" stroke="#54C999" stroke-width="2" stroke-linecap="round" marker-end="url(#ah3)"/><defs><marker id="ah3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#54C999" stroke-width="1.5" stroke-linecap="round"/></marker></defs></svg>`,
+    aba: `<svg width="20" height="50" viewBox="0 0 20 50" fill="none"><path d="M10 4 L10 42" stroke="#54C999" stroke-width="2" stroke-linecap="round" marker-end="url(#ah4)"/><defs><marker id="ah4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M2 1L8 5L2 9" fill="none" stroke="#54C999" stroke-width="1.5" stroke-linecap="round"/></marker></defs></svg>`
+  };
+
+  const isVertical = (dir==='arr'||dir==='aba');
+  if(isVertical){
+    // Vertical: arrow below text
+    const txt=document.createElement('input');
+    txt.type='text';txt.className='flecha-txt';txt.placeholder='Texto...';
+    txt.style.cssText='width:60px;display:block;margin:0 auto 4px';
+    txt.onmousedown=e=>e.stopPropagation();
+    txt.ontouchstart=e=>e.stopPropagation();
+    txt.onclick=e=>e.stopPropagation();
+    body.style.flexDirection='column';
+    body.appendChild(txt);
+    body.innerHTML+=arrowSvg[dir];
+  } else {
+    // Horizontal: arrow with text inside
+    body.innerHTML=arrowSvg[dir];
+    const txt=document.createElement('input');
+    txt.type='text';txt.className='flecha-txt';txt.placeholder='Texto...';
+    txt.onmousedown=e=>e.stopPropagation();
+    txt.ontouchstart=e=>e.stopPropagation();
+    txt.onclick=e=>e.stopPropagation();
+    body.insertBefore(txt, body.firstChild.nextSibling||null);
+    body.insertBefore(body.children[1], body.children[0]);
+  }
+
+  div.appendChild(hdr);
+  div.appendChild(body);
+
+  // Drag from header
+  let sx,sy,sl,st;
+  hdr.addEventListener('mousedown',e=>{
+    e.preventDefault();e.stopPropagation();
+    sel(div);div.style.zIndex=++zMax;
+    const w=document.getElementById('mesa-wrap');
+    sx=e.clientX;sy=e.clientY+w.scrollTop;
+    sl=parseInt(div.style.left)||0;st=parseInt(div.style.top)||0;
+    div.classList.add('dragging');
+    function mv(e){const mesa=document.getElementById('mesa');
+      div.style.left=Math.max(0,Math.min(sl+e.clientX-sx,mesa.offsetWidth-div.offsetWidth))+'px';
+      div.style.top=Math.max(0,Math.min(st+(e.clientY+w.scrollTop)-sy,mesa.offsetHeight-div.offsetHeight))+'px';}
+    function up(){div.classList.remove('dragging');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
   });
 
-  // Logo IJM en el centro
-  const ss = Math.min(W,vh) * 0.04;
-  const r = ss * 1.6;
-  svg += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(20,20,20,0.85)" stroke="rgba(84,201,153,0.6)" stroke-width="1.5"/>`;
-  svg += `<path d="M${cx} ${cy-ss} C${cx} ${cy-ss},${cx+ss*1.8} ${cy-ss*0.7},${cx+ss*2} ${cy+ss*0.5} C${cx+ss*2.2} ${cy+ss*1.7},${cx+ss*0.5} ${cy+ss*2.2},${cx-ss*0.8} ${cy+ss*1.5} C${cx-ss*2} ${cy+ss*0.8},${cx-ss*1.9} ${cy-ss*0.5},${cx-ss*0.5} ${cy-ss*1.2} C${cx+ss*0.8} ${cy-ss*1.9},${cx+ss*1.4} ${cy-ss*0.8},${cx+ss*1.4} ${cy+ss*0.3}" stroke="#54C999" stroke-width="${ss*0.35}" stroke-linecap="round" fill="none"/>`;
-  svg += `<circle cx="${cx+ss*1.6}" cy="${cy-ss*1.4}" r="${ss*0.18}" fill="#54C999" opacity=".7"/>`;
+  let lt=0;
+  hdr.addEventListener('touchstart',e=>{
+    const now=Date.now();
+    if(now-lt<280){e.preventDefault();mostrarMM(e.touches[0].clientX,e.touches[0].clientY,div);lt=0;return;}
+    lt=now;sel(div);div.style.zIndex=++zMax;
+    const w=document.getElementById('mesa-wrap');const t=e.touches[0];
+    sx=t.clientX;sy=t.clientY+w.scrollTop;
+    sl=parseInt(div.style.left)||0;st=parseInt(div.style.top)||0;div.classList.add('dragging');
+    function tm(e){e.preventDefault();const t=e.touches[0];const mesa=document.getElementById('mesa');
+      div.style.left=Math.max(0,Math.min(sl+t.clientX-sx,mesa.offsetWidth-div.offsetWidth))+'px';
+      div.style.top=Math.max(0,Math.min(st+(t.clientY+w.scrollTop)-sy,mesa.offsetHeight-div.offsetHeight))+'px';}
+    function tu(){div.classList.remove('dragging');hdr.removeEventListener('touchmove',tm);hdr.removeEventListener('touchend',tu);}
+    hdr.addEventListener('touchmove',tm,{passive:false});hdr.addEventListener('touchend',tu);
+  },{passive:true});
 
-  svg += '</g>';
-  return svg;
+  // Double click -> mini menu
+  div.addEventListener('dblclick',e=>{
+    if(e.target.tagName==='INPUT') return;
+    e.preventDefault();mostrarMM(e.clientX,e.clientY,div);
+  });
+  div.addEventListener('mousedown',()=>{sel(div);div.style.zIndex=++zMax;});
+
+  // Add delete button
+  addDel(div);
+
+  document.getElementById('mesa').appendChild(div);
+  cartasMesa.push(div);actualizarContador();
+  document.getElementById('empty').classList.add('hidden');
 }
->
+
+// Close flecha menu on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#flecha-menu')&&!e.target.closest('[title="Añadir flecha"]')){
+    document.getElementById('flecha-menu')?.classList.remove('on');
+  }
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarModal();cerrarMiniMenu();cerrarPanel();}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
+document.getElementById('mesa').addEventListener('mousedown',e=>{if(!e.target.closest('.carta')){cerrarMiniMenu();if(cartaSeleccionada){cartaSeleccionada.classList.remove('selected');cartaSeleccionada=null;}}});
+function actualizarContador(){const n=cartasMesa.length;document.getElementById('contador').textContent=n===0?'':n===1?'1 carta':`${n} cartas`;}
+function fFecha(f){if(!f)return '';const[y,m,d]=f.split('-');return `${d}/${m}/${y}`;}
+let _tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';clearTimeout(_tt);_tt=setTimeout(()=>el.style.display='none',2600);}
+</script>
+</body>
+</html>
