@@ -1007,22 +1007,21 @@ function dibujarRueda(W, H){
 
   // Zonas de cuadrante (fondo muy suave)
   const quads = [
-    {x:cx, y:margin,  w:W-cx-margin, h:cy-margin,      label:'PERSONAL',   tx:cx+(W-cx)*0.5, ty:cy*0.25},
-    {x:cx, y:cy,      w:W-cx-margin, h:vh-cy-margin,    label:'SOCIAL',     tx:cx+(W-cx)*0.5, ty:cy+(vh-cy)*0.75},
-    {x:margin, y:cy,  w:cx-margin,   h:vh-cy-margin,    label:'VITAL',      tx:cx*0.5,        ty:cy+(vh-cy)*0.75},
-    {x:margin, y:margin, w:cx-margin, h:cy-margin,      label:'ECON\u00d3MICO', tx:cx*0.5,   ty:cy*0.25},
+    {label:'PERSONAL',   tx:cx+(W-cx)/2,    ty:cy/2},
+    {label:'SOCIAL',     tx:cx+(W-cx)/2,    ty:cy+(vh-cy)/2},
+    {label:'VITAL',      tx:cx/2,           ty:cy+(vh-cy)/2},
+    {label:'ECON\u00d3MICO', tx:cx/2,      ty:cy/2},
   ];
 
   quads.forEach(q=>{
-    svg+=`<rect x="${q.x}" y="${q.y}" width="${q.w}" height="${q.h}" fill="rgba(84,201,153,0.03)" rx="0"/>`;
-    svg+=`<text x="${q.tx}" y="${q.ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${Math.max(14,R*0.13)}px" font-weight="900" fill="${txtBig}" letter-spacing="2" opacity="0.8">${q.label}</text>`;
+    svg+=`<text x="${q.tx}" y="${q.ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${Math.max(16,R*0.14)}px" font-weight="900" fill="${txtBig}" letter-spacing="2">${q.label}</text>`;
   });
 
   // Lineas que cruzan toda la pantalla
   // Horizontal
-  svg+=`<line x1="${margin}" y1="${cy}" x2="${W-margin}" y2="${cy}" stroke="rgba(84,201,153,0.5)" stroke-width="2.5"/>`;
+  svg+=`<line x1="${margin}" y1="${cy}" x2="${W-margin}" y2="${cy}" stroke="rgba(84,201,153,0.7)" stroke-width="4"/>`;
   // Vertical
-  svg+=`<line x1="${cx}" y1="${margin}" x2="${cx}" y2="${vh-margin}" stroke="rgba(84,201,153,0.5)" stroke-width="2.5"/>`;
+  svg+=`<line x1="${cx}" y1="${margin}" x2="${cx}" y2="${vh-margin}" stroke="rgba(84,201,153,0.7)" stroke-width="4"/>`;
 
   // Circulo exterior
   svg+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="rgba(0,0,0,0.18)" stroke="${stroke}" stroke-width="1.8"/>`;
