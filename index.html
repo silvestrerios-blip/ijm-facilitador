@@ -219,6 +219,7 @@ body{background:var(--mesa);color:#fff}
   height:28px;
   background:rgba(0,0,0,.7);
 }
+.carta:has(.franja-edit.on){overflow:visible}
 .franja-edit input{
   width:100%;border:none;outline:none;
   background:transparent;
@@ -643,7 +644,7 @@ function crearCarta(mazo,n,x,y){
       f.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();f.classList.toggle('on');},{passive:false});
       div.appendChild(f);
     } else if(mazo==='s'||mazo==='n'){
-      div.appendChild(mkFranjaEdit());
+      div.appendChild(mkFranjaEdit('Escribe una nota...','6px'));
     }
   }else if(m.tipo==='pal'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
@@ -992,9 +993,10 @@ function zoomMesa(dir){
 }
 
 // ── FRANJA EDITABLE (S, N, IC) ──
-function mkFranjaEdit(placeholder){
+function mkFranjaEdit(placeholder, bottomOffset){
   const f = document.createElement('div');
   f.className = 'franja-edit';
+  if(bottomOffset) f.style.bottom = bottomOffset;
   const inp = document.createElement('input');
   inp.type = 'text';
   inp.placeholder = placeholder || 'Escribe aqui...';
