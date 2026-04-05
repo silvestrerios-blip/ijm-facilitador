@@ -71,7 +71,7 @@ body{background:var(--mesa);color:#fff}
 .carta-foto{width:calc(var(--cw,180px));height:auto;display:flex;flex-direction:column}
 .carta-foto img{width:100%;height:calc(var(--ch,120px));object-fit:cover;display:block;pointer-events:none;flex-shrink:0;min-height:calc(var(--ch,120px))}
 .banda{height:6px;width:100%;position:absolute;bottom:0;left:0}
-.banda-s{background:#d42020}.banda-n{background:#1a55cc}.banda-general{background:var(--v)}
+.banda-s{background:#d42020}.banda-n{background:#1a55cc}.barra-general{width:100%;height:7px;background:var(--v);flex-shrink:0;display:block}
 .carta-pal{width:calc(var(--pw,300px));height:calc(var(--ph,44px))}
 .carta-pal img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .carta-ic{width:calc(var(--cw,180px));height:auto;background:#fff;display:flex;flex-direction:column}
@@ -634,8 +634,9 @@ function crearCarta(mazo,n,x,y){
   if(m.tipo==='foto'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
-    // Franja verde decorativa siempre visible en General
-    const fg=document.createElement('div');fg.className='banda banda-general';div.appendChild(fg);
+    if(mazo==='general'){
+      const fg=document.createElement('div');fg.className='barra-general';div.appendChild(fg);
+    }
     if(mazo==='general'&&NOMBRES[n]){
       const fnombre=document.createElement('div');fnombre.className='franja-nombre';
       const ftxt=document.createElement('span');ftxt.className='fn-txt';ftxt.textContent=NOMBRES[n];fnombre.appendChild(ftxt);
