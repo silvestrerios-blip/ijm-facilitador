@@ -178,6 +178,32 @@ body{background:var(--mesa);color:#fff}
 #empty svg{width:52px;height:52px;margin-bottom:12px}
 #empty p{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--v)}
 #empty small{font-size:10px;color:rgba(255,255,255,.3);display:block;margin-top:3px}
+/* Botón nombre carta General */
+.btn-nombre{
+  position:absolute;top:5px;left:5px;
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(84,201,153,.85);
+  border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:900;color:#fff;
+  font-family:'Outfit',sans-serif;
+  z-index:5;transition:all .15s;
+  line-height:1;
+}
+.btn-nombre:hover{background:var(--v);transform:scale(1.1)}
+.tooltip-nombre{
+  position:absolute;top:28px;left:0;
+  background:rgba(0,0,0,.88);color:#fff;
+  font-size:10px;font-weight:700;
+  padding:5px 10px;border-radius:6px;
+  white-space:nowrap;z-index:20;
+  border:1px solid rgba(84,201,153,.4);
+  pointer-events:none;
+  opacity:0;transition:opacity .18s;
+  letter-spacing:.8px;text-transform:uppercase;
+}
+.tooltip-nombre.on{opacity:1}
+
 /* ══ FLECHAS ══ */
 .carta-flecha{
   position:absolute;cursor:grab;user-select:none;
@@ -707,14 +733,17 @@ function crearCarta(mazo,n,x,y){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
     if(mazo==='general'){
-      const fg=document.createElement('div');fg.className='franja-general';div.appendChild(fg);
-    }
-    if(mazo==='general'&&NOMBRES[n]){
-      const fnombre=document.createElement('div');fnombre.className='franja-nombre';
-      const ftxt=document.createElement('span');ftxt.className='fn-txt';ftxt.textContent=NOMBRES[n];fnombre.appendChild(ftxt);
-      fnombre.addEventListener('click',e=>{e.stopPropagation();fnombre.classList.toggle('on');});
-      fnombre.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();fnombre.classList.toggle('on');},{passive:false});
-      div.appendChild(fnombre);
+      if(NOMBRES[n]){
+        const btn=document.createElement('button');btn.className='btn-nombre';btn.textContent='i';
+        const tip=document.createElement('div');tip.className='tooltip-nombre';tip.textContent=NOMBRES[n];
+        btn.onclick=e=>{e.stopPropagation();tip.classList.toggle('on');};
+        btn.ontouchend=e=>{e.stopPropagation();e.preventDefault();tip.classList.toggle('on');};
+        div.appendChild(btn);div.appendChild(tip);
+      }
+      const fi=document.createElement('input');
+      fi.type='text';fi.placeholder='Nota...';fi.className='franja-edit';
+      fi.onmousedown=e=>e.stopPropagation();fi.ontouchstart=e=>e.stopPropagation();fi.onclick=e=>e.stopPropagation();
+      div.appendChild(fi);
     } else if(mazo==='s'||mazo==='n'){
       const fi=document.createElement('input');
       fi.type='text';fi.placeholder='Nota...';
@@ -1101,11 +1130,12 @@ function aplicarEscala(){
 }
 
 function zoomMesa(dir){
-  mesaZoom = Math.max(0.5, Math.min(2, Math.round((mesaZoom + dir * 0.1)*10)/10));
-  document.getElementById('mesa').style.transform = `scale(${mesaZoom})`;
-  document.getElementById('mesa').style.transformOrigin = 'top left';
+  const slider = document.getElementById('scale-slider');
+  const newVal = Math.max(25, Math.min(150, escala + dir * 10));
+  setScale(newVal);
+  slider.value = newVal;
   const zv = document.getElementById('zoom-val');
-  if(zv) zv.textContent = Math.round(mesaZoom*100) + '%';
+  if(zv) zv.textContent = newVal + '%';
 }
 
 // ── FRANJA EDITABLE (S, N, IC) ──
