@@ -68,13 +68,13 @@ body{background:var(--mesa);color:#fff}
 .carta.selected{outline:2.5px solid var(--v);outline-offset:2px}
 @keyframes cartaEntra{from{opacity:0;transform:scale(.8) rotate(-2.5deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 .carta{animation:cartaEntra .22s cubic-bezier(.34,1.56,.64,1)}
-.carta-foto{width:calc(var(--cw,180px));height:calc(var(--ch,120px))}
-.carta-foto img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.carta-foto{width:calc(var(--cw,180px));height:auto;display:flex;flex-direction:column}
+.carta-foto img{width:100%;height:calc(var(--ch,120px));object-fit:cover;display:block;pointer-events:none;flex-shrink:0}
 .banda{height:6px;width:100%;position:absolute;bottom:0;left:0}
 .banda-s{background:#d42020}.banda-n{background:#1a55cc}
 .carta-pal{width:calc(var(--pw,300px));height:calc(var(--ph,44px))}
 .carta-pal img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
-.carta-ic{width:calc(var(--cw,180px));height:calc(var(--ich,140px));background:#fff;display:flex;flex-direction:column}
+.carta-ic{width:calc(var(--cw,180px));height:auto;background:#fff;display:flex;flex-direction:column}
 .carta-ic img{width:100%;flex:1;object-fit:contain;padding:10px;display:block;pointer-events:none}
 .ic-input{width:100%;border:none;outline:none;background:rgba(84,201,153,.07);border-top:1px solid rgba(84,201,153,.22);font-size:9px;color:#444;padding:5px 6px;font-family:'Outfit',sans-serif;text-align:center;cursor:text}
 .ic-input::placeholder{color:#ccc}
@@ -208,27 +208,24 @@ body{background:var(--mesa);color:#fff}
 
 /* Franja editable S/N/IC */
 .franja-edit{
-  position:absolute;bottom:0;left:0;right:0;
-  height:8px;
-  background:rgba(84,201,153,.18);
-  cursor:pointer;transition:height .2s,background .2s;
-  display:flex;align-items:center;overflow:hidden;
-}
-.franja-edit:hover{background:rgba(84,201,153,.28);height:10px}
-.franja-edit.on{
-  height:28px;
-  background:rgba(0,0,0,.7);
-}
-.carta:has(.franja-edit.on){overflow:visible}
-.franja-edit input{
-  width:100%;border:none;outline:none;
-  background:transparent;
-  color:#fff;font-size:10px;font-weight:600;
+  width:100%;
+  border:none;outline:none;
+  background:rgba(0,0,0,.55);
+  border-top:1px solid rgba(84,201,153,.25);
+  color:rgba(255,255,255,.8);
+  font-size:9.5px;font-weight:600;
   font-family:'Outfit',sans-serif;
-  text-align:center;padding:0 6px;
-  cursor:text;opacity:0;transition:opacity .15s;
+  text-align:center;padding:5px 6px;
+  cursor:text;display:block;
+  flex-shrink:0;
 }
-.franja-edit.on input{opacity:1}
+.franja-edit::placeholder{color:rgba(255,255,255,.3)}
+.franja-edit:focus{
+  background:rgba(0,0,0,.75);
+  border-top-color:var(--v);
+  outline:none;
+  color:#fff;
+}
 
 /* ══ MANTELES ══ */
 #mantel-menu{
@@ -644,25 +641,25 @@ function crearCarta(mazo,n,x,y){
       fnombre.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();fnombre.classList.toggle('on');},{passive:false});
       div.appendChild(fnombre);
     } else if(mazo==='s'||mazo==='n'){
-      const fe=document.createElement('div');fe.className='franja-edit';fe.style.bottom='6px';
-      const fi=document.createElement('input');fi.type='text';fi.placeholder='Escribe una nota...';
-      fi.onmousedown=e=>e.stopPropagation();fi.ontouchstart=e=>e.stopPropagation();fi.onclick=e=>e.stopPropagation();
-      fe.appendChild(fi);
-      fe.addEventListener('click',e=>{e.stopPropagation();fe.classList.toggle('on');if(fe.classList.contains('on'))setTimeout(()=>fi.focus(),50);});
-      fe.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();fe.classList.toggle('on');if(fe.classList.contains('on'))setTimeout(()=>fi.focus(),50);},{passive:false});
-      div.appendChild(fe);
+      const fi=document.createElement('input');
+      fi.type='text';fi.placeholder='Nota...';
+      fi.className='franja-edit';
+      fi.onmousedown=e=>e.stopPropagation();
+      fi.ontouchstart=e=>e.stopPropagation();
+      fi.onclick=e=>e.stopPropagation();
+      div.appendChild(fi);
     }
   }else if(m.tipo==='pal'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
   }else if(m.tipo==='ic'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
-    const fe=document.createElement('div');fe.className='franja-edit';
-    const fi=document.createElement('input');fi.type='text';fi.placeholder='¿Qué te sugiere este icono?';
-    fi.onmousedown=e=>e.stopPropagation();fi.ontouchstart=e=>e.stopPropagation();fi.onclick=e=>e.stopPropagation();
-    fe.appendChild(fi);
-    fe.addEventListener('click',e=>{e.stopPropagation();fe.classList.toggle('on');if(fe.classList.contains('on'))setTimeout(()=>fi.focus(),50);});
-    fe.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();fe.classList.toggle('on');if(fe.classList.contains('on'))setTimeout(()=>fi.focus(),50);},{passive:false});
-    div.appendChild(fe);
+    const fi=document.createElement('input');
+    fi.type='text';fi.placeholder='¿Qué te sugiere?';
+    fi.className='franja-edit';
+    fi.onmousedown=e=>e.stopPropagation();
+    fi.ontouchstart=e=>e.stopPropagation();
+    fi.onclick=e=>e.stopPropagation();
+    div.appendChild(fi);
   }
   addDel(div);addGestos(div,()=>verAmpliada(mazo,n));
   document.getElementById('mesa').appendChild(div);
