@@ -638,19 +638,31 @@ function crearCarta(mazo,n,x,y){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
     if(mazo==='general'&&NOMBRES[n]){
-      const f=document.createElement('div');f.className='franja-nombre';
-      const t=document.createElement('span');t.className='fn-txt';t.textContent=NOMBRES[n];f.appendChild(t);
-      f.addEventListener('click',e=>{e.stopPropagation();f.classList.toggle('on');});
-      f.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();f.classList.toggle('on');},{passive:false});
-      div.appendChild(f);
+      const fnombre=document.createElement('div');fnombre.className='franja-nombre';
+      const ftxt=document.createElement('span');ftxt.className='fn-txt';ftxt.textContent=NOMBRES[n];fnombre.appendChild(ftxt);
+      fnombre.addEventListener('click',e=>{e.stopPropagation();fnombre.classList.toggle('on');});
+      fnombre.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();fnombre.classList.toggle('on');},{passive:false});
+      div.appendChild(fnombre);
     } else if(mazo==='s'||mazo==='n'){
-      div.appendChild(mkFranjaEdit('Escribe una nota...','6px'));
+      const fe=document.createElement('div');fe.className='franja-edit';fe.style.bottom='6px';
+      const fi=document.createElement('input');fi.type='text';fi.placeholder='Escribe una nota...';
+      fi.onmousedown=e=>e.stopPropagation();fi.ontouchstart=e=>e.stopPropagation();fi.onclick=e=>e.stopPropagation();
+      fe.appendChild(fi);
+      fe.addEventListener('click',e=>{e.stopPropagation();fe.classList.toggle('on');if(fe.classList.contains('on'))setTimeout(()=>fi.focus(),50);});
+      fe.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();fe.classList.toggle('on');if(fe.classList.contains('on'))setTimeout(()=>fi.focus(),50);},{passive:false});
+      div.appendChild(fe);
     }
   }else if(m.tipo==='pal'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
   }else if(m.tipo==='ic'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
-    div.appendChild(mkFranjaEdit('\u00bfQu\u00e9 te sugiere este icono?'));
+    const fe=document.createElement('div');fe.className='franja-edit';
+    const fi=document.createElement('input');fi.type='text';fi.placeholder='¿Qué te sugiere este icono?';
+    fi.onmousedown=e=>e.stopPropagation();fi.ontouchstart=e=>e.stopPropagation();fi.onclick=e=>e.stopPropagation();
+    fe.appendChild(fi);
+    fe.addEventListener('click',e=>{e.stopPropagation();fe.classList.toggle('on');if(fe.classList.contains('on'))setTimeout(()=>fi.focus(),50);});
+    fe.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();fe.classList.toggle('on');if(fe.classList.contains('on'))setTimeout(()=>fi.focus(),50);},{passive:false});
+    div.appendChild(fe);
   }
   addDel(div);addGestos(div,()=>verAmpliada(mazo,n));
   document.getElementById('mesa').appendChild(div);
