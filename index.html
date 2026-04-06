@@ -1124,11 +1124,12 @@ function dibujarIkigai(W, H){
   // MISION: entre TE PAGAN(abajo) y MUNDO NECESITA(izquierda) -> abajo-izquierda
   // VOCACION: entre MUNDO NECESITA(izquierda) y AMAS(arriba) -> arriba-izquierda
   const iDist = off * 0.72;
+  const shift = 24;
   const intersects=[
-    {tx:cx+iDist, ty:cy-iDist, label:'PASION'},
-    {tx:cx+iDist, ty:cy+iDist, label:'PROFESION'},
-    {tx:cx-iDist, ty:cy+iDist, label:'MISION'},
-    {tx:cx-iDist, ty:cy-iDist, label:'VOCACION'},
+    {tx:cx+iDist+shift, ty:cy-iDist-shift, label:'PASION'},
+    {tx:cx+iDist+shift, ty:cy+iDist+shift, label:'PROFESION'},
+    {tx:cx-iDist-shift, ty:cy+iDist+shift, label:'MISION'},
+    {tx:cx-iDist-shift, ty:cy-iDist-shift, label:'VOCACION'},
   ];
   const fsI = Math.max(9, R*0.09);
   intersects.forEach(i=>{
