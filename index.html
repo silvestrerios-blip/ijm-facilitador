@@ -433,7 +433,7 @@ body{background:var(--mesa);color:#fff}
     <button class="tb-btn" title="Sesiones" onclick="abrirPanel('sesion')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
     </button>
-    <span id="contador"></span>
+    
     <button class="tb-btn" id="btn-mantel" onclick="toggleMantelMenu(event)" title="Manteles">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <circle cx="12" cy="12" r="9"/>
@@ -731,23 +731,21 @@ function crearCarta(mazo,n,x,y){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
     if(mazo==='general'){
-      // Icono nota en esquina superior izquierda
-      const btnNota=document.createElement('button');btnNota.className='btn-nota-general';btnNota.innerHTML='&#9998;';
-      const notaWrap=document.createElement('div');notaWrap.className='nota-general-wrap';
-      const notaInp=document.createElement('input');notaInp.type='text';notaInp.placeholder='Nota...';notaInp.className='nota-general-inp';
-      notaInp.onmousedown=e=>e.stopPropagation();notaInp.ontouchstart=e=>e.stopPropagation();notaInp.onclick=e=>e.stopPropagation();
-      notaWrap.appendChild(notaInp);
-      btnNota.onclick=e=>{e.stopPropagation();notaWrap.classList.toggle('on');if(notaWrap.classList.contains('on'))setTimeout(()=>notaInp.focus(),50);};
-      btnNota.ontouchend=e=>{e.stopPropagation();e.preventDefault();notaWrap.classList.toggle('on');if(notaWrap.classList.contains('on'))setTimeout(()=>notaInp.focus(),50);};
-      div.appendChild(btnNota);div.appendChild(notaWrap);
-      // Franja verde inferior -> muestra nombre
+      // Icono en esquina -> muestra nombre carta
       if(NOMBRES[n]){
-        const f=document.createElement('div');f.className='franja-nombre';
-        const t=document.createElement('span');t.className='fn-txt';t.textContent=NOMBRES[n];f.appendChild(t);
-        f.addEventListener('click',e=>{e.stopPropagation();f.classList.toggle('on');});
-        f.addEventListener('touchend',e=>{e.stopPropagation();e.preventDefault();f.classList.toggle('on');},{passive:false});
-        div.appendChild(f);
+        const btnN=document.createElement('button');btnN.className='btn-nota-general';btnN.textContent='i';
+        const tip=document.createElement('div');tip.className='nota-general-wrap';
+        tip.style.cssText='position:absolute;top:28px;left:5px;background:rgba(0,0,0,.88);color:#fff;font-size:10px;font-weight:700;padding:5px 10px;border-radius:6px;white-space:nowrap;z-index:20;border:1px solid rgba(84,201,153,.4);letter-spacing:.8px;text-transform:uppercase;display:none';
+        tip.textContent=NOMBRES[n];
+        btnN.onclick=e=>{e.stopPropagation();tip.style.display=tip.style.display==='none'?'block':'none';};
+        btnN.ontouchend=e=>{e.stopPropagation();e.preventDefault();tip.style.display=tip.style.display==='none'?'block':'none';};
+        div.appendChild(btnN);div.appendChild(tip);
       }
+      // Franja verde inferior -> nota editable
+      const fe=document.createElement('input');
+      fe.type='text';fe.placeholder='Nota del participante...';fe.className='franja-edit';
+      fe.onmousedown=e=>e.stopPropagation();fe.ontouchstart=e=>e.stopPropagation();fe.onclick=e=>e.stopPropagation();
+      div.appendChild(fe);
     } else if(mazo==='s'||mazo==='n'){
       const fi=document.createElement('input');
       fi.type='text';fi.placeholder='Nota...';
@@ -935,7 +933,6 @@ async function cargarStats(){
   }catch(e){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udce1</div>Sin conexi\u00f3n</div>';}
 }
 
-
 // ═══════════════════════════════════════════
 // 🎯 MANTELES
 // ═══════════════════════════════════════════
@@ -1038,7 +1035,6 @@ window.addEventListener('resize', () => {
   if(mantelActual) setMantel(mantelActual);
 });
 
-
 // ═══════════════════════════════════════════
 // 📐 ESCALA Y ZOOM
 // ═══════════════════════════════════════════
@@ -1104,7 +1100,6 @@ function mkFranjaEdit(placeholder, bottomOffset){
 document.addEventListener('DOMContentLoaded', () => {
   aplicarEscala();
 });
-
 
 // ═══════════════════════════════════════════
 // ↔ FLECHAS
@@ -1225,7 +1220,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarModal();cerrarMiniMenu();cerrarPanel();}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
 document.getElementById('mesa').addEventListener('mousedown',e=>{if(!e.target.closest('.carta')){cerrarMiniMenu();if(cartaSeleccionada){cartaSeleccionada.classList.remove('selected');cartaSeleccionada=null;}}});
-function actualizarContador(){const n=cartasMesa.length;document.getElementById('contador').textContent=n===0?'':n===1?'1 carta':`${n} cartas`;}
+function actualizarContador(){}
 function fFecha(f){if(!f)return '';const[y,m,d]=f.split('-');return `${d}/${m}/${y}`;}
 let _tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';clearTimeout(_tt);_tt=setTimeout(()=>el.style.display='none',2600);}
 </script>
