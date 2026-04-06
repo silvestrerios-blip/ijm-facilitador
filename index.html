@@ -541,6 +541,7 @@ body{background:var(--mesa);color:#fff}
 <div id="mantel-menu">
   <button class="mantel-opt" id="mo-rueda" onclick="setMantel('rueda')">🔵 Rueda de la Vida</button>
   <button class="mantel-opt" id="mo-dafo" onclick="setMantel('dafo')">⬡ DAFO</button>
+  <button class="mantel-opt" id="mo-ikigai" onclick="setMantel('ikigai')">⊕ Ikigai</button>
   <button class="mantel-opt" onclick="setMantel(null)">✕ Sin mantel</button>
 </div>
 <div id="flecha-menu">
@@ -1021,8 +1022,9 @@ function setMantel(nombre){
   overlay.setAttribute('height', VH);
   overlay.style.height = VH + 'px';
 
-  if(nombre === 'rueda') overlay.innerHTML = dibujarRueda(W, VH);
-  if(nombre === 'dafo')  overlay.innerHTML = dibujarDafo(W, VH);
+  if(nombre === 'rueda')   overlay.innerHTML = dibujarRueda(W, VH);
+  if(nombre === 'dafo')    overlay.innerHTML = dibujarDafo(W, VH);
+  if(nombre === 'ikigai')  overlay.innerHTML = dibujarIkigai(W, VH);
 
   overlay.classList.add('on');
 }
@@ -1064,6 +1066,67 @@ function dibujarDafo(W, H){
   s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(20,20,20,0.85)" stroke="rgba(84,201,153,0.6)" stroke-width="1.5"/>`;
   s+=`<path d="M${cx} ${cy-ss} C${cx} ${cy-ss},${cx+ss*1.8} ${cy-ss*0.7},${cx+ss*2} ${cy+ss*0.5} C${cx+ss*2.2} ${cy+ss*1.7},${cx+ss*0.5} ${cy+ss*2.2},${cx-ss*0.8} ${cy+ss*1.5} C${cx-ss*2} ${cy+ss*0.8},${cx-ss*1.9} ${cy-ss*0.5},${cx-ss*0.5} ${cy-ss*1.2} C${cx+ss*0.8} ${cy-ss*1.9},${cx+ss*1.4} ${cy-ss*0.8},${cx+ss*1.4} ${cy+ss*0.3}" stroke="#54C999" stroke-width="${ss*0.35}" stroke-linecap="round" fill="none"/>`;
   s+='</g>';return s;
+}
+
+function dibujarIkigai(W, H){
+  const cx=W/2, cy=H*0.48;
+  const R=Math.min(W*0.38, H*0.38);
+  const off=R*0.42; // offset de cada circulo del centro
+  const alpha='rgba(84,201,153,0.08)';
+  const strokeC='rgba(84,201,153,0.35)';
+  const txtC='rgba(255,255,255,0.75)';
+  const txtB='rgba(84,201,153,0.8)';
+  const txtS='rgba(255,255,255,0.55)';
+  const fs=Math.max(13,R*0.13);
+  const fss=Math.max(10,R*0.1);
+
+  // 4 centros de circulos
+  const circles=[
+    {cx:cx,      cy:cy-off, label:'LO QUE', label2:'AMAS',        col:'rgba(84,201,153,0.12)'},
+    {cx:cx+off,  cy:cy,     label:'EN LO QUE', label2:'ERES BUENO', col:'rgba(100,160,255,0.12)'},
+    {cx:cx,      cy:cy+off, label:'POR LO QUE', label2:'TE PAGAN',  col:'rgba(255,200,80,0.12)'},
+    {cx:cx-off,  cy:cy,     label:'LO QUE EL', label2:'MUNDO NECESITA', col:'rgba(255,120,120,0.12)'},
+  ];
+
+  // Intersecciones etiquetas
+  const intersects=[
+    {tx:cx+off*0.5, ty:cy-off*0.55, label:'PASION'},
+    {tx:cx+off*0.55, ty:cy+off*0.5, label:'PROFESION'},
+    {tx:cx-off*0.5, ty:cy+off*0.55, label:'MISION'},
+    {tx:cx-off*0.55, ty:cy-off*0.5, label:'VOCACION'},
+  ];
+
+  let s='<g>';
+
+  // Dibujar 4 circulos
+  circles.forEach(c=>{
+    s+=`<circle cx="${c.cx}" cy="${c.cy}" r="${R}" fill="${c.col}" stroke="${strokeC}" stroke-width="1.5"/>`;
+  });
+
+  // Etiquetas principales de cada circulo (fuera del centro)
+  const labelPos=[
+    {tx:cx,       ty:cy-off-R*0.72, a1:circles[0].label, a2:circles[0].label2},
+    {tx:cx+off+R*0.65, ty:cy,       a1:circles[1].label, a2:circles[1].label2},
+    {tx:cx,       ty:cy+off+R*0.72, a1:circles[2].label, a2:circles[2].label2},
+    {tx:cx-off-R*0.65, ty:cy,       a1:circles[3].label, a2:circles[3].label2},
+  ];
+  labelPos.forEach(l=>{
+    s+=`<text x="${l.tx}" y="${l.ty-8}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${fss}px" font-weight="700" fill="${txtS}">${l.a1}</text>`;
+    s+=`<text x="${l.tx}" y="${l.ty+8}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${fs}px" font-weight="900" fill="${txtB}">${l.a2}</text>`;
+  });
+
+  // Etiquetas intersecciones
+  intersects.forEach(i=>{
+    s+=`<text x="${i.tx}" y="${i.ty}" text-anchor="middle" dominant-baseline="middle" font-family="Outfit,sans-serif" font-size="${Math.max(9,R*0.09)}px" font-weight="700" fill="${txtC}" letter-spacing="1">${i.label}</text>`;
+  });
+
+  // Centro IKIGAI
+  s+=`<circle cx="${cx}" cy="${cy}" r="${R*0.18}" fill="rgba(20,20,20,0.85)" stroke="rgba(84,201,153,0.7)" stroke-width="2"/>`;
+  s+=`<text x="${cx}" y="${cy-6}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${Math.max(11,R*0.11)}px" font-weight="900" fill="#54C999" letter-spacing="2">IKIGAI</text>`;
+  s+=`<text x="${cx}" y="${cy+10}" text-anchor="middle" font-family="Outfit,sans-serif" font-size="${Math.max(8,R*0.08)}px" fill="rgba(255,255,255,0.4)">razon de ser</text>`;
+
+  s+='</g>';
+  return s;
 }
 
 // Cerrar menú mantel al clicar fuera
