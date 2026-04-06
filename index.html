@@ -692,6 +692,36 @@ async function generarPDF(sesion, cartas, notas){
 
   try{
     toast('Capturando mesa...');
+
+    // Convertir textareas de flechas a SVG text para html2canvas
+    const flechaTexts = [];
+    document.querySelectorAll('.carta-flecha textarea').forEach(ta=>{
+      if(!ta.value.trim()) return;
+      const svg = ta.closest('svg');
+      const fo = ta.closest('foreignObject');
+      if(!svg || !fo) return;
+      const x = parseFloat(fo.getAttribute('x'))||0;
+      const y = parseFloat(fo.getAttribute('y'))||0;
+      const w = parseFloat(fo.getAttribute('width'))||72;
+      const lines = ta.value.split('\n');
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      lines.forEach((line,i)=>{
+        const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+        t.setAttribute('x', x + w/2);
+        t.setAttribute('y', y + 16 + i*14);
+        t.setAttribute('text-anchor','middle');
+        t.setAttribute('font-size','10');
+        t.setAttribute('font-weight','700');
+        t.setAttribute('font-family','Outfit,sans-serif');
+        t.setAttribute('fill','white');
+        t.textContent = line;
+        g.appendChild(t);
+      });
+      svg.appendChild(g);
+      fo.style.display='none';
+      flechaTexts.push({svg,g,fo});
+    });
+
     const canvas=await html2canvas(mesa,{
       useCORS:true,
       allowTaint:false,
@@ -739,6 +769,11 @@ async function generarPDF(sesion, cartas, notas){
     toast('Error al generar PDF \u2014 revisa la consola');
   }finally{
     wrap.scrollTop=scrollTop;
+    // Restaurar textareas de flechas
+    flechaTexts.forEach(({svg,g,fo})=>{
+      svg.removeChild(g);
+      fo.style.display='';
+    });
   }
 }
 
