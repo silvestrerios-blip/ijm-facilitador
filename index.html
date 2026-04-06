@@ -178,6 +178,39 @@ body{background:var(--mesa);color:#fff}
 #empty svg{width:52px;height:52px;margin-bottom:12px}
 #empty p{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--v)}
 #empty small{font-size:10px;color:rgba(255,255,255,.3);display:block;margin-top:3px}
+/* Boton preguntas PRG */
+.btn-prg{
+  position:absolute;top:5px;right:5px;
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(244,160,32,.85);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:900;color:#fff;z-index:5;
+  transition:all .15s;font-family:'Outfit',sans-serif;
+}
+.btn-prg:hover{background:#F4A020;transform:scale(1.1)}
+/* Vista PRG pantalla completa */
+#prg-view{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.95);
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(10px);
+}
+#prg-view.on{display:flex}
+#prg-img{
+  max-width:92vw;max-height:90vh;
+  object-fit:contain;border-radius:10px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+#prg-close{
+  position:absolute;top:18px;right:18px;
+  width:42px;height:42px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.18);
+  color:#fff;font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;
+}
+#prg-close:hover{background:rgba(255,255,255,.2)}
+
 /* Nota icono General */
 .btn-nota-general{
   position:absolute;top:5px;left:5px;
@@ -516,6 +549,10 @@ body{background:var(--mesa);color:#fff}
   <button class="fm-btn" onclick="crearFlecha('arr')">&#8593; Arriba</button>
   <button class="fm-btn" onclick="crearFlecha('aba')">&#8595; Abajo</button>
 </div>
+<div id="prg-view" onclick="cerrarPRG()">
+  <button id="prg-close" onclick="cerrarPRG()">&#10005;</button>
+  <img id="prg-img" src="" alt="Preguntas">
+</div>
 <div id="mini-menu">
   <button class="mm-btn" id="mm-del" onclick="eliminarSeleccionada()">&#128465; Eliminar</button>
   <button class="mm-btn" id="mm-cancel" onclick="cerrarMiniMenu()">Cancelar</button>
@@ -580,6 +617,7 @@ async function sbAuth(path,opts={}){
   return r.status===204?null:r.json();
 }
 function imgUrl(mazo,n){const m=MAZOS[mazo];return `${SB_URL}/storage/v1/object/public/${m.bucket}/${n}${m.ext}`;}
+function prgUrl(n){return `${SB_URL}/storage/v1/object/public/PRG/${n}.jpg`;}
 
 // ── SESIÓN ──
 async function iniciarSesion(){
@@ -731,7 +769,7 @@ function crearCarta(mazo,n,x,y){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
     if(mazo==='general'){
-      // Icono en esquina -> muestra nombre carta
+      // Icono "i" esquina izq -> muestra nombre carta
       if(NOMBRES[n]){
         const btnN=document.createElement('button');btnN.className='btn-nota-general';btnN.textContent='i';
         const tip=document.createElement('div');tip.className='nota-general-wrap';
@@ -741,6 +779,11 @@ function crearCarta(mazo,n,x,y){
         btnN.ontouchend=e=>{e.stopPropagation();e.preventDefault();tip.style.display=tip.style.display==='none'?'block':'none';};
         div.appendChild(btnN);div.appendChild(tip);
       }
+      // Icono "?" esquina dcha -> abre preguntas PRG a pantalla completa
+      const btnPrg=document.createElement('button');btnPrg.className='btn-prg';btnPrg.textContent='?';
+      btnPrg.onclick=e=>{e.stopPropagation();verPRG(n);};
+      btnPrg.ontouchend=e=>{e.stopPropagation();e.preventDefault();verPRG(n);};
+      div.appendChild(btnPrg);
       // Franja verde inferior -> nota editable
       const fe=document.createElement('input');
       fe.type='text';fe.placeholder='Nota del participante...';fe.className='franja-edit';
@@ -1218,7 +1261,16 @@ document.addEventListener('click',e=>{
     document.getElementById('flecha-menu')?.classList.remove('on');
   }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarModal();cerrarMiniMenu();cerrarPanel();}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
+
+// ── PREGUNTAS PRG ──
+function verPRG(n){
+  document.getElementById('prg-img').src = prgUrl(n);
+  document.getElementById('prg-view').classList.add('on');
+}
+function cerrarPRG(){
+  document.getElementById('prg-view').classList.remove('on');
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarPRG();cerrarModal();cerrarMiniMenu();cerrarPanel();}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
 document.getElementById('mesa').addEventListener('mousedown',e=>{if(!e.target.closest('.carta')){cerrarMiniMenu();if(cartaSeleccionada){cartaSeleccionada.classList.remove('selected');cartaSeleccionada=null;}}});
 function actualizarContador(){}
 function fFecha(f){if(!f)return '';const[y,m,d]=f.split('-');return `${d}/${m}/${y}`;}
