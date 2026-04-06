@@ -62,13 +62,13 @@ body{background:var(--mesa);color:#fff}
 #mesa{position:relative;width:100%;height:400vh;background:radial-gradient(ellipse at 15% 20%,rgba(84,201,153,.055) 0%,transparent 42%),radial-gradient(ellipse at 85% 80%,rgba(84,201,153,.04) 0%,transparent 42%),var(--mesa)}
 #mesa::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(0,0,0,.022) 40px,rgba(0,0,0,.022) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(0,0,0,.022) 40px,rgba(0,0,0,.022) 41px)}
 /* CARTAS */
-.carta{position:absolute;cursor:grab;user-select:none;border-radius:8px;overflow:hidden;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);transition:box-shadow .15s}
+.carta{position:absolute;cursor:grab;user-select:none;border-radius:8px;overflow:visible;touch-action:none;box-shadow:0 4px 18px rgba(0,0,0,.45),0 1px 4px rgba(0,0,0,.3);transition:box-shadow .15s}
 .carta:hover{box-shadow:0 8px 28px rgba(0,0,0,.55);z-index:50!important}
 .carta.dragging{cursor:grabbing;transform:scale(1.04) rotate(.7deg);box-shadow:0 16px 48px rgba(0,0,0,.65);z-index:200!important;transition:none}
 .carta.selected{outline:2.5px solid var(--v);outline-offset:2px}
 @keyframes cartaEntra{from{opacity:0;transform:scale(.8) rotate(-2.5deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 .carta{animation:cartaEntra .22s cubic-bezier(.34,1.56,.64,1)}
-.carta-foto{width:calc(var(--cw,180px));height:auto;display:flex;flex-direction:column}
+.carta-foto{width:calc(var(--cw,180px));height:auto;display:flex;flex-direction:column;overflow:visible}
 .carta-foto img{width:100%;height:calc(var(--ch,120px));object-fit:cover;display:block;pointer-events:none;flex-shrink:0;min-height:calc(var(--ch,120px))}
 .banda{height:6px;width:100%;position:absolute;bottom:0;left:0}
 .banda-s{background:#d42020}.banda-n{background:#1a55cc}.franja-general{width:100%;height:28px;background:rgba(84,201,153,0.18);flex-shrink:0;display:flex;align-items:center;justify-content:center;border-top:1.5px solid rgba(84,201,153,0.4)}
@@ -326,12 +326,12 @@ body{background:var(--mesa);color:#fff}
 .franja-edit{
   width:100%;
   border:none;outline:none;
-  background:rgba(0,0,0,.55);
-  border-top:1px solid rgba(84,201,153,.25);
-  color:rgba(255,255,255,.8);
-  font-size:9.5px;font-weight:600;
+  background:rgba(0,0,0,.7);
+  border-top:2px solid rgba(84,201,153,.4);
+  color:#fff;
+  font-size:10px;font-weight:700;
   font-family:'Outfit',sans-serif;
-  text-align:center;padding:5px 6px;
+  text-align:center;padding:6px 6px;
   cursor:text;display:block;
   flex-shrink:0;
 }
