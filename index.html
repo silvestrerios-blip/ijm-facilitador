@@ -1246,62 +1246,54 @@ function crearFlecha(dir){
   div.className='carta-flecha';
   div.style.cssText=`left:${x}px;top:${y}px;z-index:${++zMax}`;
 
-  // Header drag handle
-  const hdr=document.createElement('div');
-  hdr.className='flecha-hdr';
-  hdr.innerHTML='<svg viewBox="0 0 20 14" fill="none" stroke="#54C999" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M1 7 L19 7"/><path d="M14 3 L19 7 L14 11"/><path d="M6 3 L1 7 L6 11"/></svg><span>Flecha</span>';
-
-  // SVG flecha segun direccion
-  const r=38, tip=24;
-  let svgW, svgH, svgContent, txtX, txtY;
+  const r=42, tip=26;
+  let svgW, svgH, svgContent, txtX, txtY, txtW=72, txtH=52;
 
   if(dir==='der'){
     svgW=r*2+tip+4; svgH=r*2+4;
     const cx=r+2,cy=r+2;
     svgContent=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(84,201,153,0.85)" stroke="#3aaa7f" stroke-width="1.5"/>
 <polygon points="${cx+r-tip*0.5},${cy-tip*0.55} ${cx+r+tip},${cy} ${cx+r-tip*0.5},${cy+tip*0.55}" fill="rgba(84,201,153,0.85)" stroke="#3aaa7f" stroke-width="1.5" stroke-linejoin="round"/>`;
-    txtX=cx-4; txtY=cy+4;
+    txtX=cx-txtW/2; txtY=cy-txtH/2;
   } else if(dir==='izq'){
     svgW=r*2+tip+4; svgH=r*2+4;
     const cx=r+tip+2,cy=r+2;
     svgContent=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(84,201,153,0.85)" stroke="#3aaa7f" stroke-width="1.5"/>
 <polygon points="${cx-r+tip*0.5},${cy-tip*0.55} ${cx-r-tip},${cy} ${cx-r+tip*0.5},${cy+tip*0.55}" fill="rgba(84,201,153,0.85)" stroke="#3aaa7f" stroke-width="1.5" stroke-linejoin="round"/>`;
-    txtX=cx+4; txtY=cy+4;
+    txtX=cx-txtW/2; txtY=cy-txtH/2;
   } else if(dir==='arr'){
     svgW=r*2+4; svgH=r*2+tip+4;
     const cx=r+2,cy=r+tip+2;
     svgContent=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(84,201,153,0.85)" stroke="#3aaa7f" stroke-width="1.5"/>
 <polygon points="${cx-tip*0.55},${cy-r+tip*0.5} ${cx},${cy-r-tip} ${cx+tip*0.55},${cy-r+tip*0.5}" fill="rgba(84,201,153,0.85)" stroke="#3aaa7f" stroke-width="1.5" stroke-linejoin="round"/>`;
-    txtX=cx; txtY=cy+5;
+    txtX=cx-txtW/2; txtY=cy-txtH/2;
   } else {
     svgW=r*2+4; svgH=r*2+tip+4;
     const cx=r+2,cy=r+2;
     svgContent=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="rgba(84,201,153,0.85)" stroke="#3aaa7f" stroke-width="1.5"/>
 <polygon points="${cx-tip*0.55},${cy+r-tip*0.5} ${cx},${cy+r+tip} ${cx+tip*0.55},${cy+r-tip*0.5}" fill="rgba(84,201,153,0.85)" stroke="#3aaa7f" stroke-width="1.5" stroke-linejoin="round"/>`;
-    txtX=cx; txtY=cy-2;
+    txtX=cx-txtW/2; txtY=cy-txtH/2;
   }
 
-  // SVG container
-  const svgEl=document.createElement('div');
-  svgEl.style.cssText='position:relative;display:inline-block';
-  svgEl.innerHTML=`<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">${svgContent}<foreignObject x="${txtX-40}" y="${txtY-12}" width="80" height="24"><input xmlns="http://www.w3.org/1999/xhtml" type="text" placeholder="Texto..." style="width:76px;border:none;outline:none;background:transparent;color:white;font-size:10px;font-weight:700;font-family:Outfit,sans-serif;text-align:center;padding:0"/></foreignObject></svg>`;
+  const container=document.createElement('div');
+  container.style.cssText='position:relative;display:inline-block;cursor:grab';
+  container.innerHTML=`<svg width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" xmlns="http://www.w3.org/2000/svg">${svgContent}<foreignObject x="${txtX}" y="${txtY}" width="${txtW}" height="${txtH}"><textarea xmlns="http://www.w3.org/1999/xhtml" placeholder="Texto..." style="width:${txtW}px;height:${txtH}px;border:none;outline:none;background:transparent;color:white;font-size:10px;font-weight:700;font-family:Outfit,sans-serif;text-align:center;padding:2px;resize:none;line-height:1.3;overflow:hidden"></textarea></foreignObject></svg>`;
 
-  // Fix input events
   setTimeout(()=>{
-    const inp=svgEl.querySelector('input');
-    if(inp){
-      inp.onmousedown=e=>e.stopPropagation();
-      inp.ontouchstart=e=>e.stopPropagation();
-      inp.onclick=e=>e.stopPropagation();
+    const ta=container.querySelector('textarea');
+    if(ta){
+      ta.onmousedown=e=>e.stopPropagation();
+      ta.ontouchstart=e=>e.stopPropagation();
+      ta.onclick=e=>e.stopPropagation();
     }
   },50);
 
-  div.appendChild(hdr);
-  div.appendChild(svgEl);
+  div.appendChild(container);
 
-  // Drag from header
+  // Drag from anywhere on the element (except textarea)
   let sx,sy,sl,st;
-  hdr.addEventListener('mousedown',e=>{
+  container.addEventListener('mousedown',e=>{
+    if(e.target.tagName==='TEXTAREA') return;
     e.preventDefault();e.stopPropagation();
     sel(div);div.style.zIndex=++zMax;
     const w=document.getElementById('mesa-wrap');
@@ -1315,7 +1307,8 @@ function crearFlecha(dir){
     document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
   });
   let lt=0;
-  hdr.addEventListener('touchstart',e=>{
+  container.addEventListener('touchstart',e=>{
+    if(e.target.tagName==='TEXTAREA') return;
     const now=Date.now();
     if(now-lt<280){e.preventDefault();mostrarMM(e.touches[0].clientX,e.touches[0].clientY,div);lt=0;return;}
     lt=now;sel(div);div.style.zIndex=++zMax;
@@ -1325,11 +1318,11 @@ function crearFlecha(dir){
     function tm(e){e.preventDefault();const t=e.touches[0];const mesa=document.getElementById('mesa');
       div.style.left=Math.max(0,Math.min(sl+t.clientX-sx,mesa.offsetWidth-div.offsetWidth))+'px';
       div.style.top=Math.max(0,Math.min(st+(t.clientY+w.scrollTop)-sy,mesa.offsetHeight-div.offsetHeight))+'px';}
-    function tu(){div.classList.remove('dragging');hdr.removeEventListener('touchmove',tm);hdr.removeEventListener('touchend',tu);}
-    hdr.addEventListener('touchmove',tm,{passive:false});hdr.addEventListener('touchend',tu);
+    function tu(){div.classList.remove('dragging');container.removeEventListener('touchmove',tm);container.removeEventListener('touchend',tu);}
+    container.addEventListener('touchmove',tm,{passive:false});container.addEventListener('touchend',tu);
   },{passive:true});
 
-  div.addEventListener('dblclick',e=>{if(e.target.tagName==='INPUT')return;e.preventDefault();mostrarMM(e.clientX,e.clientY,div);});
+  div.addEventListener('dblclick',e=>{if(e.target.tagName==='TEXTAREA')return;e.preventDefault();mostrarMM(e.clientX,e.clientY,div);});
   div.addEventListener('mousedown',()=>{sel(div);div.style.zIndex=++zMax;});
   addDel(div);
   document.getElementById('mesa').appendChild(div);
