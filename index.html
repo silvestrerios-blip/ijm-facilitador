@@ -191,20 +191,21 @@ body{background:var(--mesa);color:#fff}
 }
 /* Botones en vista ampliada */
 #ver-btns{
-  position:absolute;top:24px;left:50%;
+  position:absolute;bottom:30px;left:50%;
   transform:translateX(-50%);
-  display:flex;gap:10px;z-index:10;
+  display:flex;gap:14px;z-index:10;
 }
 .ver-btn{
-  width:36px;height:36px;border-radius:50%;
+  padding:10px 20px;border-radius:10px;
   border:2px solid rgba(255,255,255,.3);
-  background:rgba(0,0,0,.6);color:#fff;
-  font-size:14px;font-weight:900;cursor:pointer;
+  background:rgba(0,0,0,.7);color:#fff;
+  font-size:13px;font-weight:800;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   font-family:'Outfit',sans-serif;transition:all .15s;
+  letter-spacing:.5px;white-space:nowrap;
 }
-.ver-btn:hover{background:rgba(84,201,153,.5);border-color:var(--v)}
-.ver-btn.on{background:rgba(84,201,153,.7);border-color:var(--v)}
+.ver-btn:hover{background:rgba(84,201,153,.4);border-color:var(--v)}
+.ver-btn.on{background:rgba(84,201,153,.6);border-color:var(--v)}
 #ver-nombre{
   position:absolute;top:68px;left:50%;transform:translateX(-50%);
   background:rgba(0,0,0,.85);color:#fff;
@@ -223,18 +224,11 @@ body{background:var(--mesa);color:#fff}
 .carta-flecha-wrap.dragging{cursor:grabbing;z-index:200!important;transition:none}
 .carta-flecha-wrap.selected .flecha-box{outline:2.5px solid var(--v);outline-offset:2px}
 .flecha-box{
-  background:#fff;border:2px solid var(--v);
+  background:#fff;border:3px solid var(--v);
   border-radius:8px;display:flex;flex-direction:column;
-  min-width:120px;max-width:180px;
+  min-width:120px;max-width:180px;cursor:grab;
 }
-.flecha-box-hdr{
-  display:flex;align-items:center;gap:4px;
-  padding:5px 8px 3px;border-bottom:1px solid rgba(84,201,153,.2);
-  cursor:grab;user-select:none;flex-shrink:0;
-}
-.flecha-box-hdr:active{cursor:grabbing}
-.flecha-box-hdr svg{width:10px;height:10px;stroke:var(--v);flex-shrink:0}
-.flecha-box-hdr span{font-size:8px;color:var(--v);font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+.flecha-box-hdr{display:none}
 .flecha-box-ta{
   width:100%;border:none;outline:none;resize:none;
   font-size:12px;color:#333;font-family:'Outfit',sans-serif;
@@ -247,28 +241,28 @@ body{background:var(--mesa);color:#fff}
   width:0;height:0;flex-shrink:0;align-self:center;
   border-top:14px solid transparent;
   border-bottom:14px solid transparent;
-  border-left:20px solid var(--v);
+  border-left:22px solid var(--v);
   margin-left:-1px;
 }
 .flecha-punta-izq{
   width:0;height:0;flex-shrink:0;align-self:center;
   border-top:14px solid transparent;
   border-bottom:14px solid transparent;
-  border-right:20px solid var(--v);
+  border-right:22px solid var(--v);
   margin-right:-1px;order:-1;
 }
 .flecha-punta-arr{
   width:0;height:0;flex-shrink:0;align-self:center;
   border-left:14px solid transparent;
   border-right:14px solid transparent;
-  border-bottom:20px solid var(--v);
+  border-bottom:22px solid var(--v);
   margin-bottom:-1px;order:-1;
 }
 .flecha-punta-aba{
   width:0;height:0;flex-shrink:0;align-self:center;
   border-left:14px solid transparent;
   border-right:14px solid transparent;
-  border-top:20px solid var(--v);
+  border-top:22px solid var(--v);
   margin-top:-1px;
 }
 /* Layout vertical para flechas arriba/abajo */
@@ -657,8 +651,8 @@ body{background:var(--mesa);color:#fff}
 <div id="ver" onclick="cerrarVer()">
   <button id="ver-close" onclick="cerrarVer()">&#10005;</button>
   <div id="ver-btns">
-    <button class="ver-btn" id="ver-btn-i" onclick="toggleVerNombre(event)" title="Nombre">i</button>
-    <button class="ver-btn" id="ver-btn-prg" onclick="toggleVerPRG(event)" title="Preguntas">?</button>
+    <button class="ver-btn" id="ver-btn-i" onclick="toggleVerNombre(event)">N &#8212; Nombre</button>
+    <button class="ver-btn" id="ver-btn-prg" onclick="toggleVerPRG(event)">? &#8212; Preguntas</button>
   </div>
   <div id="ver-nombre"></div>
   <img id="ver-img" src="" alt=""><div id="ver-lbl"></div>
@@ -1120,7 +1114,12 @@ function toggleVerNombre(e){
 }
 function toggleVerPRG(e){
   e.stopPropagation();
-  if(verCartaActual) verPRG(verCartaActual.n);
+  if(!verCartaActual) return;
+  // Mostrar PRG encima de la carta ampliada
+  const prgView = document.getElementById('prg-view');
+  document.getElementById('prg-img').src = prgUrl(verCartaActual.n);
+  prgView.style.zIndex = '600';
+  prgView.classList.add('on');
 }
 function cerrarVer(){
   document.getElementById('ver').classList.remove('on');
@@ -1540,7 +1539,9 @@ function verPRG(n){
   document.getElementById('prg-view').classList.add('on');
 }
 function cerrarPRG(){
-  document.getElementById('prg-view').classList.remove('on');
+  const prgView=document.getElementById('prg-view');
+  prgView.classList.remove('on');
+  prgView.style.zIndex='';
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarPRG();cerrarModal();cerrarMiniMenu();cerrarPanel();}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
 document.getElementById('mesa').addEventListener('mousedown',e=>{if(!e.target.closest('.carta')){cerrarMiniMenu();if(cartaSeleccionada){cartaSeleccionada.classList.remove('selected');cartaSeleccionada=null;}}});
