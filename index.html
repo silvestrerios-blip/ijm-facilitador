@@ -693,8 +693,11 @@ async function generarPDF(sesion, cartas, notas){
   try{
     toast('Capturando mesa...');
 
-    // Convertir textareas de flechas a SVG text para html2canvas
+    // Convertir textareas a elementos visibles para html2canvas
     const flechaTexts = [];
+    const notaFixes = [];
+
+    // 1. Flechas: foreignObject textarea -> SVG text
     document.querySelectorAll('.carta-flecha textarea').forEach(ta=>{
       if(!ta.value.trim()) return;
       const svg = ta.closest('svg');
@@ -708,7 +711,7 @@ async function generarPDF(sesion, cartas, notas){
       lines.forEach((line,i)=>{
         const t = document.createElementNS('http://www.w3.org/2000/svg','text');
         t.setAttribute('x', x + w/2);
-        t.setAttribute('y', y + 16 + i*14);
+        t.setAttribute('y', y + 14 + i*13);
         t.setAttribute('text-anchor','middle');
         t.setAttribute('font-size','10');
         t.setAttribute('font-weight','700');
@@ -720,6 +723,22 @@ async function generarPDF(sesion, cartas, notas){
       svg.appendChild(g);
       fo.style.display='none';
       flechaTexts.push({svg,g,fo});
+    });
+
+    // 2. Notas T: expandir textarea para mostrar todo el contenido
+    document.querySelectorAll('.carta-nota textarea').forEach(ta=>{
+      const oldH = ta.style.height;
+      const oldOverflow = ta.style.overflow;
+      ta.style.height = ta.scrollHeight + 'px';
+      ta.style.overflow = 'visible';
+      notaFixes.push({ta, oldH, oldOverflow});
+    });
+
+    // 3. Franjas editables: asegurar que el texto sea visible
+    document.querySelectorAll('.franja-edit').forEach(inp=>{
+      const oldC = inp.style.color;
+      inp.style.color = '#ffffff';
+      notaFixes.push({ta:inp, oldH:null, oldOverflow:null, oldColor:oldC, isInput:true});
     });
 
     const canvas=await html2canvas(mesa,{
@@ -769,10 +788,15 @@ async function generarPDF(sesion, cartas, notas){
     toast('Error al generar PDF \u2014 revisa la consola');
   }finally{
     wrap.scrollTop=scrollTop;
-    // Restaurar textareas de flechas
+    // Restaurar flechas
     flechaTexts.forEach(({svg,g,fo})=>{
       svg.removeChild(g);
       fo.style.display='';
+    });
+    // Restaurar notas y franjas
+    notaFixes.forEach(({ta,oldH,oldOverflow,oldColor,isInput})=>{
+      if(isInput){ ta.style.color = oldColor||''; }
+      else { ta.style.height = oldH||''; ta.style.overflow = oldOverflow||''; }
     });
   }
 }
