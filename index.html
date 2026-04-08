@@ -693,11 +693,52 @@ async function generarPDF(sesion, cartas, notas){
   try{
     toast('Capturando mesa...');
 
-    // Convertir textareas a elementos visibles para html2canvas
-    const flechaTexts = [];
-    const notaFixes = [];
+    // Reemplazar inputs/textareas con divs visibles para html2canvas
+    const pdfOverlays = [];
 
-    // 1. Flechas: foreignObject textarea -> SVG text
+    // Funcion helper: reemplaza un input/textarea con un div
+    function mkOverlay(el, multiline){
+      if(!el.value && !el.textContent) return;
+      const val = el.value || el.textContent || '';
+      if(!val.trim()) return;
+      const rect = el.getBoundingClientRect();
+      const mesaRect = mesa.getBoundingClientRect();
+      const wrap = document.getElementById('mesa-wrap');
+      const div = document.createElement('div');
+      div.style.cssText = [
+        'position:absolute',
+        'left:' + (rect.left - mesaRect.left) + 'px',
+        'top:' + (rect.top - mesaRect.top + wrap.scrollTop) + 'px',
+        'width:' + rect.width + 'px',
+        'min-height:' + rect.height + 'px',
+        'background:rgba(0,0,0,0.7)',
+        'color:#fff',
+        'font-size:' + (multiline ? '11px' : '13px'),
+        'font-weight:700',
+        'font-family:Outfit,sans-serif',
+        'text-align:center',
+        'padding:6px',
+        'z-index:9999',
+        'word-break:break-word',
+        'white-space:pre-wrap',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center'
+      ].join(';');
+      div.textContent = val;
+      mesa.appendChild(div);
+      el.style.opacity = '0';
+      pdfOverlays.push({div, el});
+    }
+
+    // Notas T (textarea multilinea)
+    document.querySelectorAll('.carta-nota .nota-body').forEach(ta => mkOverlay(ta, true));
+
+    // Franjas editables (input pie de carta)
+    document.querySelectorAll('.franja-edit').forEach(inp => mkOverlay(inp, false));
+
+    // Flechas: foreignObject textarea -> SVG text
+    const flechaTexts = [];
     document.querySelectorAll('.carta-flecha textarea').forEach(ta=>{
       if(!ta.value.trim()) return;
       const svg = ta.closest('svg');
@@ -709,6 +750,7 @@ async function generarPDF(sesion, cartas, notas){
       const lines = ta.value.split('\n');
       const g = document.createElementNS('http://www.w3.org/2000/svg','g');
       lines.forEach((line,i)=>{
+        if(!line.trim()) return;
         const t = document.createElementNS('http://www.w3.org/2000/svg','text');
         t.setAttribute('x', x + w/2);
         t.setAttribute('y', y + 14 + i*13);
@@ -723,22 +765,6 @@ async function generarPDF(sesion, cartas, notas){
       svg.appendChild(g);
       fo.style.display='none';
       flechaTexts.push({svg,g,fo});
-    });
-
-    // 2. Notas T: expandir textarea para mostrar todo el contenido
-    document.querySelectorAll('.carta-nota textarea').forEach(ta=>{
-      const oldH = ta.style.height;
-      const oldOverflow = ta.style.overflow;
-      ta.style.height = ta.scrollHeight + 'px';
-      ta.style.overflow = 'visible';
-      notaFixes.push({ta, oldH, oldOverflow});
-    });
-
-    // 3. Franjas editables: asegurar que el texto sea visible
-    document.querySelectorAll('.franja-edit').forEach(inp=>{
-      const oldC = inp.style.color;
-      inp.style.color = '#ffffff';
-      notaFixes.push({ta:inp, oldH:null, oldOverflow:null, oldColor:oldC, isInput:true});
     });
 
     const canvas=await html2canvas(mesa,{
@@ -788,15 +814,14 @@ async function generarPDF(sesion, cartas, notas){
     toast('Error al generar PDF \u2014 revisa la consola');
   }finally{
     wrap.scrollTop=scrollTop;
-    // Restaurar flechas
+    // Restaurar elementos
+    pdfOverlays.forEach(({div, el})=>{
+      mesa.removeChild(div);
+      el.style.opacity = '';
+    });
     flechaTexts.forEach(({svg,g,fo})=>{
       svg.removeChild(g);
       fo.style.display='';
-    });
-    // Restaurar notas y franjas
-    notaFixes.forEach(({ta,oldH,oldOverflow,oldColor,isInput})=>{
-      if(isInput){ ta.style.color = oldColor||''; }
-      else { ta.style.height = oldH||''; ta.style.overflow = oldOverflow||''; }
     });
   }
 }
