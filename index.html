@@ -178,6 +178,43 @@ body{background:var(--mesa);color:#fff}
 #empty svg{width:52px;height:52px;margin-bottom:12px}
 #empty p{font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--v)}
 #empty small{font-size:10px;color:rgba(255,255,255,.3);display:block;margin-top:3px}
+/* Nombre carta en parte superior */
+.carta-nombre-label{
+  position:absolute;top:0;left:0;right:0;
+  background:rgba(0,0,0,0.72);
+  color:#fff;font-size:11px;font-weight:800;
+  font-family:'Outfit',sans-serif;
+  text-align:center;padding:4px 6px;
+  letter-spacing:1px;text-transform:uppercase;
+  border-radius:6px 6px 0 0;
+  pointer-events:none;z-index:4;
+}
+/* Botones en vista ampliada */
+#ver-btns{
+  position:absolute;top:24px;left:50%;
+  transform:translateX(-50%);
+  display:flex;gap:10px;z-index:10;
+}
+.ver-btn{
+  width:36px;height:36px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.3);
+  background:rgba(0,0,0,.6);color:#fff;
+  font-size:14px;font-weight:900;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Outfit',sans-serif;transition:all .15s;
+}
+.ver-btn:hover{background:rgba(84,201,153,.5);border-color:var(--v)}
+.ver-btn.on{background:rgba(84,201,153,.7);border-color:var(--v)}
+#ver-nombre{
+  position:absolute;top:68px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.85);color:#fff;
+  font-size:14px;font-weight:800;
+  padding:6px 18px;border-radius:8px;
+  letter-spacing:1.5px;text-transform:uppercase;
+  border:1px solid rgba(84,201,153,.4);
+  display:none;white-space:nowrap;
+}
+
 /* Nueva flecha estilo nota + punta */
 .carta-flecha-wrap{
   position:absolute;cursor:grab;user-select:none;
@@ -619,6 +656,11 @@ body{background:var(--mesa);color:#fff}
 </div>
 <div id="ver" onclick="cerrarVer()">
   <button id="ver-close" onclick="cerrarVer()">&#10005;</button>
+  <div id="ver-btns">
+    <button class="ver-btn" id="ver-btn-i" onclick="toggleVerNombre(event)" title="Nombre">i</button>
+    <button class="ver-btn" id="ver-btn-prg" onclick="toggleVerPRG(event)" title="Preguntas">?</button>
+  </div>
+  <div id="ver-nombre"></div>
   <img id="ver-img" src="" alt=""><div id="ver-lbl"></div>
 </div>
 <div id="modal"><div id="modal-box">
@@ -917,21 +959,12 @@ function crearCarta(mazo,n,x,y){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
     if(mazo==='general'){
-      // Icono "i" esquina izq -> muestra nombre carta
-      if(NOMBRES[n]){
-        const btnN=document.createElement('button');btnN.className='btn-nota-general';btnN.textContent='i';
-        const tip=document.createElement('div');tip.className='nota-general-wrap';
-        tip.style.cssText='position:absolute;top:28px;left:5px;background:rgba(0,0,0,.88);color:#fff;font-size:10px;font-weight:700;padding:5px 10px;border-radius:6px;white-space:nowrap;z-index:20;border:1px solid rgba(84,201,153,.4);letter-spacing:.8px;text-transform:uppercase;display:none';
-        tip.textContent=NOMBRES[n];
-        btnN.onclick=e=>{e.stopPropagation();tip.style.display=tip.style.display==='none'?'block':'none';};
-        btnN.ontouchend=e=>{e.stopPropagation();e.preventDefault();tip.style.display=tip.style.display==='none'?'block':'none';};
-        div.appendChild(btnN);div.appendChild(tip);
-      }
-      // Icono "?" esquina dcha -> abre preguntas PRG a pantalla completa
-      const btnPrg=document.createElement('button');btnPrg.className='btn-prg';btnPrg.textContent='?';
-      btnPrg.onclick=e=>{e.stopPropagation();verPRG(n);};
-      btnPrg.ontouchend=e=>{e.stopPropagation();e.preventDefault();verPRG(n);};
-      div.appendChild(btnPrg);
+      // Etiqueta nombre en parte superior (oculta por defecto)
+      const nombreLabel=document.createElement('div');nombreLabel.className='carta-nombre-label';
+      nombreLabel.textContent=NOMBRES[n]||'';
+      nombreLabel.style.display='none';
+      div.appendChild(nombreLabel);
+      div._nombreLabel=nombreLabel;
       // Franja verde inferior -> nota editable
       const fe=document.createElement('input');
       fe.type='text';fe.placeholder='Nota del participante...';fe.className='franja-edit';
@@ -958,7 +991,7 @@ function crearCarta(mazo,n,x,y){
     fi.onclick=e=>e.stopPropagation();
     div.appendChild(fi);
   }
-  addDel(div);addGestos(div,()=>verAmpliada(mazo,n));
+  addDel(div);addGestos(div,()=>verAmpliada(mazo,n,div));
   document.getElementById('mesa').appendChild(div);
   cartasMesa.push(div);actualizarContador();actualizarInfoSesion();
 }
@@ -1056,8 +1089,45 @@ function drag(el){
 function mostrarMM(cx,cy,el){miniTarget=el;sel(el);const mm=document.getElementById('mini-menu');mm.style.left=Math.min(cx,window.innerWidth-160)+'px';mm.style.top=Math.max(8,cy-76)+'px';mm.classList.add('on');}
 function cerrarMiniMenu(){document.getElementById('mini-menu').classList.remove('on');miniTarget=null;}
 function eliminarSeleccionada(){if(miniTarget)elimCarta(miniTarget);cerrarMiniMenu();}
-function verAmpliada(mazo,n){document.getElementById('ver-img').src=imgUrl(mazo,n);document.getElementById('ver-lbl').textContent=`${mazo.toUpperCase()} \u00b7 ${n}${mazo==='general'&&NOMBRES[n]?' \u00b7 '+NOMBRES[n]:''}`;document.getElementById('ver').classList.add('on');}
-function cerrarVer(){document.getElementById('ver').classList.remove('on');}
+let verCartaActual=null;
+function verAmpliada(mazo,n,cartaDiv){
+  document.getElementById('ver-img').src=imgUrl(mazo,n);
+  document.getElementById('ver-lbl').textContent='';
+  const btns=document.getElementById('ver-btns');
+  const verNombre=document.getElementById('ver-nombre');
+  if(mazo==='general'){
+    btns.style.display='flex';
+    verNombre.textContent=NOMBRES[n]||'';
+    verNombre.style.display='none';
+    document.getElementById('ver-btn-i').classList.remove('on');
+    verCartaActual={mazo,n,div:cartaDiv};
+  } else {
+    btns.style.display='none';
+    verCartaActual=null;
+  }
+  document.getElementById('ver').classList.add('on');
+}
+function toggleVerNombre(e){
+  e.stopPropagation();
+  const btn=document.getElementById('ver-btn-i');
+  const label=document.getElementById('ver-nombre');
+  const on=!btn.classList.contains('on');
+  btn.classList.toggle('on',on);
+  label.style.display=on?'block':'none';
+  if(verCartaActual?.div?._nombreLabel){
+    verCartaActual.div._nombreLabel.style.display=on?'block':'none';
+  }
+}
+function toggleVerPRG(e){
+  e.stopPropagation();
+  if(verCartaActual) verPRG(verCartaActual.n);
+}
+function cerrarVer(){
+  document.getElementById('ver').classList.remove('on');
+  document.getElementById('ver-btns').style.display='none';
+  document.getElementById('ver-nombre').style.display='none';
+  document.getElementById('ver-btn-i').classList.remove('on');
+}
 function sel(el){if(cartaSeleccionada)cartaSeleccionada.classList.remove('selected');cartaSeleccionada=el;el.classList.add('selected');}
 function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.style.opacity='0';el.style.transform='scale(.8)';setTimeout(()=>{el.remove();cartasMesa=cartasMesa.filter(c=>c!==el);if(cartaSeleccionada===el)cartaSeleccionada=null;actualizarContador();actualizarInfoSesion();if(cartasMesa.length===0)document.getElementById('empty').classList.remove('hidden');},180);}
 function pedirLimpiar(){if(cartasMesa.length===0){toast('La mesa ya est\u00e1 vac\u00eda');return;}document.getElementById('modal').classList.add('on');}
