@@ -91,7 +91,7 @@ body{background:var(--mesa);color:#fff}
 .franja-nombre .fn-txt{color:#fff;font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;opacity:0;transition:opacity .18s;white-space:nowrap;pointer-events:none}
 .franja-nombre.on .fn-txt{opacity:1}
 .btn-del{position:absolute;top:-7px;right:-7px;width:19px;height:19px;border-radius:50%;background:#ff4455;color:#fff;border:2px solid var(--mesa);font-size:8px;cursor:pointer;display:none;align-items:center;justify-content:center;font-weight:900;z-index:10;line-height:1;padding:0;transition:transform .1s}
-.carta:hover .btn-del,.carta.selected .btn-del{display:flex}
+.carta:hover .btn-del,.carta.selected .btn-del,.carta-flecha-wrap:hover .btn-del,.carta-flecha-wrap.selected .btn-del{display:flex}
 .btn-del:hover{transform:scale(1.15)}
 /* PANEL */
 #panel{position:fixed;top:var(--tb);right:0;bottom:0;width:340px;max-width:94vw;background:rgba(22,22,22,.98);backdrop-filter:blur(14px);border-left:1px solid rgba(84,201,153,.18);z-index:150;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
@@ -217,7 +217,7 @@ body{background:var(--mesa);color:#fff}
 }
 
 /* Nueva flecha estilo nota + punta */
-.carta-flecha-wrap{
+.carta-flecha-wrap{position:absolute;
   position:absolute;cursor:grab;user-select:none;
   touch-action:none;display:inline-flex;
 }
