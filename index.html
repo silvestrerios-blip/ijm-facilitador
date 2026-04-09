@@ -591,6 +591,7 @@ body{background:var(--mesa);color:#fff}
       <div id="sesion-form" style="margin-bottom:14px">
         <div class="pfield"><label>Participante</label><input id="inp-participante" type="text" placeholder="Nombre..."></div>
         <div class="pfield"><label>Fecha</label><input id="inp-fecha" type="date"></div>
+        <div class="pfield"><label>Hora</label><input id="inp-hora" type="time"></div>
         <button id="btn-ini-sesion" onclick="iniciarSesion()">Iniciar sesi&#243;n</button>
       </div>
       <div id="sesion-activa-info">
@@ -657,6 +658,16 @@ body{background:var(--mesa);color:#fff}
   <div id="ver-nombre"></div>
   <img id="ver-img" src="" alt=""><div id="ver-lbl"></div>
 </div>
+<div id="modal-cerrar" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+  <div style="background:#222;border:1px solid rgba(84,201,153,.3);border-radius:14px;padding:24px 28px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <h3 style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">Cerrar y guardar sesi&#243;n</h3>
+    <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.55">Se guardar&#225; la sesi&#243;n, se generar&#225; el PDF<br>y la mesa quedar&#225; limpia.</p>
+    <div style="display:flex;gap:8px">
+      <button onclick="document.getElementById('modal-cerrar').classList.remove('on')" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
+      <button onclick="confirmarCerrarSesion()" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:var(--v);color:#fff">Guardar y limpiar</button>
+    </div>
+  </div>
+</div>
 <div id="modal"><div id="modal-box">
   <h3>&#9888;&#65039; Limpiar la mesa</h3>
   <p>Se eliminar&#225;n todas las cartas.<br>Esta acci&#243;n no se puede deshacer.</p>
@@ -698,6 +709,7 @@ async function doLogin(){
     document.getElementById('user-badge').innerHTML=`<span class="ub-name">${usuario.nombre}</span>${usuario.esAdmin?' &middot; admin':''}`;
     if(usuario.esAdmin){document.getElementById('btn-stats').classList.add('visible');document.getElementById('ptab-stats').style.display='block';}
     document.getElementById('inp-fecha').valueAsDate=new Date();
+    const now=new Date();document.getElementById('inp-hora').value=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     toast(`Bienvenido, ${usuario.nombre} \u{1F44B}`);
   }catch(e){errEl.textContent=e.message;}
   document.getElementById('btn-login').textContent='Entrar';
@@ -710,7 +722,10 @@ document.addEventListener('DOMContentLoaded',()=>{
 async function sbAuth(path,opts={}){
   const r=await fetch(`${SB_URL}/rest/v1/${path}`,{method:opts.method||'GET',headers:{'apikey':SB_KEY,'Authorization':`Bearer ${usuario?.token||SB_KEY}`,'Content-Type':'application/json','Prefer':opts.prefer||'return=representation',...(opts.headers||{})},body:opts.body?JSON.stringify(opts.body):undefined});
   if(!r.ok) throw new Error(await r.text());
-  return r.status===204?null:r.json();
+  if(r.status===204||r.headers.get('content-length')==='0') return null;
+  const text=await r.text();
+  if(!text||!text.trim()) return null;
+  try{return JSON.parse(text);}catch(e){return null;}
 }
 function imgUrl(mazo,n){const m=MAZOS[mazo];return `${SB_URL}/storage/v1/object/public/${m.bucket}/${n}${m.ext}`;}
 function prgUrl(n){return `${SB_URL}/storage/v1/object/public/PRG/${n}.jpg`;}
@@ -719,21 +734,28 @@ function prgUrl(n){return `${SB_URL}/storage/v1/object/public/PRG/${n}.jpg`;}
 async function iniciarSesion(){
   const participante=document.getElementById('inp-participante').value.trim();
   const fecha=document.getElementById('inp-fecha').value;
+  const hora=document.getElementById('inp-hora').value||'';
   if(!participante){toast('Introduce el nombre del participante');return;}
   if(!fecha){toast('Selecciona la fecha');return;}
   try{
     const [row]=await sbAuth('sesiones',{method:'POST',body:{participante,fecha,facilitador_id:usuario.id,facilitador_nombre:usuario.nombre,n_cartas:0}});
-    sesionActual={...row};
-  }catch(e){sesionActual={id:null,participante,fecha,local:true,n_cartas:0};}
+    sesionActual={...row,hora};
+  }catch(e){sesionActual={id:null,participante,fecha,hora,local:true,n_cartas:0};}
   document.getElementById('sesion-form').style.display='none';
   document.getElementById('sesion-activa-info').style.display='block';
   document.getElementById('info-participante').textContent=participante;
-  document.getElementById('info-fecha').textContent=fFecha(fecha);
+  document.getElementById('info-fecha').textContent=fFecha(fecha)+(hora?' · '+hora:'');
   toast(`Sesi\u00f3n iniciada con ${participante}`);
 }
 
-async function cerrarSesion(){
+function cerrarSesion(){
   if(!sesionActual){toast('No hay sesi\u00f3n activa');return;}
+  // Mostrar modal de confirmacion
+  document.getElementById('modal-cerrar').classList.add('on');
+}
+
+async function confirmarCerrarSesion(){
+  document.getElementById('modal-cerrar').classList.remove('on');
   toast('Guardando sesi\u00f3n...');
 
   // Recoger cartas de la mesa
@@ -748,15 +770,22 @@ async function cerrarSesion(){
     .filter(t=>t.length>0);
 
   // Guardar en Supabase
-  if(sesionActual.id){
-    try{
+  try{
+    if(sesionActual.id){
       await sbAuth(`sesiones?id=eq.${sesionActual.id}`,{method:'PATCH',prefer:'return=minimal',body:{n_cartas:cartasData.length}});
       if(cartasData.length>0){
         const rows=cartasData.map(c=>({sesion_id:sesionActual.id,...c}));
         await sbAuth('cartas_sesion',{method:'POST',prefer:'return=minimal',body:rows});
       }
-    }catch(e){console.warn('Supabase error:',e);}
-  }
+    } else {
+      // Crear sesion nueva si no existe
+      const [row]=await sbAuth('sesiones',{method:'POST',body:{participante:sesionActual.participante,fecha:sesionActual.fecha,hora:sesionActual.hora||null,facilitador_id:usuario.id,facilitador_nombre:usuario.nombre,n_cartas:cartasData.length}});
+      if(row && cartasData.length>0){
+        const rows=cartasData.map(c=>({sesion_id:row.id,...c}));
+        await sbAuth('cartas_sesion',{method:'POST',prefer:'return=minimal',body:rows});
+      }
+    }
+  }catch(e){console.warn('Supabase error:',e);}
 
   // Generar PDF
   await generarPDF(sesionActual, cartasData, notas);
@@ -764,7 +793,12 @@ async function cerrarSesion(){
   sesionActual=null;
   document.getElementById('sesion-form').style.display='block';
   document.getElementById('sesion-activa-info').style.display='none';
-  toast('Sesi\u00f3n guardada \u2705 PDF descargado');
+  // Limpiar mesa
+  cartasMesa.forEach(c=>c.remove());
+  cartasMesa=[];cartaSeleccionada=null;
+  actualizarContador();
+  document.getElementById('empty').classList.remove('hidden');
+  toast('Sesi\u00f3n guardada \u2705 Mesa limpiada');
 }
 
 // ── PDF (captura completa de mesa) ──
@@ -891,7 +925,7 @@ async function generarPDF(sesion, cartas, notas){
     doc.text('INNER JOURNEY METHOD\u2122',M,7);
     doc.setFont('helvetica','normal');
     doc.setFontSize(8);
-    doc.text(`Participante: ${sesion.participante}  \u00b7  Facilitador: ${usuario.nombre}  \u00b7  Fecha: ${fFecha(sesion.fecha)}  \u00b7  ${cartas.length} cartas`,M,13);
+    doc.text(`Participante: ${sesion.participante}  \u00b7  Facilitador: ${usuario.nombre}  \u00b7  Fecha: ${fFecha(sesion.fecha)}${sesion.hora?" · "+sesion.hora:""}  \u00b7  ${cartas.length} cartas`,M,13);
 
     // Imagen de la mesa centrada
     const imgData=canvas.toDataURL('image/jpeg',0.85);
@@ -1545,7 +1579,7 @@ function cerrarPRG(){
   prgView.classList.remove('on');
   prgView.style.zIndex='';
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarPRG();cerrarModal();cerrarMiniMenu();cerrarPanel();}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarPRG();cerrarModal();cerrarMiniMenu();cerrarPanel();document.getElementById('modal-cerrar').classList.remove('on');}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
 document.getElementById('mesa').addEventListener('mousedown',e=>{if(!e.target.closest('.carta')){cerrarMiniMenu();if(cartaSeleccionada){cartaSeleccionada.classList.remove('selected');cartaSeleccionada=null;}}});
 function actualizarContador(){}
 function fFecha(f){if(!f)return '';const[y,m,d]=f.split('-');return `${d}/${m}/${y}`;}
