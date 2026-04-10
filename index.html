@@ -120,7 +120,12 @@ body{background:var(--mesa);color:#fff}
 #h-search{width:100%;padding:8px 12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12px;font-family:'Outfit',sans-serif;outline:none;margin-bottom:10px;transition:border-color .2s}
 #h-search:focus{border-color:var(--v)}
 #h-search::placeholder{color:rgba(255,255,255,.25)}
-.h-item{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:border-color .15s}
+.h-item{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:border-color .15s;position:relative}
+.h-item{position:relative}
+.h-del-btn{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:rgba(255,68,85,.15);border:1px solid rgba(255,68,85,.3);color:#ff4455;font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;font-weight:900;line-height:1;transition:all .15s;flex-shrink:0;z-index:5}
+.h-del-btn:hover{background:rgba(255,68,85,.4);border-color:#ff4455;transform:scale(1.1)}
+.h-item:hover .h-del-btn{display:flex}
+
 .h-item:hover{border-color:rgba(84,201,153,.3)}
 .h-item h4{font-size:12px;font-weight:700;color:#fff;margin-bottom:3px}
 .h-item p{font-size:10px;color:rgba(255,255,255,.4)}
@@ -1207,6 +1212,7 @@ function renderHistorial(rows){
   if(!rows||rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin sesiones a\u00fan</div>';return;}
   el.innerHTML=rows.map(s=>`
     <div class="h-item" onclick="toggleDetalle('${s.id}')">
+      ${usuario.esAdmin?`<button class="h-del-btn" onclick="pedirBorrarSesion(event,'${s.id}','${s.participante.replace(/'/g,"\\'")}')">&#10005;</button>`:''}
       <h4>${s.participante}</h4>
       <p>${fFecha(s.fecha)}${usuario.esAdmin&&s.facilitador_nombre?' \u00b7 '+s.facilitador_nombre:''}</p>
       <span class="h-badge">${s.n_cartas||0} carta${s.n_cartas!==1?'s':''}</span>
@@ -1217,6 +1223,26 @@ function renderHistorial(rows){
 function filtrarHistorial(q){
   if(!q.trim()){renderHistorial(historialData);return;}
   const f=q.toLowerCase();renderHistorial(historialData.filter(s=>s.participante.toLowerCase().includes(f)));
+}
+
+function pedirBorrarSesion(e,id,nombre){
+  e.stopPropagation();
+  if(!confirm('\u00bfBorrar la sesi\u00f3n de '+nombre+'?\nSe eliminar\u00e1n tambi\u00e9n sus cartas.')) return;
+  borrarSesion(id);
+}
+
+async function borrarSesion(id){
+  toast('Borrando sesi\u00f3n...');
+  try{
+    await sbAuth('cartas_sesion?sesion_id=eq.'+id,{method:'DELETE',prefer:'return=minimal'});
+    await sbAuth('sesiones?id=eq.'+id,{method:'DELETE',prefer:'return=minimal'});
+    historialData=historialData.filter(s=>s.id!==id);
+    renderHistorial(historialData);
+    toast('Sesi\u00f3n eliminada \u2713');
+  }catch(err){
+    console.error('Error al borrar:',err);
+    toast('Error al borrar la sesi\u00f3n');
+  }
 }
 
 async function toggleDetalle(sesionId){
