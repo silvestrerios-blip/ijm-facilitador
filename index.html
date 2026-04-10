@@ -665,7 +665,7 @@ body{background:var(--mesa);color:#fff}
     <h3 style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">Cerrar y guardar sesi&#243;n</h3>
     <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.55">Se guardar&#225; la sesi&#243;n, se generar&#225; el PDF<br>y la mesa quedar&#225; limpia.</p>
     <div style="display:flex;gap:8px">
-      <button onclick="document.getElementById('modal-cerrar').classList.remove('on')" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
+      <button onclick="const m=document.getElementById('modal-cerrar');m.classList.remove('on');m.style.display='';" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
       <button onclick="confirmarCerrarSesion()" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:var(--v);color:#fff">Guardar y limpiar</button>
     </div>
   </div>
@@ -752,12 +752,15 @@ async function iniciarSesion(){
 
 function cerrarSesion(){
   if(!sesionActual){toast('No hay sesi\u00f3n activa');return;}
-  // Mostrar modal de confirmacion
-  document.getElementById('modal-cerrar').classList.add('on');
+  const m=document.getElementById('modal-cerrar');
+  m.style.display='flex';
+  m.classList.add('on');
 }
 
 async function confirmarCerrarSesion(){
-  document.getElementById('modal-cerrar').classList.remove('on');
+  const m=document.getElementById('modal-cerrar');
+  m.classList.remove('on');
+  m.style.display='';
   toast('Guardando sesi\u00f3n...');
 
   // Recoger cartas de la mesa
