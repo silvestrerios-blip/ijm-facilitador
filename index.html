@@ -145,6 +145,18 @@ body{background:var(--mesa);color:#fff}
 .sr-val{font-size:11px;font-weight:700;color:var(--v)}
 .empty-p{text-align:center;padding:30px 10px;color:rgba(255,255,255,.25);font-size:12px}
 .empty-p .ei{font-size:32px;margin-bottom:8px}
+/* STATS CHARTS */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.bar-label{font-size:10px;color:rgba(255,255,255,.6);min-width:68px;text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:var(--v);border-radius:4px}
+.bar-val{font-size:10px;font-weight:700;color:var(--v);min-width:22px;text-align:right;flex-shrink:0}
+.month-row{display:flex;align-items:flex-end;gap:3px;height:70px;margin-bottom:4px}
+.month-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px}
+.month-bar{width:100%;background:var(--v);border-radius:3px 3px 0 0;opacity:.8;min-height:0}
+.month-lbl{font-size:7.5px;color:rgba(255,255,255,.35);text-align:center}
+.month-num{font-size:8px;color:var(--v);font-weight:700;min-height:10px}
+.recur-badge{background:rgba(84,201,153,.15);color:var(--v);font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -665,7 +677,7 @@ body{background:var(--mesa);color:#fff}
     <h3 style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">Cerrar y guardar sesi&#243;n</h3>
     <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.55">Se guardar&#225; la sesi&#243;n, se generar&#225; el PDF<br>y la mesa quedar&#225; limpia.</p>
     <div style="display:flex;gap:8px">
-      <button onclick="const m=document.getElementById('modal-cerrar');m.classList.remove('on');m.style.display='';" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
+      <button onclick="const _m=document.getElementById('modal-cerrar');_m.classList.remove('on');_m.style.display='';" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
       <button onclick="confirmarCerrarSesion()" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:var(--v);color:#fff">Guardar y limpiar</button>
     </div>
   </div>
@@ -758,9 +770,7 @@ function cerrarSesion(){
 }
 
 async function confirmarCerrarSesion(){
-  const m=document.getElementById('modal-cerrar');
-  m.classList.remove('on');
-  m.style.display='';
+  const _mc=document.getElementById('modal-cerrar');_mc.classList.remove('on');_mc.style.display='';
   toast('Guardando sesi\u00f3n...');
 
   // Recoger cartas de la mesa
@@ -1221,15 +1231,40 @@ async function toggleDetalle(sesionId){
 }
 
 async function cargarStats(){
-  if(!usuario.esAdmin){document.getElementById('stats-content').innerHTML='<div class="empty-p"><div class="ei">\ud83d\udd12</div>Solo administrador</div>';return;}
-  const el=document.getElementById('stats-content');el.innerHTML='<div class="empty-p"><div class="ei">\u23f3</div>Calculando...</div>';
+  if(!usuario.esAdmin){document.getElementById('stats-content').innerHTML='<div class="empty-p"><div class="ei">&#128274;</div>Solo administrador</div>';return;}
+  const el=document.getElementById('stats-content');
+  el.innerHTML='<div class="empty-p"><div class="ei">&#9203;</div>Calculando...</div>';
   try{
-    const rows=await sbAuth('sesiones?select=*&order=created_at.desc&limit=500')||[];
-    if(rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin datos a\u00fan</div>';return;}
-    const totalSes=rows.length,totalCartas=rows.reduce((a,r)=>a+(r.n_cartas||0),0),mediaCartas=totalSes>0?(totalCartas/totalSes).toFixed(1):0,participantes=new Set(rows.map(r=>r.participante)).size;
-    const porFac={};rows.forEach(r=>{const f=r.facilitador_nombre||'\u2014';if(!porFac[f])porFac[f]={ses:0,parts:new Set()};porFac[f].ses++;porFac[f].parts.add(r.participante);});
-    el.innerHTML=`<div class="stats-grid"><div class="sg-card"><div class="sg-n">${totalSes}</div><div class="sg-l">Sesiones</div></div><div class="sg-card"><div class="sg-n">${participantes}</div><div class="sg-l">Participantes</div></div><div class="sg-card"><div class="sg-n">${mediaCartas}</div><div class="sg-l">Cartas/sesi\u00f3n</div></div><div class="sg-card"><div class="sg-n">${Object.keys(porFac).length}</div><div class="sg-l">Facilitadores</div></div></div><div class="stat-card"><h3>Por facilitador</h3>${Object.entries(porFac).sort((a,b)=>b[1].ses-a[1].ses).map(([n,d])=>`<div class="stat-row"><span class="sr-name">${n}</span><span class="sr-val">${d.ses} ses \u00b7 ${d.parts.size} part.</span></div>`).join('')}</div>`;
-  }catch(e){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udce1</div>Sin conexi\u00f3n</div>';}
+    const [ses,carts]=await Promise.all([
+      sbAuth('sesiones?select=*&order=fecha.desc&limit=500'),
+      sbAuth('cartas_sesion?select=mazo&limit=5000')
+    ]);
+    const rows=ses||[],cartasRows=carts||[];
+    if(rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">&#128205;</div>Sin datos a&uacute;n</div>';return;}
+    const totalSes=rows.length;
+    const totalCartas=rows.reduce((a,r)=>a+(r.n_cartas||0),0);
+    const mediaCartas=totalSes>0?(totalCartas/totalSes).toFixed(1):0;
+    const participantes=new Set(rows.map(r=>r.participante)).size;
+    const partCount={};
+    rows.forEach(r=>{const p=r.participante||'--';partCount[p]=(partCount[p]||0)+1;});
+    const recurrentes=Object.entries(partCount).filter(([,n])=>n>1).sort((a,b)=>b[1]-a[1]);
+    const mazoCount={general:0,s:0,n:0,pal:0,ic:0};
+    cartasRows.forEach(c=>{if(c.mazo&&mazoCount[c.mazo]!==undefined)mazoCount[c.mazo]++;});
+    const totalMazo=Object.values(mazoCount).reduce((a,b)=>a+b,0)||1;
+    const mazoNames={general:'IJM General',s:'Sentimientos',n:'Necesidades',pal:'PAL',ic:'Iconos'};
+    const now=new Date();
+    const meses=[];
+    for(let i=11;i>=0;i--){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+      meses.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),lbl:d.toLocaleDateString('es-ES',{month:'short'}),n:0});
+    }
+    rows.forEach(r=>{const k=(r.fecha||r.created_at||'').substring(0,7);const m=meses.find(x=>x.key===k);if(m)m.n++;});
+    const maxMes=Math.max(...meses.map(m=>m.n),1);
+    const mazoBarras=Object.entries(mazoCount).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+(mazoNames[k]||k)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(v/totalMazo*100)+'%"></div></div><span class="bar-val">'+v+'</span></div>').join('');
+    const mesBarras=meses.map(m=>'<div class="month-col"><span class="month-num">'+(m.n||'')+'</span><div class="month-bar" style="height:'+(m.n?Math.max(3,Math.round(m.n/maxMes*52)):0)+'px"></div><span class="month-lbl">'+m.lbl+'</span></div>').join('');
+    const recurHTML=recurrentes.length===0?'<p style="font-size:11px;color:rgba(255,255,255,.3);text-align:center;padding:8px 0">Sin participantes recurrentes a&uacute;n</p>':recurrentes.map(([p,n])=>'<div class="stat-row"><span class="sr-name">'+p+'</span><span class="recur-badge">'+n+' sesiones</span></div>').join('');
+    el.innerHTML='<div class="stats-grid"><div class="sg-card"><div class="sg-n">'+totalSes+'</div><div class="sg-l">Sesiones</div></div><div class="sg-card"><div class="sg-n">'+participantes+'</div><div class="sg-l">Participantes</div></div><div class="sg-card"><div class="sg-n">'+mediaCartas+'</div><div class="sg-l">Cartas/sesi&oacute;n</div></div><div class="sg-card"><div class="sg-n">'+recurrentes.length+'</div><div class="sg-l">Recurrentes</div></div></div><div class="stat-card"><h3>&#128197; Sesiones por mes</h3><div class="month-row">'+mesBarras+'</div></div><div class="stat-card"><h3>&#127183; Uso por mazo</h3>'+mazoBarras+'</div><div class="stat-card"><h3>&#128260; Participantes recurrentes</h3>'+recurHTML+'</div>';
+  }catch(e){console.error('Stats error:',e);el.innerHTML='<div class="empty-p"><div class="ei">&#128225;</div>Error al cargar</div>';}
 }
 
 // ═══════════════════════════════════════════
