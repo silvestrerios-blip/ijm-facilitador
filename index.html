@@ -120,12 +120,7 @@ body{background:var(--mesa);color:#fff}
 #h-search{width:100%;padding:8px 12px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12px;font-family:'Outfit',sans-serif;outline:none;margin-bottom:10px;transition:border-color .2s}
 #h-search:focus{border-color:var(--v)}
 #h-search::placeholder{color:rgba(255,255,255,.25)}
-.h-item{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:border-color .15s;position:relative}
-.h-item{position:relative}
-.h-del-btn{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:rgba(255,68,85,.15);border:1px solid rgba(255,68,85,.3);color:#ff4455;font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;font-weight:900;line-height:1;transition:all .15s;flex-shrink:0;z-index:5}
-.h-del-btn:hover{background:rgba(255,68,85,.4);border-color:#ff4455;transform:scale(1.1)}
-.h-item:hover .h-del-btn{display:flex}
-
+.h-item{background:rgba(255,255,255,.04);border-radius:8px;padding:10px 12px;margin-bottom:8px;border:1px solid rgba(255,255,255,.06);cursor:pointer;transition:border-color .15s}
 .h-item:hover{border-color:rgba(84,201,153,.3)}
 .h-item h4{font-size:12px;font-weight:700;color:#fff;margin-bottom:3px}
 .h-item p{font-size:10px;color:rgba(255,255,255,.4)}
@@ -150,18 +145,33 @@ body{background:var(--mesa);color:#fff}
 .sr-val{font-size:11px;font-weight:700;color:var(--v)}
 .empty-p{text-align:center;padding:30px 10px;color:rgba(255,255,255,.25);font-size:12px}
 .empty-p .ei{font-size:32px;margin-bottom:8px}
-/* STATS CHARTS */
-.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
-.bar-label{font-size:10px;color:rgba(255,255,255,.6);min-width:68px;text-align:right;flex-shrink:0}
-.bar-track{flex:1;height:7px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
-.bar-fill{height:100%;background:var(--v);border-radius:4px}
-.bar-val{font-size:10px;font-weight:700;color:var(--v);min-width:22px;text-align:right;flex-shrink:0}
-.month-row{display:flex;align-items:flex-end;gap:3px;height:70px;margin-bottom:4px}
-.month-col{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px}
-.month-bar{width:100%;background:var(--v);border-radius:3px 3px 0 0;opacity:.8;min-height:0}
-.month-lbl{font-size:7.5px;color:rgba(255,255,255,.35);text-align:center}
-.month-num{font-size:8px;color:var(--v);font-weight:700;min-height:10px}
-.recur-badge{background:rgba(84,201,153,.15);color:var(--v);font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0}
+
+/* GRUPOS MENU */
+#grupos-menu{
+  position:fixed;z-index:300;
+  background:rgba(22,22,22,.97);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;padding:6px;
+  display:none;flex-direction:column;gap:3px;
+  box-shadow:0 8px 28px rgba(0,0,0,.55);
+  backdrop-filter:blur(10px);
+  min-width:170px;
+  bottom:calc(var(--tb) + 8px);
+}
+#grupos-menu.on{display:flex}
+.gm-title{font-size:8px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:rgba(255,255,255,.3);
+  padding:4px 10px 2px;pointer-events:none}
+.gm-btn{
+  padding:9px 14px;border-radius:7px;border:none;
+  font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Outfit',sans-serif;text-align:left;
+  background:rgba(255,255,255,.04);color:rgba(255,255,255,.7);
+  transition:all .12s;display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.gm-btn:hover{background:rgba(84,201,153,.12);color:#fff}
+.gm-count{font-size:9px;color:rgba(84,201,153,.7);font-weight:700}
+.gm-loading{padding:10px 14px;font-size:11px;color:rgba(255,255,255,.3);text-align:center}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -180,8 +190,6 @@ body{background:var(--mesa);color:#fff}
 /* MODAL */
 #modal{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
 #modal.on{display:flex}
-#modal-cerrar{display:none}
-#modal-cerrar.on{display:flex}
 #modal-box{background:#222;border:1px solid rgba(255,80,80,.25);border-radius:14px;padding:24px 28px;text-align:center;max-width:310px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 #modal-box h3{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
 #modal-box p{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.55}
@@ -552,6 +560,13 @@ body{background:var(--mesa);color:#fff}
         <path d="M4 16L6 13L10.5 9L13 6L13 16Z" fill="rgba(244,160,32,0.2)" stroke="#F4A020" stroke-width=".8"/>
       </svg>
     </div>
+    <div class="chip" id="chip-grupos" onclick="toggleGruposMenu(event)" title="Grupos temáticos">
+      <svg style="width:14px;height:14px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <span style="font-size:9px;font-weight:900;letter-spacing:.4px">GRUPOS</span>
+    </div>
     <div class="chip" onclick="crearNota()" title="Nota libre">
       <svg style="width:22px;height:18px;vertical-align:middle;flex-shrink:0" viewBox="0 0 22 18">
         <rect x="0" y="1" width="22" height="16" rx="3" fill="rgba(84,201,153,0.15)" stroke="#54C999" stroke-width="1.3"/>
@@ -660,6 +675,10 @@ body{background:var(--mesa);color:#fff}
   <button class="fm-btn" onclick="crearFlecha('arr')">&#8593; Arriba</button>
   <button class="fm-btn" onclick="crearFlecha('aba')">&#8595; Abajo</button>
 </div>
+<div id="grupos-menu">
+  <div class="gm-title">Grupos temáticos</div>
+  <div class="gm-loading" id="gm-loading">Cargando...</div>
+</div>
 <div id="prg-view" onclick="cerrarPRG()">
   <button id="prg-close" onclick="cerrarPRG()">&#10005;</button>
   <img id="prg-img" src="" alt="Preguntas">
@@ -677,12 +696,12 @@ body{background:var(--mesa);color:#fff}
   <div id="ver-nombre"></div>
   <img id="ver-img" src="" alt=""><div id="ver-lbl"></div>
 </div>
-<div id="modal-cerrar" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+<div id="modal-cerrar" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)">
   <div style="background:#222;border:1px solid rgba(84,201,153,.3);border-radius:14px;padding:24px 28px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)">
     <h3 style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">Cerrar y guardar sesi&#243;n</h3>
     <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.55">Se guardar&#225; la sesi&#243;n, se generar&#225; el PDF<br>y la mesa quedar&#225; limpia.</p>
     <div style="display:flex;gap:8px">
-      <button onclick="const _m=document.getElementById('modal-cerrar');_m.classList.remove('on');_m.style.display='';" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
+      <button onclick="document.getElementById('modal-cerrar').classList.remove('on')" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
       <button onclick="confirmarCerrarSesion()" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:var(--v);color:#fff">Guardar y limpiar</button>
     </div>
   </div>
@@ -711,6 +730,7 @@ const MAZOS={
 const NOMBRES={1:"Abuso",2:"Logro",3:"Acci\u00f3n",4:"Aventura",5:"Alerta",6:"Casi",7:"Apego",8:"Conciencia",9:"Equilibrio",10:"Barrera",11:"Base",12:"Creencias",13:"Nacimiento",14:"L\u00edmites",15:"Cuidado",16:"Celebraci\u00f3n",17:"Claridad",18:"Confrontaci\u00f3n",19:"Conexi\u00f3n",20:"Plenitud",21:"Conveniencia",22:"Creatividad",23:"Crisis",24:"Muerte",25:"Decisi\u00f3n",26:"Dedicaci\u00f3n",27:"Defensa",28:"Determinaci\u00f3n",29:"Distracci\u00f3n",30:"Sue\u00f1o",31:"Eficiencia",32:"Esfuerzo",33:"Ego",34:"Elasticidad",35:"Empoderamiento",36:"Vac\u00edo",37:"Final",38:"Exceso",39:"Salida",40:"Fantas\u00eda",41:"Miedo",42:"Lucha",43:"Flexibilidad",44:"Fluir",45:"Foco",46:"Amistad",47:"Futuro",48:"Objetivo",49:"Gratitud",50:"Escondite",51:"Esperanza",52:"Identidad",53:"Impulso",54:"Iniciativa",55:"Intimidad",56:"Introspecci\u00f3n",57:"Liderazgo",58:"Legado",59:"Liberaci\u00f3n",60:"Vida",61:"Ligereza",62:"Escucha",63:"Carga",64:"Amor",65:"Suerte",66:"M\u00e1scara",67:"Medir",68:"Memoria",69:"Momento",70:"Descuidar",71:"Oportunidad",72:"Sobrecarga",73:"Pasi\u00f3n",74:"Paciencia",75:"Pausa",76:"Perspectiva",77:"Proceso",78:"Proyecciones",79:"Reflejo",80:"Renovaci\u00f3n",81:"Resistencia",82:"Descanso",83:"Resultados",84:"Ritmo",85:"Tristeza",86:"Escasez",87:"Singularidad",88:"Velocidad",89:"Espontaneidad",90:"Estancamiento",91:"Inicio",92:"Fuerza",93:"Bloqueo",94:"\u00c9xito",95:"Equipo",96:"Tentaci\u00f3n",97:"Ataduras",98:"Tiempo",99:"Transformaci\u00f3n",100:"Transici\u00f3n",101:"Confianza",102:"Unidad",103:"Valor",104:"Visi\u00f3n",105:"Voz",106:"Espera",107:"Anhelo"};
 
 let usuario=null,sesionActual=null,cartasMesa=[],zMax=10,cartaSeleccionada=null,miniTarget=null,panelTab='sesion';
+let gruposData=[];
 let historialData=[];
 
 // ── AUTH ──
@@ -730,6 +750,7 @@ async function doLogin(){
     document.getElementById('inp-fecha').valueAsDate=new Date();
     const now=new Date();document.getElementById('inp-hora').value=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     toast(`Bienvenido, ${usuario.nombre} \u{1F44B}`);
+    cargarGrupos();
   }catch(e){errEl.textContent=e.message;}
   document.getElementById('btn-login').textContent='Entrar';
 }
@@ -769,13 +790,12 @@ async function iniciarSesion(){
 
 function cerrarSesion(){
   if(!sesionActual){toast('No hay sesi\u00f3n activa');return;}
-  const m=document.getElementById('modal-cerrar');
-  m.style.display='flex';
-  m.classList.add('on');
+  // Mostrar modal de confirmacion
+  document.getElementById('modal-cerrar').classList.add('on');
 }
 
 async function confirmarCerrarSesion(){
-  const _mc=document.getElementById('modal-cerrar');_mc.classList.remove('on');_mc.style.display='';
+  document.getElementById('modal-cerrar').classList.remove('on');
   toast('Guardando sesi\u00f3n...');
 
   // Recoger cartas de la mesa
@@ -1212,7 +1232,6 @@ function renderHistorial(rows){
   if(!rows||rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin sesiones a\u00fan</div>';return;}
   el.innerHTML=rows.map(s=>`
     <div class="h-item" onclick="toggleDetalle('${s.id}')">
-      ${usuario.esAdmin?`<button class="h-del-btn" onclick="pedirBorrarSesion(event,'${s.id}','${s.participante.replace(/'/g,"\\'")}')">&#10005;</button>`:''}
       <h4>${s.participante}</h4>
       <p>${fFecha(s.fecha)}${usuario.esAdmin&&s.facilitador_nombre?' \u00b7 '+s.facilitador_nombre:''}</p>
       <span class="h-badge">${s.n_cartas||0} carta${s.n_cartas!==1?'s':''}</span>
@@ -1223,26 +1242,6 @@ function renderHistorial(rows){
 function filtrarHistorial(q){
   if(!q.trim()){renderHistorial(historialData);return;}
   const f=q.toLowerCase();renderHistorial(historialData.filter(s=>s.participante.toLowerCase().includes(f)));
-}
-
-function pedirBorrarSesion(e,id,nombre){
-  e.stopPropagation();
-  if(!confirm('\u00bfBorrar la sesi\u00f3n de '+nombre+'?\nSe eliminar\u00e1n tambi\u00e9n sus cartas.')) return;
-  borrarSesion(id);
-}
-
-async function borrarSesion(id){
-  toast('Borrando sesi\u00f3n...');
-  try{
-    await sbAuth('cartas_sesion?sesion_id=eq.'+id,{method:'DELETE',prefer:'return=minimal'});
-    await sbAuth('sesiones?id=eq.'+id,{method:'DELETE',prefer:'return=minimal'});
-    historialData=historialData.filter(s=>s.id!==id);
-    renderHistorial(historialData);
-    toast('Sesi\u00f3n eliminada \u2713');
-  }catch(err){
-    console.error('Error al borrar:',err);
-    toast('Error al borrar la sesi\u00f3n');
-  }
 }
 
 async function toggleDetalle(sesionId){
@@ -1257,40 +1256,15 @@ async function toggleDetalle(sesionId){
 }
 
 async function cargarStats(){
-  if(!usuario.esAdmin){document.getElementById('stats-content').innerHTML='<div class="empty-p"><div class="ei">&#128274;</div>Solo administrador</div>';return;}
-  const el=document.getElementById('stats-content');
-  el.innerHTML='<div class="empty-p"><div class="ei">&#9203;</div>Calculando...</div>';
+  if(!usuario.esAdmin){document.getElementById('stats-content').innerHTML='<div class="empty-p"><div class="ei">\ud83d\udd12</div>Solo administrador</div>';return;}
+  const el=document.getElementById('stats-content');el.innerHTML='<div class="empty-p"><div class="ei">\u23f3</div>Calculando...</div>';
   try{
-    const [ses,carts]=await Promise.all([
-      sbAuth('sesiones?select=*&order=fecha.desc&limit=500'),
-      sbAuth('cartas_sesion?select=mazo&limit=5000')
-    ]);
-    const rows=ses||[],cartasRows=carts||[];
-    if(rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">&#128205;</div>Sin datos a&uacute;n</div>';return;}
-    const totalSes=rows.length;
-    const totalCartas=rows.reduce((a,r)=>a+(r.n_cartas||0),0);
-    const mediaCartas=totalSes>0?(totalCartas/totalSes).toFixed(1):0;
-    const participantes=new Set(rows.map(r=>r.participante)).size;
-    const partCount={};
-    rows.forEach(r=>{const p=r.participante||'--';partCount[p]=(partCount[p]||0)+1;});
-    const recurrentes=Object.entries(partCount).filter(([,n])=>n>1).sort((a,b)=>b[1]-a[1]);
-    const mazoCount={general:0,s:0,n:0,pal:0,ic:0};
-    cartasRows.forEach(c=>{if(c.mazo&&mazoCount[c.mazo]!==undefined)mazoCount[c.mazo]++;});
-    const totalMazo=Object.values(mazoCount).reduce((a,b)=>a+b,0)||1;
-    const mazoNames={general:'IJM General',s:'Sentimientos',n:'Necesidades',pal:'PAL',ic:'Iconos'};
-    const now=new Date();
-    const meses=[];
-    for(let i=11;i>=0;i--){
-      const d=new Date(now.getFullYear(),now.getMonth()-i,1);
-      meses.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),lbl:d.toLocaleDateString('es-ES',{month:'short'}),n:0});
-    }
-    rows.forEach(r=>{const k=(r.fecha||r.created_at||'').substring(0,7);const m=meses.find(x=>x.key===k);if(m)m.n++;});
-    const maxMes=Math.max(...meses.map(m=>m.n),1);
-    const mazoBarras=Object.entries(mazoCount).sort((a,b)=>b[1]-a[1]).map(([k,v])=>'<div class="bar-row"><span class="bar-label">'+(mazoNames[k]||k)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+Math.round(v/totalMazo*100)+'%"></div></div><span class="bar-val">'+v+'</span></div>').join('');
-    const mesBarras=meses.map(m=>'<div class="month-col"><span class="month-num">'+(m.n||'')+'</span><div class="month-bar" style="height:'+(m.n?Math.max(3,Math.round(m.n/maxMes*52)):0)+'px"></div><span class="month-lbl">'+m.lbl+'</span></div>').join('');
-    const recurHTML=recurrentes.length===0?'<p style="font-size:11px;color:rgba(255,255,255,.3);text-align:center;padding:8px 0">Sin participantes recurrentes a&uacute;n</p>':recurrentes.map(([p,n])=>'<div class="stat-row"><span class="sr-name">'+p+'</span><span class="recur-badge">'+n+' sesiones</span></div>').join('');
-    el.innerHTML='<div class="stats-grid"><div class="sg-card"><div class="sg-n">'+totalSes+'</div><div class="sg-l">Sesiones</div></div><div class="sg-card"><div class="sg-n">'+participantes+'</div><div class="sg-l">Participantes</div></div><div class="sg-card"><div class="sg-n">'+mediaCartas+'</div><div class="sg-l">Cartas/sesi&oacute;n</div></div><div class="sg-card"><div class="sg-n">'+recurrentes.length+'</div><div class="sg-l">Recurrentes</div></div></div><div class="stat-card"><h3>&#128197; Sesiones por mes</h3><div class="month-row">'+mesBarras+'</div></div><div class="stat-card"><h3>&#127183; Uso por mazo</h3>'+mazoBarras+'</div><div class="stat-card"><h3>&#128260; Participantes recurrentes</h3>'+recurHTML+'</div>';
-  }catch(e){console.error('Stats error:',e);el.innerHTML='<div class="empty-p"><div class="ei">&#128225;</div>Error al cargar</div>';}
+    const rows=await sbAuth('sesiones?select=*&order=created_at.desc&limit=500')||[];
+    if(rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin datos a\u00fan</div>';return;}
+    const totalSes=rows.length,totalCartas=rows.reduce((a,r)=>a+(r.n_cartas||0),0),mediaCartas=totalSes>0?(totalCartas/totalSes).toFixed(1):0,participantes=new Set(rows.map(r=>r.participante)).size;
+    const porFac={};rows.forEach(r=>{const f=r.facilitador_nombre||'\u2014';if(!porFac[f])porFac[f]={ses:0,parts:new Set()};porFac[f].ses++;porFac[f].parts.add(r.participante);});
+    el.innerHTML=`<div class="stats-grid"><div class="sg-card"><div class="sg-n">${totalSes}</div><div class="sg-l">Sesiones</div></div><div class="sg-card"><div class="sg-n">${participantes}</div><div class="sg-l">Participantes</div></div><div class="sg-card"><div class="sg-n">${mediaCartas}</div><div class="sg-l">Cartas/sesi\u00f3n</div></div><div class="sg-card"><div class="sg-n">${Object.keys(porFac).length}</div><div class="sg-l">Facilitadores</div></div></div><div class="stat-card"><h3>Por facilitador</h3>${Object.entries(porFac).sort((a,b)=>b[1].ses-a[1].ses).map(([n,d])=>`<div class="stat-row"><span class="sr-name">${n}</span><span class="sr-val">${d.ses} ses \u00b7 ${d.parts.size} part.</span></div>`).join('')}</div>`;
+  }catch(e){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udce1</div>Sin conexi\u00f3n</div>';}
 }
 
 // ═══════════════════════════════════════════
@@ -1650,6 +1624,77 @@ document.getElementById('mesa').addEventListener('mousedown',e=>{if(!e.target.cl
 function actualizarContador(){}
 function fFecha(f){if(!f)return '';const[y,m,d]=f.split('-');return `${d}/${m}/${y}`;}
 let _tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';clearTimeout(_tt);_tt=setTimeout(()=>el.style.display='none',2600);}
+
+// ══════════════════════════════════════════
+// GRUPOS TEMÁTICOS
+// ══════════════════════════════════════════
+async function cargarGrupos(){
+  try{
+    const rows = await sbAuth('grupos?select=id,nombre,orden&order=orden.asc') || [];
+    // Para cada grupo cargamos el conteo de cartas
+    const counts = await sbAuth('grupos_cartas?select=grupo_id') || [];
+    const countMap = {};
+    counts.forEach(r=>{ countMap[r.grupo_id]=(countMap[r.grupo_id]||0)+1; });
+    gruposData = rows.map(r=>({...r, count: countMap[r.id]||0}));
+    renderGruposMenu();
+  }catch(e){ console.warn('Error cargando grupos:',e); }
+}
+
+function renderGruposMenu(){
+  const menu = document.getElementById('grupos-menu');
+  const loading = document.getElementById('gm-loading');
+  if(loading) loading.remove();
+  // Limpiar botones anteriores
+  menu.querySelectorAll('.gm-btn').forEach(b=>b.remove());
+  gruposData.forEach(g=>{
+    const btn = document.createElement('button');
+    btn.className = 'gm-btn';
+    btn.innerHTML = `<span>${g.nombre}</span><span class="gm-count">${g.count}</span>`;
+    btn.onclick = () => sacarGrupo(g.id, g.nombre);
+    menu.appendChild(btn);
+  });
+}
+
+function toggleGruposMenu(e){
+  e.stopPropagation();
+  const m = document.getElementById('grupos-menu');
+  const btn = document.getElementById('chip-grupos');
+  if(m.classList.contains('on')){ m.classList.remove('on'); return; }
+  const rect = btn.getBoundingClientRect();
+  m.style.left = (rect.left - 10) + 'px';
+  m.classList.add('on');
+}
+
+async function sacarGrupo(grupoId, nombre){
+  document.getElementById('grupos-menu').classList.remove('on');
+  toast('Cargando grupo ' + nombre + '...');
+  try{
+    const cartas = await sbAuth('grupos_cartas?select=carta_numero&grupo_id=eq.'+grupoId+'&order=carta_numero.asc') || [];
+    if(cartas.length === 0){ toast('El grupo está vacío'); return; }
+    const wrap = document.getElementById('mesa-wrap');
+    // Apilar todas las cartas en el centro-izquierda con ligero offset aleatorio
+    const baseX = 30;
+    const baseY = 40 + wrap.scrollTop;
+    cartas.forEach((c, i) => {
+      const x = baseX + (Math.random() * 8 - 4);
+      const y = baseY + (Math.random() * 8 - 4);
+      crearCarta('general', c.carta_numero, x, y);
+    });
+    document.getElementById('empty').classList.add('hidden');
+    toast(nombre + ': ' + cartas.length + ' cartas en mesa ✅');
+  }catch(e){
+    console.error('Error sacarGrupo:',e);
+    toast('Error al cargar el grupo');
+  }
+}
+
+// Cerrar menú grupos al clicar fuera
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#grupos-menu') && !e.target.closest('#chip-grupos')){
+    document.getElementById('grupos-menu')?.classList.remove('on');
+  }
+});
+
 </script>
 </body>
 </html>
