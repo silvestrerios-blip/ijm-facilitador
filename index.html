@@ -190,6 +190,8 @@ body{background:var(--mesa);color:#fff}
 /* MODAL */
 #modal{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
 #modal.on{display:flex}
+#modal-cerrar{display:none}
+#modal-cerrar.on{display:flex}
 #modal-box{background:#222;border:1px solid rgba(255,80,80,.25);border-radius:14px;padding:24px 28px;text-align:center;max-width:310px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 #modal-box h3{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
 #modal-box p{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.55}
@@ -696,12 +698,12 @@ body{background:var(--mesa);color:#fff}
   <div id="ver-nombre"></div>
   <img id="ver-img" src="" alt=""><div id="ver-lbl"></div>
 </div>
-<div id="modal-cerrar" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)">
+<div id="modal-cerrar" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);align-items:center;justify-content:center;backdrop-filter:blur(6px)">
   <div style="background:#222;border:1px solid rgba(84,201,153,.3);border-radius:14px;padding:24px 28px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)">
     <h3 style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px">Cerrar y guardar sesi&#243;n</h3>
     <p style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.55">Se guardar&#225; la sesi&#243;n, se generar&#225; el PDF<br>y la mesa quedar&#225; limpia.</p>
     <div style="display:flex;gap:8px">
-      <button onclick="document.getElementById('modal-cerrar').classList.remove('on')" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
+      <button onclick="const _m=document.getElementById('modal-cerrar');_m.classList.remove('on');_m.style.display='';" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:rgba(255,255,255,.07);color:rgba(255,255,255,.45)">Cancelar</button>
       <button onclick="confirmarCerrarSesion()" style="flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:11px;font-weight:700;text-transform:uppercase;font-family:'Outfit',sans-serif;background:var(--v);color:#fff">Guardar y limpiar</button>
     </div>
   </div>
@@ -790,12 +792,13 @@ async function iniciarSesion(){
 
 function cerrarSesion(){
   if(!sesionActual){toast('No hay sesi\u00f3n activa');return;}
-  // Mostrar modal de confirmacion
-  document.getElementById('modal-cerrar').classList.add('on');
+  const m=document.getElementById('modal-cerrar');
+  m.style.display='flex';
+  m.classList.add('on');
 }
 
 async function confirmarCerrarSesion(){
-  document.getElementById('modal-cerrar').classList.remove('on');
+  const _mc=document.getElementById('modal-cerrar');_mc.classList.remove('on');_mc.style.display='';
   toast('Guardando sesi\u00f3n...');
 
   // Recoger cartas de la mesa
