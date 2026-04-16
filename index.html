@@ -172,6 +172,44 @@ body{background:var(--mesa);color:#fff}
 .gm-btn:hover{background:rgba(84,201,153,.12);color:#fff}
 .gm-count{font-size:9px;color:rgba(84,201,153,.7);font-weight:700}
 .gm-loading{padding:10px 14px;font-size:11px;color:rgba(255,255,255,.3);text-align:center}
+
+/* LINEA FLECHA SVG */
+.linea-wrap{position:absolute;cursor:default;user-select:none;touch-action:none;z-index:30;overflow:visible;}
+.linea-wrap.selected .linea-svg line{stroke:#fff;stroke-width:2.5}
+.linea-wrap.selected .linea-svg polygon{fill:#fff}
+.linea-svg{overflow:visible;position:absolute;top:0;left:0;pointer-events:none}
+.linea-handle{
+  position:absolute;width:14px;height:14px;border-radius:50%;
+  background:var(--v);border:2px solid #fff;
+  cursor:grab;z-index:5;transform:translate(-50%,-50%);
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+  transition:transform .1s;
+}
+.linea-handle:hover{transform:translate(-50%,-50%) scale(1.3)}
+.linea-handle:active{cursor:grabbing}
+.linea-label-inp{
+  position:absolute;
+  background:rgba(0,0,0,.65);
+  border:1px solid rgba(84,201,153,.4);
+  border-radius:5px;
+  color:#fff;font-size:10px;font-weight:600;
+  font-family:'Outfit',sans-serif;
+  text-align:center;padding:2px 7px;
+  cursor:text;outline:none;
+  transform:translateX(-50%);
+  min-width:60px;max-width:140px;
+  white-space:nowrap;
+}
+.linea-label-inp::placeholder{color:rgba(255,255,255,.3)}
+.linea-del{
+  position:absolute;width:18px;height:18px;border-radius:50%;
+  background:#ff4455;color:#fff;border:2px solid #1a1a1a;
+  font-size:9px;cursor:pointer;display:none;
+  align-items:center;justify-content:center;
+  font-weight:900;z-index:10;
+  transform:translate(-50%,-50%);
+}
+.linea-wrap:hover .linea-del,.linea-wrap.selected .linea-del{display:flex}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -580,6 +618,12 @@ body{background:var(--mesa);color:#fff}
         <path d="M1 7 L19 7" stroke="#54C999" stroke-width="1.8" stroke-linecap="round"/>
         <path d="M14 3 L19 7 L14 11" stroke="#54C999" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M6 3 L1 7 L6 11" stroke="#54C999" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="chip" onclick="crearLineaFlecha()" title="Línea con flecha">
+      <svg style="width:22px;height:14px;flex-shrink:0" viewBox="0 0 22 14" fill="none">
+        <line x1="1" y1="7" x2="18" y2="7" stroke="#54C999" stroke-width="1.8" stroke-linecap="round"/>
+        <polygon points="18,3 22,7 18,11" fill="#54C999"/>
       </svg>
     </div>
   </div>
@@ -1697,6 +1741,139 @@ document.addEventListener('click', e=>{
     document.getElementById('grupos-menu')?.classList.remove('on');
   }
 });
+
+
+// ══════════════════════════════════════════
+// LINEA FLECHA (SVG conector)
+// ══════════════════════════════════════════
+function crearLineaFlecha(){
+  const wrap = document.getElementById('mesa-wrap');
+  const scrollY = wrap.scrollTop;
+  const mesaW = document.getElementById('mesa').offsetWidth;
+
+  // Puntos iniciales: horizontal, centro pantalla
+  const cx = Math.min(mesaW - 160, Math.max(20, (mesaW/2) - 80));
+  const cy = scrollY + 120;
+  let x1 = cx, y1 = cy, x2 = cx + 160, y2 = cy;
+
+  const container = document.createElement('div');
+  container.className = 'linea-wrap';
+  container.style.cssText = 'left:0;top:0;width:100%;height:1px;z-index:'+( ++zMax);
+
+  // SVG
+  const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('class','linea-svg');
+  svg.setAttribute('width','100%');
+  svg.setAttribute('height', document.getElementById('mesa').offsetHeight+'px');
+  svg.style.cssText='position:absolute;top:0;left:0;pointer-events:none;overflow:visible';
+
+  // Defs arrowhead
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const markerId = 'arr-'+Date.now();
+  defs.innerHTML = `<marker id="${markerId}" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <polygon points="0,0 8,3 0,6" fill="#54C999"/>
+  </marker>`;
+  svg.appendChild(defs);
+
+  // Line
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('stroke','#54C999');
+  line.setAttribute('stroke-width','2');
+  line.setAttribute('stroke-linecap','round');
+  line.setAttribute('marker-end','url(#'+markerId+')');
+  svg.appendChild(line);
+  container.appendChild(svg);
+
+  // Handle origen (círculo)
+  const h1 = document.createElement('div');
+  h1.className = 'linea-handle';
+  h1.title = 'Origen';
+  container.appendChild(h1);
+
+  // Handle destino (círculo)
+  const h2 = document.createElement('div');
+  h2.className = 'linea-handle';
+  h2.title = 'Destino';
+  container.appendChild(h2);
+
+  // Etiqueta texto
+  const lbl = document.createElement('input');
+  lbl.className = 'linea-label-inp';
+  lbl.placeholder = 'Etiqueta...';
+  lbl.type = 'text';
+  lbl.onmousedown = e => e.stopPropagation();
+  lbl.ontouchstart = e => e.stopPropagation();
+  lbl.onclick = e => e.stopPropagation();
+  container.appendChild(lbl);
+
+  // Botón borrar
+  const del = document.createElement('div');
+  del.className = 'linea-del';
+  del.innerHTML = '&#10005;';
+  del.onclick = e => { e.stopPropagation(); container.remove(); cartasMesa.splice(cartasMesa.indexOf(container),1); actualizarContador(); };
+  container.appendChild(del);
+
+  function updateLine(){
+    const ax = Math.min(x1,x2)-10, ay = Math.min(y1,y2)-10;
+    line.setAttribute('x1', x1);
+    line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2);
+    line.setAttribute('y2', y2);
+    // Handles
+    h1.style.left = x1+'px'; h1.style.top = y1+'px';
+    h2.style.left = x2+'px'; h2.style.top = y2+'px';
+    // Label en punto medio
+    const mx = (x1+x2)/2, my = (y1+y2)/2;
+    lbl.style.left = mx+'px';
+    lbl.style.top = (my-18)+'px';
+    // Del en punto medio
+    del.style.left = mx+'px';
+    del.style.top = (my+6)+'px';
+  }
+
+  function makeDraggable(handle, getSet){
+    let sx, sy, ox, oy;
+    function onMove(e){
+      const t = e.touches ? e.touches[0] : e;
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      getSet(ox+dx, oy+dy);
+      updateLine();
+    }
+    function onUp(){
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      handle.removeEventListener('touchmove', onMove);
+      handle.removeEventListener('touchend', onUp);
+    }
+    handle.addEventListener('mousedown', e=>{
+      e.stopPropagation(); e.preventDefault();
+      const t = e.touches ? e.touches[0] : e;
+      sx=t.clientX; sy=t.clientY;
+      const pos = getSet(); ox=pos[0]; oy=pos[1];
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+    });
+    handle.addEventListener('touchstart', e=>{
+      e.stopPropagation();
+      const t = e.touches[0];
+      sx=t.clientX; sy=t.clientY;
+      const pos = getSet(); ox=pos[0]; oy=pos[1];
+      handle.addEventListener('touchmove', onMove, {passive:false});
+      handle.addEventListener('touchend', onUp);
+    },{passive:true});
+  }
+
+  makeDraggable(h1, (nx,ny)=>{ if(nx!==undefined){x1=nx;y1=ny;} return [x1,y1]; });
+  makeDraggable(h2, (nx,ny)=>{ if(nx!==undefined){x2=nx;y2=ny;} return [x2,y2]; });
+
+  container.addEventListener('mousedown', ()=>{ sel(container); container.style.zIndex=++zMax; });
+
+  updateLine();
+  document.getElementById('mesa').appendChild(container);
+  cartasMesa.push(container);
+  actualizarContador();
+  document.getElementById('empty').classList.add('hidden');
+}
 
 </script>
 </body>
