@@ -1770,8 +1770,8 @@ function crearLineaFlecha(){
   // Defs arrowhead
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
   const markerId = 'arr-'+Date.now();
-  defs.innerHTML = `<marker id="${markerId}" markerWidth="12" markerHeight="12" refX="9" refY="4.5" orient="auto">
-    <polygon points="0,0 12,4.5 0,9" fill="#54C999"/>
+  defs.innerHTML = `<marker id="${markerId}" markerWidth="14" markerHeight="14" refX="0" refY="7" orient="auto">
+    <polygon points="0,0 14,7 0,14" fill="#54C999"/>
   </marker>`;
   svg.appendChild(defs);
 
@@ -1815,10 +1815,16 @@ function crearLineaFlecha(){
 
   function updateLine(){
     const ax = Math.min(x1,x2)-10, ay = Math.min(y1,y2)-10;
+    // Acortar línea para que la flecha quede DELANTE de la bola destino
+    const dx2 = x2-x1, dy2 = y2-y1;
+    const len2 = Math.sqrt(dx2*dx2+dy2*dy2)||1;
+    const off = 8; // offset en px
+    const ex = x2 + (dx2/len2)*off;
+    const ey = y2 + (dy2/len2)*off;
     line.setAttribute('x1', x1);
     line.setAttribute('y1', y1);
-    line.setAttribute('x2', x2);
-    line.setAttribute('y2', y2);
+    line.setAttribute('x2', ex);
+    line.setAttribute('y2', ey);
     // Handles
     h1.style.left = x1+'px'; h1.style.top = y1+'px';
     h2.style.left = x2+'px'; h2.style.top = y2+'px';
