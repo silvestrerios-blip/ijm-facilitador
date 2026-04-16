@@ -1770,8 +1770,8 @@ function crearLineaFlecha(){
   // Defs arrowhead
   const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
   const markerId = 'arr-'+Date.now();
-  defs.innerHTML = `<marker id="${markerId}" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-    <polygon points="0,0 8,3 0,6" fill="#54C999"/>
+  defs.innerHTML = `<marker id="${markerId}" markerWidth="12" markerHeight="12" refX="9" refY="4.5" orient="auto">
+    <polygon points="0,0 12,4.5 0,9" fill="#54C999"/>
   </marker>`;
   svg.appendChild(defs);
 
