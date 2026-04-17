@@ -738,6 +738,7 @@ body{background:var(--mesa);color:#fff}
   <div id="ver-btns">
     <button class="ver-btn" id="ver-btn-i" onclick="toggleVerNombre(event)">N &#8212; Nombre</button>
     <button class="ver-btn" id="ver-btn-prg" onclick="toggleVerPRG(event)">? &#8212; Preguntas</button>
+    <button class="ver-btn" id="ver-btn-mini" onclick="toggleVerMini(event)">&#8599; Mini</button>
   </div>
   <div id="ver-nombre"></div>
   <img id="ver-img" src="" alt=""><div id="ver-lbl"></div>
@@ -1215,6 +1216,8 @@ function verAmpliada(mazo,n,cartaDiv){
     verNombre.textContent=NOMBRES[n]||'';
     verNombre.style.display='none';
     document.getElementById('ver-btn-i').classList.remove('on');
+    const bm=document.getElementById('ver-btn-mini');
+    if(bm){bm.classList.toggle('on',cartaDiv&&cartaDiv._mini===true);bm.textContent=cartaDiv&&cartaDiv._mini?'\u2199 Normal':'\u2197 Mini';}
     verCartaActual={mazo,n,div:cartaDiv};
   } else {
     btns.style.display='none';
@@ -1247,6 +1250,7 @@ function cerrarVer(){
   document.getElementById('ver-btns').style.display='none';
   document.getElementById('ver-nombre').style.display='none';
   document.getElementById('ver-btn-i').classList.remove('on');
+  const _bm=document.getElementById('ver-btn-mini');if(_bm)_bm.classList.remove('on');
 }
 function sel(el){if(cartaSeleccionada)cartaSeleccionada.classList.remove('selected');cartaSeleccionada=el;el.classList.add('selected');}
 function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.style.opacity='0';el.style.transform='scale(.8)';setTimeout(()=>{el.remove();cartasMesa=cartasMesa.filter(c=>c!==el);if(cartaSeleccionada===el)cartaSeleccionada=null;actualizarContador();actualizarInfoSesion();if(cartasMesa.length===0)document.getElementById('empty').classList.remove('hidden');},180);}
@@ -1879,6 +1883,22 @@ function crearLineaFlecha(){
   cartasMesa.push(container);
   actualizarContador();
   document.getElementById('empty').classList.add('hidden');
+}
+
+
+function toggleVerMini(e){
+  e.stopPropagation();
+  if(!verCartaActual?.div) return;
+  const div = verCartaActual.div;
+  const btn = document.getElementById('ver-btn-mini');
+  const isMini = !div._mini;
+  div._mini = isMini;
+  // Aplicar escala via transform
+  div.style.transform = isMini ? 'scale(0.5)' : '';
+  div.style.transformOrigin = 'top left';
+  btn.classList.toggle('on', isMini);
+  btn.textContent = isMini ? '\u2199 Normal' : '\u2197 Mini';
+  toast(isMini ? 'Carta reducida al 50%' : 'Carta a tamaño normal');
 }
 
 </script>
