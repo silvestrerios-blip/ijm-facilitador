@@ -1213,6 +1213,8 @@ function verAmpliada(mazo,n,cartaDiv){
   const verNombre=document.getElementById('ver-nombre');
   if(mazo==='general'){
     btns.style.display='flex';
+    document.getElementById('ver-btn-i').style.display='';
+    document.getElementById('ver-btn-prg').style.display='';
     verNombre.textContent=NOMBRES[n]||'';
     verNombre.style.display='none';
     document.getElementById('ver-btn-i').classList.remove('on');
@@ -1220,8 +1222,13 @@ function verAmpliada(mazo,n,cartaDiv){
     if(bm){bm.classList.toggle('on',cartaDiv&&cartaDiv._mini===true);bm.textContent=cartaDiv&&cartaDiv._mini?'\u2199 Normal':'\u2197 Mini';}
     verCartaActual={mazo,n,div:cartaDiv};
   } else {
-    btns.style.display='none';
-    verCartaActual=null;
+    // Para S, N, IC, PAL: mostrar solo botón mini
+    btns.style.display='flex';
+    document.getElementById('ver-btn-i').style.display='none';
+    document.getElementById('ver-btn-prg').style.display='none';
+    const bm2=document.getElementById('ver-btn-mini');
+    if(bm2){bm2.style.display='';bm2.classList.toggle('on',cartaDiv&&cartaDiv._mini===true);bm2.textContent=cartaDiv&&cartaDiv._mini?'\u2199 Normal':'\u2197 Mini';}
+    verCartaActual={mazo,n,div:cartaDiv};
   }
   document.getElementById('ver').classList.add('on');
 }
