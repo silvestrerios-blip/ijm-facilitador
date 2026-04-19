@@ -826,9 +826,13 @@ body{background:var(--mesa);color:#fff}
     <button class="ver-btn" id="ver-btn-i" onclick="toggleVerNombre(event)">N &#8212; Nombre</button>
     <button class="ver-btn" id="ver-btn-prg" onclick="toggleVerPRG(event)">? &#8212; Preguntas</button>
     <button class="ver-btn" id="ver-btn-mini" onclick="toggleVerMini(event)">&#8599; Mini</button>
+    <button class="ver-btn" id="ver-btn-nota" onclick="toggleVerNota(event)">&#9998; Nota</button>
   </div>
   <div id="ver-nombre"></div>
   <img id="ver-img" src="" alt=""><div id="ver-lbl"></div>
+  <div id="ver-nota-wrap" style="display:none;position:absolute;bottom:80px;left:50%;transform:translateX(-50%);width:min(400px,80vw);z-index:10">
+    <input id="ver-nota-inp" type="text" placeholder="Escribe una nota..." style="width:100%;padding:10px 14px;background:rgba(0,0,0,.82);border:1.5px solid rgba(84,201,153,.5);border-radius:10px;color:#fff;font-size:13px;font-weight:600;font-family:'Outfit',sans-serif;outline:none;text-align:center">
+  </div>
 </div>
 <div id="modal-cerrar" style="position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.72);align-items:center;justify-content:center;backdrop-filter:blur(6px)">
   <div style="background:#222;border:1px solid rgba(84,201,153,.3);border-radius:14px;padding:24px 28px;text-align:center;max-width:320px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5)">
@@ -1271,33 +1275,16 @@ function crearCarta(mazo,n,x,y){
       div.appendChild(nombreLabel);
       div._nombreLabel=nombreLabel;
       // Franja verde inferior -> nota editable
-      const fe=document.createElement('input');
-      fe.type='text';fe.placeholder='Nota del participante...';fe.className='franja-edit';
-      fe.onmousedown=e=>e.stopPropagation();fe.ontouchstart=e=>e.stopPropagation();fe.onclick=e=>e.stopPropagation();
-      setupFranjaEdit(fe);
-      div.appendChild(fe);
+      // Nota gestionada desde vista ampliada
     } else if(mazo==='s'||mazo==='n'){
-      const fi=document.createElement('input');
-      fi.type='text';fi.placeholder='Nota...';
-      fi.className='franja-edit';
-      fi.onmousedown=e=>e.stopPropagation();
-      fi.ontouchstart=e=>e.stopPropagation();
-      fi.onclick=e=>e.stopPropagation();
-      setupFranjaEdit(fi);
-      div.appendChild(fi);
+      // Nota gestionada desde vista ampliada
     }
   }else if(m.tipo==='pal'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
   }else if(m.tipo==='ic'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     const fi=document.createElement('input');
-    fi.type='text';fi.placeholder='¿Qué te sugiere?';
-    fi.className='franja-edit';
-    fi.onmousedown=e=>e.stopPropagation();
-    fi.ontouchstart=e=>e.stopPropagation();
-    fi.onclick=e=>e.stopPropagation();
-    setupFranjaEdit(fi);
-    div.appendChild(fi);
+    // Nota gestionada desde vista ampliada
   }
   addDel(div);addGestos(div,()=>verAmpliada(mazo,n,div));
   document.getElementById('mesa').appendChild(div);
@@ -1407,20 +1394,36 @@ function verAmpliada(mazo,n,cartaDiv){
     btns.style.display='flex';
     document.getElementById('ver-btn-i').style.display='';
     document.getElementById('ver-btn-prg').style.display='';
+    document.getElementById('ver-btn-nota').style.display='';
     verNombre.textContent=NOMBRES[n]||'';
     verNombre.style.display='none';
     document.getElementById('ver-btn-i').classList.remove('on');
     const bm=document.getElementById('ver-btn-mini');
     if(bm){bm.classList.toggle('on',cartaDiv&&cartaDiv._mini===true);bm.textContent=cartaDiv&&cartaDiv._mini?'\u2199 Normal':'\u2197 Mini';}
     verCartaActual={mazo,n,div:cartaDiv};
+    // Restaurar nota
+    const vni=document.getElementById('ver-nota-inp');
+    const vnw=document.getElementById('ver-nota-wrap');
+    const btnNota=document.getElementById('ver-btn-nota');
+    if(vni&&cartaDiv){vni.value=cartaDiv._nota||'';}
+    if(vnw) vnw.style.display='none';
+    if(btnNota) btnNota.classList.remove('on');
   } else {
     // Para S, N, IC, PAL: mostrar solo botón mini
     btns.style.display='flex';
     document.getElementById('ver-btn-i').style.display='none';
     document.getElementById('ver-btn-prg').style.display='none';
+    document.getElementById('ver-btn-nota').style.display='';
     const bm2=document.getElementById('ver-btn-mini');
     if(bm2){bm2.style.display='';bm2.classList.toggle('on',cartaDiv&&cartaDiv._mini===true);bm2.textContent=cartaDiv&&cartaDiv._mini?'\u2199 Normal':'\u2197 Mini';}
     verCartaActual={mazo,n,div:cartaDiv};
+    // Restaurar nota
+    const vni2=document.getElementById('ver-nota-inp');
+    const vnw2=document.getElementById('ver-nota-wrap');
+    const btnNota2=document.getElementById('ver-btn-nota');
+    if(vni2&&cartaDiv){vni2.value=cartaDiv._nota||'';}
+    if(vnw2) vnw2.style.display='none';
+    if(btnNota2) btnNota2.classList.remove('on');
   }
   document.getElementById('ver').classList.add('on');
 }
@@ -1450,6 +1453,8 @@ function cerrarVer(){
   document.getElementById('ver-nombre').style.display='none';
   document.getElementById('ver-btn-i').classList.remove('on');
   const _bm=document.getElementById('ver-btn-mini');if(_bm)_bm.classList.remove('on');
+  document.getElementById('ver-nota-wrap').style.display='none';
+  document.getElementById('ver-btn-nota').classList.remove('on');
 }
 function sel(el){if(cartaSeleccionada)cartaSeleccionada.classList.remove('selected');cartaSeleccionada=el;el.classList.add('selected');}
 function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.style.opacity='0';el.style.transform='scale(.8)';setTimeout(()=>{el.remove();cartasMesa=cartasMesa.filter(c=>c!==el);if(cartaSeleccionada===el)cartaSeleccionada=null;actualizarContador();actualizarInfoSesion();if(cartasMesa.length===0)document.getElementById('empty').classList.remove('hidden');},180);}
@@ -2385,10 +2390,11 @@ function colocarCartasProposito(){
   const TOOLBAR_H = 50; // altura toolbar
   const HDR_MARGIN = 4; // espacio entre cabecera y primera fila
 
-  // Tamaño igual que las cartas estándar (respeta el slider de escala)
-  const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
-  const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120');
-  const cartaH = ch + 34; // imagen + franja nota
+  // Tamaño ajustado para que quepan 5 filas en pantalla
+  const availH = VH - TOOLBAR_H - HDR_H - HDR_MARGIN - GAP_Y*(ROWS-1);
+  const ch = Math.floor(availH / ROWS);
+  const cw = Math.floor(ch / 0.67);
+  const cartaH = ch;
 
   // Posicionar cabeceras
   const hdrEl = document.getElementById('proposito-headers');
@@ -2420,12 +2426,7 @@ function colocarCartasProposito(){
 
       // Franja editable
       const fe = document.createElement('input');
-      fe.type='text'; fe.placeholder='Nota...'; fe.className='franja-edit';
-      fe.onmousedown=e=>e.stopPropagation();
-      fe.ontouchstart=e=>e.stopPropagation();
-      fe.onclick=e=>e.stopPropagation();
-      setupFranjaEdit(fe);
-      div.appendChild(fe);
+      // Nota gestionada desde vista ampliada
 
       addDel(div);
       addGestos(div, ()=>verAmpliada('general', n, div));
@@ -2446,6 +2447,25 @@ function setupFranjaEdit(el){
   });
   // Estado inicial
   if(el.value && el.value.trim().length > 0) el.classList.add('tiene-texto');
+}
+
+
+function toggleVerNota(e){
+  e.stopPropagation();
+  if(!verCartaActual) return;
+  const wrap = document.getElementById('ver-nota-wrap');
+  const btn = document.getElementById('ver-btn-nota');
+  const inp = document.getElementById('ver-nota-inp');
+  const on = wrap.style.display === 'none';
+  wrap.style.display = on ? 'block' : 'none';
+  btn.classList.toggle('on', on);
+  if(on){ inp.focus(); }
+  // Guardar nota en la carta al escribir
+  inp.oninput = ()=>{
+    if(verCartaActual?.div){
+      verCartaActual.div._nota = inp.value.trim();
+    }
+  };
 }
 
 </script>
