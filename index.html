@@ -563,24 +563,27 @@ body{background:var(--mesa);color:#fff}
 
 /* Franja editable S/N/IC */
 .franja-edit{
-  width:100%;
+  position:absolute;bottom:0;left:0;right:0;
   border:none;outline:none;
-  background:rgba(0,0,0,.7);
+  background:rgba(0,0,0,.72);
   border-top:2px solid rgba(84,201,153,.4);
   color:#fff;
-  font-size:13px;font-weight:600;
+  font-size:12px;font-weight:600;
   font-family:'Outfit',sans-serif;
-  text-align:center;padding:7px 6px;
+  text-align:center;padding:5px 6px;
   cursor:text;display:block;
-  flex-shrink:0;
+  opacity:0;transition:opacity .15s;
+  z-index:3;
 }
-.franja-edit::placeholder{color:rgba(255,255,255,.3)}
+.franja-edit::placeholder{color:transparent}
 .franja-edit:focus{
-  background:rgba(0,0,0,.75);
+  opacity:1;
+  background:rgba(0,0,0,.82);
   border-top-color:var(--v);
   outline:none;
-  color:#fff;
 }
+.franja-edit.tiene-texto{opacity:1}
+.franja-edit:focus::placeholder{color:rgba(255,255,255,.3)}
 
 /* ══ MANTELES ══ */
 #mantel-menu{
@@ -1271,6 +1274,7 @@ function crearCarta(mazo,n,x,y){
       const fe=document.createElement('input');
       fe.type='text';fe.placeholder='Nota del participante...';fe.className='franja-edit';
       fe.onmousedown=e=>e.stopPropagation();fe.ontouchstart=e=>e.stopPropagation();fe.onclick=e=>e.stopPropagation();
+      setupFranjaEdit(fe);
       div.appendChild(fe);
     } else if(mazo==='s'||mazo==='n'){
       const fi=document.createElement('input');
@@ -1279,6 +1283,7 @@ function crearCarta(mazo,n,x,y){
       fi.onmousedown=e=>e.stopPropagation();
       fi.ontouchstart=e=>e.stopPropagation();
       fi.onclick=e=>e.stopPropagation();
+      setupFranjaEdit(fi);
       div.appendChild(fi);
     }
   }else if(m.tipo==='pal'){
@@ -1291,6 +1296,7 @@ function crearCarta(mazo,n,x,y){
     fi.onmousedown=e=>e.stopPropagation();
     fi.ontouchstart=e=>e.stopPropagation();
     fi.onclick=e=>e.stopPropagation();
+    setupFranjaEdit(fi);
     div.appendChild(fi);
   }
   addDel(div);addGestos(div,()=>verAmpliada(mazo,n,div));
@@ -2418,6 +2424,7 @@ function colocarCartasProposito(){
       fe.onmousedown=e=>e.stopPropagation();
       fe.ontouchstart=e=>e.stopPropagation();
       fe.onclick=e=>e.stopPropagation();
+      setupFranjaEdit(fe);
       div.appendChild(fe);
 
       addDel(div);
@@ -2430,6 +2437,15 @@ function colocarCartasProposito(){
   actualizarContador();
   document.getElementById('empty').classList.add('hidden');
   toast('Mantel Prop\u00f3sito listo \u2014 25 cartas colocadas');
+}
+
+
+function setupFranjaEdit(el){
+  el.addEventListener('input', ()=>{
+    el.classList.toggle('tiene-texto', el.value.trim().length > 0);
+  });
+  // Estado inicial
+  if(el.value && el.value.trim().length > 0) el.classList.add('tiene-texto');
 }
 
 </script>
