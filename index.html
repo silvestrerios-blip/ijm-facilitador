@@ -2258,7 +2258,9 @@ function colocarCartasCirculo(W, VH, scrollY, cx, cy){
     del.onclick = e => { e.stopPropagation(); elimCarta(div); };
     div.appendChild(del);
 
-    // Click para girar
+    // Empieza mostrando dorso (girada=true) y al tocar muestra imagen
+    div._flip = true;
+    div.classList.add('girada');
     div.addEventListener('click', ()=>{
       div._flip = !div._flip;
       div.classList.toggle('girada', div._flip);
@@ -2280,7 +2282,8 @@ function colocarCartasCirculo(W, VH, scrollY, cx, cy){
 
 function girarTodasFlip(){
   const btn = document.getElementById('btn-girar-todas');
-  const todasGiradas = cartasFlip.filter(c=>c._flip).length === cartasFlip.filter(c=>document.contains(c)).length;
+  const activas = cartasFlip.filter(c=>document.contains(c));
+  const todasGiradas = activas.every(c=>c._flip);
   cartasFlip.forEach(c=>{
     if(!document.contains(c)) return;
     c._flip = !todasGiradas;
