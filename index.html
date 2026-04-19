@@ -2372,18 +2372,22 @@ function colocarCartasProposito(){
   const scrollY = wrap.scrollTop;
   const COLS = 5, ROWS = 5;
   const LABELS = ['PROPÓSITO','TRAMPA','CAÍDA','',''];
-  const HDR_H = 28;
+  const HDR_H = 30;   // altura cabecera
   const MARGIN = 14;
-  const GAP = 8;
+  const GAP_X = 10;   // espacio horizontal entre cartas
+  const GAP_Y = 38;   // espacio vertical — incluye franja nota (~30px) + margen
+  const TOOLBAR_H = 50; // altura toolbar
+  const HDR_MARGIN = 10; // espacio entre cabecera y primera fila
 
   // Tamaño igual que las cartas estándar (respeta el slider de escala)
   const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
   const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120');
+  const cartaH = ch + 34; // imagen + franja nota
 
   // Posicionar cabeceras
   const hdrEl = document.getElementById('proposito-headers');
-  hdrEl.style.cssText = `top:${50}px;left:${MARGIN}px;width:${W - MARGIN*2}px;flex-direction:row;`;
-  hdrEl.innerHTML = LABELS.map(l=>`<div class="prop-col-hdr" style="width:${cw}px;height:${HDR_H}px;flex-shrink:0;margin-right:${GAP}px">${l}</div>`).join('');
+  hdrEl.style.cssText = `top:${TOOLBAR_H}px;left:${MARGIN}px;width:${W - MARGIN*2}px;flex-direction:row;gap:${GAP_X}px;`;
+  hdrEl.innerHTML = LABELS.map(l=>`<div class="prop-col-hdr" style="width:${cw}px;height:${HDR_H}px;flex-shrink:0">${l}</div>`).join('');
   hdrEl.classList.add('visible');
 
   // Colocar 25 cartas
@@ -2394,8 +2398,8 @@ function colocarCartasProposito(){
       do{ n = Math.floor(Math.random()*107)+1; }while(usados.has(n));
       usados.add(n);
 
-      const x = MARGIN + col*(cw+GAP);
-      const y = scrollY + HDR_H + 8 + row*(ch+GAP) + 50;
+      const x = MARGIN + col*(cw+GAP_X);
+      const y = scrollY + TOOLBAR_H + HDR_H + HDR_MARGIN + row*(cartaH+GAP_Y);
 
       const div = document.createElement('div');
       div.className = 'carta carta-foto';
