@@ -304,6 +304,21 @@ body{background:var(--mesa);color:#fff}
   word-break:break-word;line-height:1.3;
 }
 .carta-nota-label.visible{display:block}
+
+/* BOTONES COLUMNA IZQUIERDA */
+#col-btns{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.col-btn{
+  width:26px;height:26px;border-radius:6px;
+  border:1.5px solid rgba(84,201,153,.3);
+  background:transparent;color:var(--v);
+  font-size:10px;font-weight:900;cursor:pointer;
+  font-family:'Outfit',sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;flex-shrink:0;
+}
+.col-btn:hover{background:rgba(84,201,153,.15);border-color:var(--v)}
+.col-btn-del{border-color:rgba(255,80,80,.25);color:rgba(255,100,100,.6)}
+.col-btn-del:hover{border-color:#ff5050;color:#ff5050;background:rgba(255,80,80,.1)}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -659,6 +674,18 @@ body{background:var(--mesa);color:#fff}
       <circle cx="72" cy="22" r="2.2" fill="#54C999" opacity=".7"/>
     </svg>
     <div class="ijm-text"><span class="t1">INNER</span><span class="t2">JOURNEY</span><span class="t3">METHOD&#8482;</span></div>
+  </div>
+  <div id="col-btns">
+    <button class="col-btn" onclick="sacarColumna(2)" title="2 cartas en columna">2</button>
+    <button class="col-btn" onclick="sacarColumna(3)" title="3 cartas en columna">3</button>
+    <button class="col-btn" onclick="sacarColumna(5)" title="5 cartas en columna">5</button>
+    <button class="col-btn col-btn-del" onclick="borrarColumna()" title="Borrar columna">
+      <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
+        <path d="M3 4h10M6 4V3h4v1M5 4v8h6V4H5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="7" y1="7" x2="7" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        <line x1="9" y1="7" x2="9" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </button>
   </div>
   <div class="sep"></div>
   <div class="chips">
@@ -1311,6 +1338,7 @@ function crearCarta(mazo,n,x,y){
   addDel(div);addGestos(div,()=>verAmpliada(mazo,n,div));
   document.getElementById('mesa').appendChild(div);
   cartasMesa.push(div);actualizarContador();actualizarInfoSesion();
+  return div;
 }
 
 function crearNota(){
@@ -2500,6 +2528,45 @@ function toggleVerNota(e){
       }
     }
   };
+}
+
+
+// ══════════════════════════════════════════
+// COLUMNA IZQUIERDA
+// ══════════════════════════════════════════
+let cartasColumna = [];
+
+function sacarColumna(n){
+  // Borrar columna anterior
+  borrarColumna();
+  const wrap = document.getElementById('mesa-wrap');
+  const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
+  const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120');
+  const cardH = ch + 4; // imagen + pequeño margen
+  const x = 14;
+  const baseY = wrap.scrollTop + 14;
+  const usados = new Set();
+
+  for(let i = 0; i < n; i++){
+    let num;
+    do{ num = Math.floor(Math.random()*107)+1; }while(usados.has(num));
+    usados.add(num);
+    const y = baseY + i * (cardH + 8);
+    const div = crearCarta('general', num, x, y);
+    if(div) cartasColumna.push(div);
+  }
+  document.getElementById('empty').classList.add('hidden');
+}
+
+function borrarColumna(){
+  cartasColumna.forEach(c=>{
+    c.remove();
+    cartasMesa = cartasMesa.filter(m=>m!==c);
+  });
+  cartasColumna = [];
+  actualizarContador();
+  actualizarInfoSesion();
+  if(cartasMesa.length===0) document.getElementById('empty').classList.remove('hidden');
 }
 
 </script>
