@@ -255,6 +255,19 @@ body{background:var(--mesa);color:#fff}
   font-family:'Outfit',sans-serif;transition:all .15s;}
 .cant-btn:hover{border-color:var(--v);background:rgba(84,201,153,.15);color:var(--v)}
 .cant-btn.on{border-color:var(--v);background:rgba(84,201,153,.25);color:var(--v)}
+
+.figura-sel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+.figura-opt{border-radius:8px;border:1.5px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);cursor:pointer;padding:6px 4px;
+  display:flex;flex-direction:column;align-items:center;gap:4px;transition:all .15s}
+.figura-opt:hover{border-color:rgba(84,201,153,.5);background:rgba(84,201,153,.08)}
+.figura-opt.on{border-color:var(--v);background:rgba(84,201,153,.18)}
+.figura-opt svg{width:52px;height:52px}
+.figura-opt span{font-size:8.5px;font-weight:700;color:rgba(255,255,255,.5);
+  text-transform:uppercase;letter-spacing:.5px;text-align:center}
+.figura-opt.on span{color:var(--v)}
+#modal-cantidad-box{max-width:340px}
+
 #btn-cant-ok{width:100%;padding:11px;border-radius:9px;border:none;
   background:var(--v);color:#fff;font-size:12px;font-weight:800;
   text-transform:uppercase;letter-spacing:.8px;cursor:pointer;font-family:'Outfit',sans-serif}
@@ -804,8 +817,58 @@ body{background:var(--mesa);color:#fff}
 </div>
 <div id="modal-cantidad">
   <div id="modal-cantidad-box">
-    <h3>&#9398; Cartas en el c&#237;rculo</h3>
-    <p>&#191;Cu&#225;ntas cartas quieres colocar?</p>
+    <h3>&#9398; Configurar mantel circular</h3>
+    <p style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:12px;text-transform:uppercase;letter-spacing:.8px">Figura central</p>
+    <div class="figura-sel" id="figura-sel">
+      <div class="figura-opt on" onclick="selFigura(0)">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2a2525"/>
+        <path d="M50 10 C50 10,78 13,82 40 C86 67,62 80,42 73 C22 66,18 47,28 33 C38 19,58 21,64 35 C70 49,58 60,46 57 C34 54,32 43,38 37 C44 31,52 35,52 42" stroke="#54C999" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+        </svg><span>Espiral</span>
+      </div>
+      <div class="figura-opt" onclick="selFigura(1)">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2a2525"/>
+        <circle cx="50" cy="28" r="10" stroke="#54C999" stroke-width="2.5" fill="none"/>
+        <path d="M42 38 Q35 42 33 52 Q31 62 35 68 L38 82" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M58 38 Q65 42 67 52 Q69 62 65 68 L62 82" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M38 44 Q28 43 22 50 Q17 57 22 64" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M62 44 Q72 43 78 50 Q83 57 78 64" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg><span>Persona</span>
+      </div>
+      <div class="figura-opt" onclick="selFigura(2)">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2a2525"/>
+        <path d="M50 80 Q42 72 38 62 Q34 52 38 43 Q42 34 50 32" stroke="#54C999" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="56" cy="26" rx="12" ry="9" fill="#2a2525" stroke="#54C999" stroke-width="2.5"/>
+        <path d="M38 55 Q28 52 22 58" stroke="#54C999" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M40 50 Q32 38 24 32 Q19 28 22 24 Q26 20 32 26 Q38 32 40 42" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M44 46 Q52 34 62 28 Q68 24 70 28 Q72 33 66 38 Q58 44 50 46" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg><span>Drag&#243;n</span>
+      </div>
+      <div class="figura-opt" onclick="selFigura(3)">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2a2525"/>
+        <path d="M50 82 Q50 70 50 55" stroke="#54C999" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M50 65 Q38 58 28 52" stroke="#54C999" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 60 Q62 53 72 47" stroke="#54C999" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M50 55 Q40 46 33 38" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M50 55 Q60 46 67 38" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M50 55 Q50 42 50 28" stroke="#54C999" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <circle cx="50" cy="24" r="4" fill="#54C999" opacity=".9"/>
+        </svg><span>&#193;rbol</span>
+      </div>
+      <div class="figura-opt" onclick="selFigura(4)">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2a2525"/>
+        <path d="M15 75 L50 25 L85 75 Z" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linejoin="round"/>
+        <path d="M50 25 Q44 35 41 42 Q47 39 50 42 Q53 39 59 42 Q56 35 50 25 Z" stroke="#54C999" stroke-width="1.5" fill="none" opacity=".8"/>
+        <circle cx="50" cy="22" r="4" fill="#54C999" opacity=".9"/>
+        </svg><span>Monta&#241;a</span>
+      </div>
+      <div class="figura-opt" onclick="selFigura(5)">
+        <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="#2a2525"/>
+        <path d="M12 54 C20 54 24 40 34 38 C44 36 48 50 58 47 C68 44 72 30 82 30 C89 30 93 40 96 44" stroke="#54C999" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M68 30 C72 22 82 19 86 24 C91 30 89 40 82 44 C75 48 66 44 64 36 C62 28 68 22 74 22" stroke="#54C999" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        </svg><span>Ola</span>
+      </div>
+    </div>
+    <p style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:10px;text-transform:uppercase;letter-spacing:.8px">N&#250;mero de cartas</p>
     <div class="cantidad-btns">
       <button class="cant-btn" onclick="selCantidad(3)">3</button>
       <button class="cant-btn" onclick="selCantidad(4)">4</button>
@@ -2065,6 +2128,13 @@ function setMantelCircular(){
   document.getElementById('mantel-menu').classList.remove('on');
   document.getElementById('modal-cantidad').style.display='flex';
   document.getElementById('modal-cantidad').classList.add('on');
+}
+
+function selFigura(n){
+  figuraCircularIdx = n;
+  document.querySelectorAll('.figura-opt').forEach((b,i)=>{
+    b.classList.toggle('on', i===n);
+  });
 }
 
 function selCantidad(n){
