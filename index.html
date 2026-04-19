@@ -2312,8 +2312,8 @@ function colocarCartasCirculo(W, VH, scrollY, cx, cy){
 
     const div = document.createElement('div');
     div.className = 'carta-flip';
-    const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180') * 0.5;
-    const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120') * 0.5;
+    const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
+    const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120');
     div.style.cssText = `left:${x - cw/2}px;top:${y - ch/2}px;width:${cw}px;height:${ch}px;z-index:${++zMax}`;
     div._mazo = 'general'; div._n = num; div._flip = false;
 
