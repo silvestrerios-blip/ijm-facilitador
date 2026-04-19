@@ -13,7 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
-:root{--v:#54C999;--vd:#3aaa7f;--mesa:#606060;--tb:50px;--safe-b:env(safe-area-inset-bottom,0px)}
+:root{--v:#54C999;--vd:#3aaa7f;--mesa:#606060;--tb:72px;--safe-b:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;font-family:'Outfit',sans-serif}
 body{background:var(--mesa);color:#fff}
@@ -34,7 +34,9 @@ body{background:var(--mesa);color:#fff}
 #btn-login:hover{background:var(--vd)}
 #login-error{color:#ff6677;font-size:12px;text-align:center;margin-top:10px;min-height:16px}
 /* TOOLBAR */
-#toolbar{position:fixed;top:0;left:0;right:0;height:var(--tb);background:rgba(28,28,28,.97);backdrop-filter:blur(14px);display:flex;align-items:center;padding:0 12px;gap:8px;z-index:100;border-bottom:1px solid rgba(84,201,153,.22)}
+#toolbar{position:fixed;top:0;left:0;right:0;height:var(--tb);background:rgba(28,28,28,.97);backdrop-filter:blur(14px);display:flex;flex-direction:column;align-items:stretch;padding:0;z-index:100;border-bottom:1px solid rgba(84,201,153,.22)}
+#toolbar-row1{display:flex;align-items:center;padding:0 12px;gap:8px;height:50px;flex-shrink:0}
+#toolbar-row2{display:flex;align-items:center;padding:0 12px;gap:6px;height:22px;border-top:1px solid rgba(84,201,153,.1);flex-shrink:0}
 #ijm-logo{display:flex;align-items:center;gap:7px;flex-shrink:0;user-select:none}
 .ijm-spiral{width:26px;height:26px;flex-shrink:0}
 .ijm-text{font-size:9.5px;font-weight:900;letter-spacing:1.4px;white-space:nowrap}
@@ -306,19 +308,20 @@ body{background:var(--mesa);color:#fff}
 .carta-nota-label.visible{display:block}
 
 /* BOTONES COLUMNA IZQUIERDA */
-#col-btns{display:flex;align-items:center;gap:4px;flex-shrink:0}
+#col-btns{display:flex;align-items:center;gap:5px}
 .col-btn{
-  width:26px;height:26px;border-radius:6px;
-  border:1.5px solid rgba(84,201,153,.3);
+  height:16px;padding:0 8px;border-radius:4px;
+  border:1px solid rgba(84,201,153,.35);
   background:transparent;color:var(--v);
-  font-size:10px;font-weight:900;cursor:pointer;
+  font-size:9px;font-weight:900;cursor:pointer;
   font-family:'Outfit',sans-serif;
   display:flex;align-items:center;justify-content:center;
   transition:all .15s;flex-shrink:0;
 }
 .col-btn:hover{background:rgba(84,201,153,.15);border-color:var(--v)}
-.col-btn-del{border-color:rgba(255,80,80,.25);color:rgba(255,100,100,.6)}
+.col-btn-del{border-color:rgba(255,80,80,.25);color:rgba(255,100,100,.6);padding:0 6px}
 .col-btn-del:hover{border-color:#ff5050;color:#ff5050;background:rgba(255,80,80,.1)}
+.col-row-label{font-size:8px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px;text-transform:uppercase;margin-right:2px}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -668,26 +671,15 @@ body{background:var(--mesa);color:#fff}
 </div>
 
 <div id="toolbar">
-  <div id="ijm-logo">
-    <svg class="ijm-spiral" viewBox="0 0 100 100" fill="none">
-      <path d="M50 15C50 15,78 18,82 45C86 72,62 85,42 78C22 71,18 52,28 38C38 24,58 26,64 40C70 54,58 65,46 62C34 59,32 48,38 42C44 36,52 40,52 47" stroke="#54C999" stroke-width="4.5" stroke-linecap="round"/>
-      <circle cx="72" cy="22" r="2.2" fill="#54C999" opacity=".7"/>
-    </svg>
-    <div class="ijm-text"><span class="t1">INNER</span><span class="t2">JOURNEY</span><span class="t3">METHOD&#8482;</span></div>
-  </div>
-  <div id="col-btns">
-    <button class="col-btn" onclick="sacarColumna(2)" title="2 cartas en columna">2</button>
-    <button class="col-btn" onclick="sacarColumna(3)" title="3 cartas en columna">3</button>
-    <button class="col-btn" onclick="sacarColumna(5)" title="5 cartas en columna">5</button>
-    <button class="col-btn col-btn-del" onclick="borrarColumna()" title="Borrar columna">
-      <svg viewBox="0 0 16 16" fill="none" width="12" height="12">
-        <path d="M3 4h10M6 4V3h4v1M5 4v8h6V4H5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="7" y1="7" x2="7" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-        <line x1="9" y1="7" x2="9" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+  <div id="toolbar-row1">
+    <div id="ijm-logo">
+      <svg class="ijm-spiral" viewBox="0 0 100 100" fill="none">
+        <path d="M50 15C50 15,78 18,82 45C86 72,62 85,42 78C22 71,18 52,28 38C38 24,58 26,64 40C70 54,58 65,46 62C34 59,32 48,38 42C44 36,52 40,52 47" stroke="#54C999" stroke-width="4.5" stroke-linecap="round"/>
+        <circle cx="72" cy="22" r="2.2" fill="#54C999" opacity=".7"/>
       </svg>
-    </button>
-  </div>
-  <div class="sep"></div>
+      <div class="ijm-text"><span class="t1">INNER</span><span class="t2">JOURNEY</span><span class="t3">METHOD&#8482;</span></div>
+    </div>
+    <div class="sep"></div>
   <div class="chips">
     <div class="chip on" onclick="sacarCarta('general',this)" title="General (107 cartas)">
       <svg style="width:14px;height:14px;vertical-align:middle;margin-right:4px;flex-shrink:0" viewBox="0 0 24 24" fill="none">
@@ -772,6 +764,22 @@ body{background:var(--mesa);color:#fff}
     </button>
     <button id="btn-limpiar" onclick="pedirLimpiar()">&#128465; Limpiar</button>
   </div>
+  </div><!-- end toolbar-row1 -->
+  <div id="toolbar-row2">
+    <span class="col-row-label">Selecci&#243;n</span>
+    <div id="col-btns">
+      <button class="col-btn" onclick="sacarColumna(2)" title="2 cartas">2</button>
+      <button class="col-btn" onclick="sacarColumna(3)" title="3 cartas">3</button>
+      <button class="col-btn" onclick="sacarColumna(5)" title="5 cartas">5</button>
+      <button class="col-btn col-btn-del" onclick="borrarColumna()" title="Borrar selecci&#243;n">
+        <svg viewBox="0 0 16 16" fill="none" width="10" height="10">
+          <path d="M3 4h10M6 4V3h4v1M5 4v8h6V4H5z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="7" y1="7" x2="7" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          <line x1="9" y1="7" x2="9" y2="10" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+  </div><!-- end toolbar-row2 -->
 </div>
 
 <div id="mesa-wrap"><div id="mesa">
@@ -2537,12 +2545,12 @@ function toggleVerNota(e){
 let cartasColumna = [];
 
 function sacarColumna(n){
-  // Borrar columna anterior
+  // Solo borrar las cartas que siguen en la columna (no han sido movidas)
   borrarColumna();
   const wrap = document.getElementById('mesa-wrap');
   const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
   const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120');
-  const cardH = ch + 4; // imagen + pequeño margen
+  const cardH = ch + 4;
   const x = 14;
   const baseY = wrap.scrollTop + 14;
   const usados = new Set();
@@ -2553,17 +2561,28 @@ function sacarColumna(n){
     usados.add(num);
     const y = baseY + i * (cardH + 8);
     const div = crearCarta('general', num, x, y);
-    if(div) cartasColumna.push(div);
+    if(div){
+      div._esColumna = true;
+      div._colX = x;
+      cartasColumna.push(div);
+    }
   }
   document.getElementById('empty').classList.add('hidden');
 }
 
 function borrarColumna(){
-  cartasColumna.forEach(c=>{
+  // Solo borrar las que siguen en su posición original (no movidas)
+  const porBorrar = cartasColumna.filter(c=>{
+    if(!document.contains(c)) return false;
+    const cx = parseInt(c.style.left)||0;
+    // Si la carta sigue cerca de la columna izquierda (x < 30px)
+    return cx < 30;
+  });
+  porBorrar.forEach(c=>{
     c.remove();
     cartasMesa = cartasMesa.filter(m=>m!==c);
   });
-  cartasColumna = [];
+  cartasColumna = cartasColumna.filter(c=>document.contains(c) && (parseInt(c.style.left)||0) >= 30);
   actualizarContador();
   actualizarInfoSesion();
   if(cartasMesa.length===0) document.getElementById('empty').classList.remove('hidden');
