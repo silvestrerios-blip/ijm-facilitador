@@ -1044,15 +1044,24 @@ async function generarPDF(sesion, cartas, notas){
   try{
     toast('Capturando mesa...');
 
-    // Para PDF: forzar imagen visible en todas las cartas flip, guardar estado
+    // Para PDF: ocultar dorso, mostrar imagen directamente
     const cartasFlipEstado = [];
     document.querySelectorAll('.carta-flip').forEach(c=>{
       const estabaGirada = c.classList.contains('girada');
       cartasFlipEstado.push({c, estabaGirada});
-      c.classList.remove('girada');
       const inner = c.querySelector('.carta-flip-inner');
-      if(inner) inner.style.transition='none';
+      if(inner){
+        inner.style.transition = 'none';
+        inner.style.transform = 'rotateY(0deg)';
+      }
+      // Ocultar el back (dorso) y mostrar el front (imagen)
+      const front = c.querySelector('.carta-flip-front');
+      const back = c.querySelector('.carta-flip-back');
+      if(front) front.style.cssText='position:absolute;inset:0;backface-visibility:visible;-webkit-backface-visibility:visible;border-radius:8px;overflow:hidden;z-index:2';
+      if(back) back.style.display='none';
     });
+    // Forzar reflow antes de capturar
+    await new Promise(r=>setTimeout(r,120));
 
     // Reemplazar inputs/textareas con divs visibles para html2canvas
 
@@ -1178,9 +1187,16 @@ async function generarPDF(sesion, cartas, notas){
     wrap.scrollTop=scrollTop;
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
-      c.classList.toggle('girada', estabaGirada);
       const inner = c.querySelector('.carta-flip-inner');
-      if(inner) inner.style.transition='';
+      if(inner){
+        inner.style.transition = '';
+        inner.style.transform = '';
+      }
+      const front = c.querySelector('.carta-flip-front');
+      const back = c.querySelector('.carta-flip-back');
+      if(front) front.style.cssText='';
+      if(back) back.style.display='';
+      c.classList.toggle('girada', estabaGirada);
     });
     // Restaurar elementos
     pdfOverlays.forEach(({div, el})=>{
