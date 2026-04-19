@@ -2376,9 +2376,9 @@ function colocarCartasProposito(){
   const MARGIN = 14;
   const GAP = 8;
 
-  // Tamaño de carta según escala actual
-  const cw = Math.floor((W - MARGIN*2 - GAP*(COLS-1)) / COLS);
-  const ch = Math.floor(cw * 0.67);
+  // Tamaño igual que las cartas estándar (respeta el slider de escala)
+  const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
+  const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120');
 
   // Posicionar cabeceras
   const hdrEl = document.getElementById('proposito-headers');
@@ -2405,7 +2405,7 @@ function colocarCartasProposito(){
       const img = document.createElement('img');
       img.src = imgUrl('general', n);
       img.draggable = false;
-      img.style.cssText = `width:100%;height:${ch}px;object-fit:cover;display:block`;
+      img.style.cssText = `width:100%;height:calc(var(--ch,120px));object-fit:cover;display:block`;
       div.appendChild(img);
 
       // Franja editable
