@@ -1275,6 +1275,12 @@ function crearCarta(mazo,n,x,y){
   div.className=`carta carta-${m.tipo==='foto'?'foto':m.tipo}`;
   div.style.cssText=`left:${x}px;top:${y}px;z-index:${++zMax}`;
   div._mazo=mazo; div._n=n;
+  // Si hay mantel activo, reducir al 50%
+  if(mantelActual && mantelActual !== 'proposito' && mantelActual !== 'circular'){
+    div._mini = true;
+    div.style.transform = 'scale(0.5)';
+    div.style.transformOrigin = 'top left';
+  }
 
   if(m.tipo==='foto'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
@@ -2306,8 +2312,8 @@ function colocarCartasCirculo(W, VH, scrollY, cx, cy){
 
     const div = document.createElement('div');
     div.className = 'carta-flip';
-    const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
-    const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120');
+    const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180') * 0.5;
+    const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120') * 0.5;
     div.style.cssText = `left:${x - cw/2}px;top:${y - ch/2}px;width:${cw}px;height:${ch}px;z-index:${++zMax}`;
     div._mazo = 'general'; div._n = num; div._flip = false;
 
@@ -2349,8 +2355,13 @@ function colocarCartasCirculo(W, VH, scrollY, cx, cy){
       div.classList.toggle('girada', div._flip);
     });
 
-    // Drag
-    addGestos(div, ()=>{});
+    // Nota label
+    const nlf=document.createElement('div');nlf.className='carta-nota-label';
+    front.appendChild(nlf);div._notaLabel=nlf;
+    div._nombreLabel=null;
+
+    // Drag y ver ampliada igual que cartas normales
+    addGestos(div, ()=>verAmpliada('general', num, div));
     addDel(div);
 
     document.getElementById('mesa').appendChild(div);
