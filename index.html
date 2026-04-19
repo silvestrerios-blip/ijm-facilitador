@@ -292,6 +292,18 @@ body{background:var(--mesa);color:#fff}
   border-right:1px solid rgba(84,201,153,.15);
 }
 .prop-col-hdr:last-child{border-right:none}
+
+.carta-nota-label{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(0,0,0,.75);
+  border-top:2px solid rgba(84,201,153,.4);
+  color:#fff;font-size:11px;font-weight:600;
+  font-family:'Outfit',sans-serif;
+  text-align:center;padding:5px 6px;
+  display:none;z-index:4;
+  word-break:break-word;line-height:1.3;
+}
+.carta-nota-label.visible{display:block}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -1275,16 +1287,20 @@ function crearCarta(mazo,n,x,y){
       div.appendChild(nombreLabel);
       div._nombreLabel=nombreLabel;
       // Franja verde inferior -> nota editable
-      // Nota gestionada desde vista ampliada
+      // Nota label visible en mesa
+      const nl=document.createElement('div');nl.className='carta-nota-label';
+      div.appendChild(nl);div._notaLabel=nl;
     } else if(mazo==='s'||mazo==='n'){
-      // Nota gestionada desde vista ampliada
+      const nl2=document.createElement('div');nl2.className='carta-nota-label';
+      div.appendChild(nl2);div._notaLabel=nl2;
     }
   }else if(m.tipo==='pal'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
   }else if(m.tipo==='ic'){
     const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
     const fi=document.createElement('input');
-    // Nota gestionada desde vista ampliada
+    const nl3=document.createElement('div');nl3.className='carta-nota-label';
+    div.appendChild(nl3);div._notaLabel=nl3;
   }
   addDel(div);addGestos(div,()=>verAmpliada(mazo,n,div));
   document.getElementById('mesa').appendChild(div);
@@ -2426,7 +2442,8 @@ function colocarCartasProposito(){
 
       // Franja editable
       const fe = document.createElement('input');
-      // Nota gestionada desde vista ampliada
+      const nlp=document.createElement('div');nlp.className='carta-nota-label';
+      div.appendChild(nlp);div._notaLabel=nlp;
 
       addDel(div);
       addGestos(div, ()=>verAmpliada('general', n, div));
@@ -2463,7 +2480,13 @@ function toggleVerNota(e){
   // Guardar nota en la carta al escribir
   inp.oninput = ()=>{
     if(verCartaActual?.div){
-      verCartaActual.div._nota = inp.value.trim();
+      const nota = inp.value.trim();
+      verCartaActual.div._nota = nota;
+      // Actualizar label en la carta de la mesa
+      if(verCartaActual.div._notaLabel){
+        verCartaActual.div._notaLabel.textContent = nota;
+        verCartaActual.div._notaLabel.classList.toggle('visible', nota.length > 0);
+      }
     }
   };
 }
