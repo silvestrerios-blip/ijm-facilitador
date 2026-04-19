@@ -210,6 +210,54 @@ body{background:var(--mesa);color:#fff}
   transform:translate(-50%,-50%);
 }
 .linea-wrap:hover .linea-del,.linea-wrap.selected .linea-del{display:flex}
+
+/* MANTEL CIRCULAR */
+.carta-flip{position:absolute;cursor:pointer;user-select:none;touch-action:none;
+  perspective:600px;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.45);}
+.carta-flip-inner{width:100%;height:100%;position:relative;
+  transform-style:preserve-3d;transition:transform .6s cubic-bezier(.4,0,.2,1);}
+.carta-flip.girada .carta-flip-inner{transform:rotateY(180deg)}
+.carta-flip-front,.carta-flip-back{position:absolute;inset:0;
+  backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:8px;overflow:hidden;}
+.carta-flip-back{transform:rotateY(180deg)}
+.carta-flip-back img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.carta-flip-front img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.carta-flip .btn-del{position:absolute;top:-7px;right:-7px;width:19px;height:19px;
+  border-radius:50%;background:#ff4455;color:#fff;border:2px solid var(--mesa);
+  font-size:8px;cursor:pointer;display:none;align-items:center;justify-content:center;
+  font-weight:900;z-index:10;line-height:1;padding:0;}
+.carta-flip:hover .btn-del{display:flex}
+
+/* Botón flotante girar todas */
+#btn-girar-todas{
+  position:fixed;top:calc(var(--tb) + 12px);left:12px;z-index:200;
+  padding:8px 16px;border-radius:20px;
+  background:rgba(22,22,22,.95);border:1.5px solid rgba(84,201,153,.5);
+  color:var(--v);font-size:11px;font-weight:800;cursor:pointer;
+  font-family:'Outfit',sans-serif;letter-spacing:.5px;text-transform:uppercase;
+  display:none;align-items:center;gap:6px;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);transition:all .15s;
+}
+#btn-girar-todas:hover{background:rgba(84,201,153,.15)}
+#btn-girar-todas.visible{display:flex}
+
+/* Modal cantidad cartas */
+#modal-cantidad{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.72);
+  display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+#modal-cantidad.on{display:flex}
+#modal-cantidad-box{background:#222;border:1px solid rgba(84,201,153,.3);
+  border-radius:14px;padding:28px 32px;text-align:center;max-width:300px;width:90%;}
+#modal-cantidad-box h3{font-size:15px;font-weight:700;color:#fff;margin-bottom:8px}
+#modal-cantidad-box p{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px}
+.cantidad-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+.cant-btn{width:48px;height:48px;border-radius:10px;border:1.5px solid rgba(84,201,153,.3);
+  background:transparent;color:#fff;font-size:16px;font-weight:800;cursor:pointer;
+  font-family:'Outfit',sans-serif;transition:all .15s;}
+.cant-btn:hover{border-color:var(--v);background:rgba(84,201,153,.15);color:var(--v)}
+.cant-btn.on{border-color:var(--v);background:rgba(84,201,153,.25);color:var(--v)}
+#btn-cant-ok{width:100%;padding:11px;border-radius:9px;border:none;
+  background:var(--v);color:#fff;font-size:12px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.8px;cursor:pointer;font-family:'Outfit',sans-serif}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -713,6 +761,7 @@ body{background:var(--mesa);color:#fff}
   <button class="mantel-opt" id="mo-rueda" onclick="setMantel('rueda')">🔵 Rueda de la Vida</button>
   <button class="mantel-opt" id="mo-dafo" onclick="setMantel('dafo')">⬡ DAFO</button>
   <button class="mantel-opt" id="mo-ikigai" onclick="setMantel('ikigai')">⊕ Ikigai</button>
+  <button class="mantel-opt" id="mo-circular" onclick="setMantelCircular()">⭕ Circular con cartas</button>
   <button class="mantel-opt" onclick="setMantel(null)">✕ Sin mantel</button>
 </div>
 <div id="flecha-menu">
@@ -753,6 +802,22 @@ body{background:var(--mesa);color:#fff}
     </div>
   </div>
 </div>
+<div id="modal-cantidad">
+  <div id="modal-cantidad-box">
+    <h3>&#9398; Cartas en el c&#237;rculo</h3>
+    <p>&#191;Cu&#225;ntas cartas quieres colocar?</p>
+    <div class="cantidad-btns">
+      <button class="cant-btn" onclick="selCantidad(3)">3</button>
+      <button class="cant-btn" onclick="selCantidad(4)">4</button>
+      <button class="cant-btn on" onclick="selCantidad(5)">5</button>
+      <button class="cant-btn" onclick="selCantidad(6)">6</button>
+      <button class="cant-btn" onclick="selCantidad(7)">7</button>
+      <button class="cant-btn" onclick="selCantidad(8)">8</button>
+    </div>
+    <button id="btn-cant-ok" onclick="confirmarCircular()">Colocar cartas</button>
+  </div>
+</div>
+<button id="btn-girar-todas" onclick="girarTodasFlip()">&#8635; Girar todas</button>
 <div id="modal"><div id="modal-box">
   <h3>&#9888;&#65039; Limpiar la mesa</h3>
   <p>Se eliminar&#225;n todas las cartas.<br>Esta acci&#243;n no se puede deshacer.</p>
@@ -778,6 +843,9 @@ const NOMBRES={1:"Abuso",2:"Logro",3:"Acci\u00f3n",4:"Aventura",5:"Alerta",6:"Ca
 
 let usuario=null,sesionActual=null,cartasMesa=[],zMax=10,cartaSeleccionada=null,miniTarget=null,panelTab='sesion';
 let gruposData=[];
+let figuraCircularIdx=0;
+let cantidadCircular=5;
+let cartasFlip=[];
 let historialData=[];
 
 // ── AUTH ──
@@ -1354,6 +1422,8 @@ function setMantel(nombre){
     mantelActual = null;
     overlay.classList.remove('on');
     overlay.innerHTML = '';
+    document.getElementById('btn-girar-todas').classList.remove('visible');
+    cartasFlip=[];
     return;
   }
 
@@ -1906,6 +1976,247 @@ function toggleVerMini(e){
   btn.classList.toggle('on', isMini);
   btn.textContent = isMini ? '\u2199 Normal' : '\u2197 Mini';
   toast(isMini ? 'Carta reducida al 50%' : 'Carta a tamaño normal');
+}
+
+
+// ══════════════════════════════════════════
+// MANTEL CIRCULAR CON CARTAS
+// ══════════════════════════════════════════
+const FIGURAS_SVG = [
+  // 0 — Espiral IJM
+  `<g transform="translate(340,330) scale(3.8)">
+    <path d="M 0 -55 C 0 -55, 44 -50, 50 -8 C 56 34, 19 53, -12 43 C -44 33, -50 3, -34 -19 C -18 -41, 13 -38, 22 -16 C 31 6, 13 23, -6 19 C -25 15, -28 -3, -19 -13 C -9 -22, 3 -16, 3 -5" stroke="#54C999" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+    <circle cx="30" cy="-44" r="3" fill="#54C999" opacity=".8"/>
+    <circle cx="52" cy="-22" r="2" fill="#54C999" opacity=".6"/>
+    <path d="M -8 -62 L -6 -68 L -4 -62 L 2 -60 L -4 -58 L -6 -52 L -8 -58 L -14 -60 Z" fill="#54C999" opacity=".85"/>
+    <path d="M 44 -52 L 46 -57 L 48 -52 L 53 -50 L 48 -48 L 46 -43 L 44 -48 L 39 -50 Z" fill="#54C999" opacity=".7"/>
+    <path d="M 58 10 L 60 5 L 62 10 L 67 12 L 62 14 L 60 19 L 58 14 L 53 12 Z" fill="#54C999" opacity=".6"/>
+    <path d="M -52 20 L -50 15 L -48 20 L -43 22 L -48 24 L -50 29 L -52 24 L -57 22 Z" fill="#54C999" opacity=".55"/>
+    <path d="M 10 62 L 12 57 L 14 62 L 19 64 L 14 66 L 12 71 L 10 66 L 5 64 Z" fill="#54C999" opacity=".6"/>
+  </g>`,
+  // 1 — Figura humana
+  `<g>
+    <circle cx="340" cy="310" r="185" stroke="#54C999" stroke-width="1.5" fill="none" opacity=".2" stroke-dasharray="6,8"/>
+    <circle cx="340" cy="148" r="42" stroke="#54C999" stroke-width="7" fill="none"/>
+    <path d="M 325 188 L 322 212 M 355 188 L 358 212" stroke="#54C999" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M 322 212 Q 295 220 278 250 Q 262 278 268 310 Q 274 340 295 355 L 305 430 Q 308 460 306 490 Q 304 515 300 535" stroke="#54C999" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 358 212 Q 385 220 402 250 Q 418 278 412 310 Q 406 340 385 355 L 375 430 Q 372 460 374 490 Q 376 515 380 535" stroke="#54C999" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 285 230 Q 245 228 218 245 Q 195 260 182 285 Q 170 308 178 328 Q 186 348 205 352" stroke="#54C999" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 395 230 Q 435 228 462 245 Q 485 260 498 285 Q 510 308 502 328 Q 494 348 475 352" stroke="#54C999" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 340 285 C 340 275 328 268 320 275 C 312 282 313 295 340 312 C 367 295 368 282 360 275 C 352 268 340 275 340 285 Z" stroke="#54C999" stroke-width="3" fill="none" opacity=".8"/>
+    <path d="M 300 535 Q 292 548 286 558 Q 282 566 288 570 Q 298 573 312 568" stroke="#54C999" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M 380 535 Q 388 548 394 558 Q 398 566 392 570 Q 382 573 368 568" stroke="#54C999" stroke-width="5" fill="none" stroke-linecap="round"/>
+  </g>`,
+  // 2 — Dragón
+  `<g>
+    <path d="M 340 540 Q 280 560 260 520 Q 240 480 270 460 Q 300 440 320 460 Q 340 480 320 500 Q 305 515 310 530" stroke="#54C999" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <path d="M 320 460 Q 300 420 290 380 Q 278 335 295 300 Q 312 265 340 255" stroke="#54C999" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M 340 255 Q 360 240 370 215 Q 380 188 365 170" stroke="#54C999" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <ellipse cx="355" cy="152" rx="38" ry="28" fill="#3d3535" stroke="#54C999" stroke-width="7"/>
+    <path d="M 378 158 Q 398 155 405 162 Q 410 168 402 173 Q 392 176 378 170 Z" fill="#54C999" opacity=".9"/>
+    <ellipse cx="348" cy="145" rx="8" ry="7" fill="#54C999"/>
+    <ellipse cx="350" cy="145" rx="3" ry="4" fill="#3d3535"/>
+    <path d="M 295 310 Q 268 348 255 368 Q 248 385 260 392" stroke="#54C999" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M 305 330 Q 335 318 355 328 Q 372 338 370 355" stroke="#54C999" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M 295 310 Q 240 270 210 235 Q 195 215 210 205 Q 228 195 248 215 Q 265 232 272 258 Q 278 280 285 295" stroke="#54C999" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M 330 285 Q 390 248 430 218 Q 455 200 465 210 Q 472 222 458 238 Q 440 255 415 265 Q 390 274 365 280" stroke="#54C999" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>`,
+  // 3 — Árbol
+  `<g>
+    <path d="M 340 530 Q 310 550 285 565 Q 268 575 260 590" stroke="#54C999" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M 340 530 Q 368 548 392 558 Q 410 566 422 578" stroke="#54C999" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M 340 530 Q 336 480 338 430 Q 340 380 340 320" stroke="#54C999" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M 338 400 Q 295 370 258 345 Q 230 325 210 300" stroke="#54C999" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <path d="M 339 380 Q 378 355 415 332 Q 445 312 468 292" stroke="#54C999" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <path d="M 339 340 Q 305 315 278 295 Q 258 278 245 258" stroke="#54C999" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 340 330 Q 372 308 398 288 Q 420 270 432 250" stroke="#54C999" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 340 320 Q 338 280 336 245 Q 335 218 337 190" stroke="#54C999" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M 337 190 Q 318 168 305 150" stroke="#54C999" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M 337 190 Q 356 168 368 150" stroke="#54C999" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M 337 190 Q 336 165 337 145" stroke="#54C999" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <circle cx="210" cy="300" r="7" fill="#54C999" opacity=".85"/>
+    <circle cx="468" cy="292" r="7" fill="#54C999" opacity=".85"/>
+    <circle cx="338" cy="112" r="7" fill="#54C999" opacity=".9"/>
+    <circle cx="290" cy="122" r="6" fill="#54C999" opacity=".85"/>
+    <circle cx="382" cy="122" r="6" fill="#54C999" opacity=".85"/>
+  </g>`,
+  // 4 — Montaña
+  `<g>
+    <path d="M 100 530 L 340 145 L 580 530 Z" stroke="#54C999" stroke-width="7" fill="none" stroke-linejoin="round"/>
+    <path d="M 340 145 Q 318 190 305 215 Q 325 205 340 215 Q 355 205 375 215 Q 362 190 340 145 Z" stroke="#54C999" stroke-width="3" fill="none" stroke-linejoin="round" opacity=".8"/>
+    <path d="M 340 530 Q 336 490 332 460 Q 328 430 325 400 Q 322 370 326 340 Q 330 310 335 280 Q 337 260 340 240" stroke="#54C999" stroke-width="3" fill="none" stroke-linecap="round" stroke-dasharray="8,6" opacity=".6"/>
+    <circle cx="340" cy="138" r="10" fill="#54C999" opacity=".9"/>
+    <path d="M 340 148 L 340 172" stroke="#54C999" stroke-width="4" stroke-linecap="round"/>
+    <path d="M 340 155 Q 326 148 318 140" stroke="#54C999" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M 340 155 Q 354 148 362 140" stroke="#54C999" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>`,
+  // 5 — Ola
+  `<g>
+    <path d="M 80 380 C 120 380 140 300 200 290 C 260 280 280 360 340 340 C 400 320 420 240 480 240 C 530 240 555 300 580 320" stroke="#54C999" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <path d="M 460 240 C 475 200 510 185 530 200 C 555 218 550 255 530 270 C 510 285 485 275 470 258 C 455 242 460 215 480 210" stroke="#54C999" stroke-width="7" fill="none" stroke-linecap="round"/>
+    <path d="M 80 420 C 130 415 160 355 220 348 C 280 341 305 400 360 390 C 415 380 440 320 495 315 C 535 312 558 348 580 365" stroke="#54C999" stroke-width="5" fill="none" stroke-linecap="round" opacity=".45"/>
+    <circle cx="508" cy="188" r="4" fill="#54C999" opacity=".7"/>
+    <circle cx="522" cy="180" r="3" fill="#54C999" opacity=".6"/>
+    <circle cx="538" cy="185" r="3.5" fill="#54C999" opacity=".65"/>
+  </g>`
+];
+
+function setMantelCircular(){
+  document.getElementById('mantel-menu').classList.remove('on');
+  document.getElementById('modal-cantidad').style.display='flex';
+  document.getElementById('modal-cantidad').classList.add('on');
+}
+
+function selCantidad(n){
+  cantidadCircular = n;
+  document.querySelectorAll('.cant-btn').forEach(b=>{
+    b.classList.toggle('on', parseInt(b.textContent)===n);
+  });
+}
+
+function confirmarCircular(){
+  document.getElementById('modal-cantidad').classList.remove('on');
+  document.getElementById('modal-cantidad').style.display='none';
+  activarMantelCircular();
+}
+
+function activarMantelCircular(){
+  // Activar overlay con figura
+  const overlay = document.getElementById('mantel-overlay');
+  const mesa = document.getElementById('mesa');
+  const wrap = document.getElementById('mesa-wrap');
+  const W = mesa.offsetWidth;
+  const VH = wrap.offsetHeight;
+  const scrollY = wrap.scrollTop;
+
+  overlay.setAttribute('viewBox', `0 0 ${W} ${VH}`);
+  overlay.setAttribute('width', W);
+  overlay.setAttribute('height', VH);
+  overlay.style.height = VH + 'px';
+
+  // Calcular SVG centrado
+  const cx = W/2, cy = VH/2;
+  const scale = Math.min(W, VH) / 680;
+  const tx = cx - 340*scale, ty = cy - 340*scale;
+
+  overlay.innerHTML = `<g transform="translate(${tx},${ty}) scale(${scale})" style="cursor:pointer" onclick="cambiarFiguraCircular()">
+    ${FIGURAS_SVG[figuraCircularIdx]}
+    <rect width="680" height="680" fill="transparent"/>
+  </g>`;
+  overlay.classList.add('on');
+
+  mantelActual = 'circular';
+  document.getElementById('mo-circular').classList.add('on');
+
+  // Colocar cartas en círculo
+  colocarCartasCirculo(W, VH, scrollY, cx, cy);
+
+  // Mostrar botón flotante
+  document.getElementById('btn-girar-todas').classList.add('visible');
+}
+
+function cambiarFiguraCircular(){
+  figuraCircularIdx = (figuraCircularIdx + 1) % FIGURAS_SVG.length;
+  const overlay = document.getElementById('mantel-overlay');
+  const mesa = document.getElementById('mesa');
+  const wrap = document.getElementById('mesa-wrap');
+  const W = mesa.offsetWidth;
+  const VH = wrap.offsetHeight;
+  const cx = W/2, cy = VH/2;
+  const scale = Math.min(W, VH) / 680;
+  const tx = cx - 340*scale, ty = cy - 340*scale;
+  overlay.innerHTML = `<g transform="translate(${tx},${ty}) scale(${scale})" style="cursor:pointer" onclick="cambiarFiguraCircular()">
+    ${FIGURAS_SVG[figuraCircularIdx]}
+    <rect width="680" height="680" fill="transparent"/>
+  </g>`;
+}
+
+function colocarCartasCirculo(W, VH, scrollY, cx, cy){
+  const n = cantidadCircular;
+  const DORSO_URL = `${SB_URL}/storage/v1/object/public/imagenes-IJM/dorso.jpg`;
+  const radio = Math.min(W, VH) * 0.32;
+  cartasFlip = [];
+
+  // Cartas aleatorias del mazo general sin repetir
+  const usados = new Set();
+  const nums = [];
+  while(nums.length < n){
+    const r = Math.floor(Math.random()*107)+1;
+    if(!usados.has(r)){ usados.add(r); nums.push(r); }
+  }
+
+  for(let i=0; i<n; i++){
+    const angle = (i * 2 * Math.PI / n) - Math.PI/2;
+    const x = cx + radio * Math.cos(angle);
+    const y = cy + scrollY + radio * Math.sin(angle);
+    const num = nums[i];
+
+    const div = document.createElement('div');
+    div.className = 'carta-flip';
+    const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
+    const ch = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch') || '120');
+    div.style.cssText = `left:${x - cw/2}px;top:${y - ch/2}px;width:${cw}px;height:${ch}px;z-index:${++zMax}`;
+    div._mazo = 'general'; div._n = num; div._flip = false;
+
+    const inner = document.createElement('div');
+    inner.className = 'carta-flip-inner';
+
+    // Frente (imagen real)
+    const front = document.createElement('div');
+    front.className = 'carta-flip-front';
+    const imgF = document.createElement('img');
+    imgF.src = imgUrl('general', num);
+    imgF.draggable = false;
+    front.appendChild(imgF);
+
+    // Dorso
+    const back = document.createElement('div');
+    back.className = 'carta-flip-back';
+    const imgB = document.createElement('img');
+    imgB.src = DORSO_URL;
+    imgB.draggable = false;
+    back.appendChild(imgB);
+
+    inner.appendChild(front);
+    inner.appendChild(back);
+    div.appendChild(inner);
+
+    // Botón borrar
+    const del = document.createElement('button');
+    del.className = 'btn-del';
+    del.innerHTML = '&#10005;';
+    del.onclick = e => { e.stopPropagation(); elimCarta(div); };
+    div.appendChild(del);
+
+    // Click para girar
+    div.addEventListener('click', ()=>{
+      div._flip = !div._flip;
+      div.classList.toggle('girada', div._flip);
+    });
+
+    // Drag
+    addGestos(div, ()=>{});
+    addDel(div);
+
+    document.getElementById('mesa').appendChild(div);
+    cartasMesa.push(div);
+    cartasFlip.push(div);
+  }
+
+  actualizarContador();
+  document.getElementById('empty').classList.add('hidden');
+  toast(n + ' cartas colocadas — toca para girar');
+}
+
+function girarTodasFlip(){
+  const btn = document.getElementById('btn-girar-todas');
+  const todasGiradas = cartasFlip.filter(c=>c._flip).length === cartasFlip.filter(c=>document.contains(c)).length;
+  cartasFlip.forEach(c=>{
+    if(!document.contains(c)) return;
+    c._flip = !todasGiradas;
+    c.classList.toggle('girada', c._flip);
+  });
+  btn.textContent = todasGiradas ? '\u8635 Girar todas' : '\u21BA Ocultar todas';
 }
 
 </script>
