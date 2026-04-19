@@ -2374,10 +2374,10 @@ function colocarCartasProposito(){
   const LABELS = ['PROPÓSITO','TRAMPA','CAÍDA','',''];
   const HDR_H = 30;   // altura cabecera
   const MARGIN = 14;
-  const GAP_X = 10;   // espacio horizontal entre cartas
-  const GAP_Y = 38;   // espacio vertical — incluye franja nota (~30px) + margen
+  const GAP_X = 6;    // espacio horizontal entre cartas
+  const GAP_Y = 6;    // espacio vertical mínimo
   const TOOLBAR_H = 50; // altura toolbar
-  const HDR_MARGIN = 10; // espacio entre cabecera y primera fila
+  const HDR_MARGIN = 4; // espacio entre cabecera y primera fila
 
   // Tamaño igual que las cartas estándar (respeta el slider de escala)
   const cw = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw') || '180');
