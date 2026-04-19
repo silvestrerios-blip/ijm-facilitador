@@ -271,6 +271,27 @@ body{background:var(--mesa);color:#fff}
 #btn-cant-ok{width:100%;padding:11px;border-radius:9px;border:none;
   background:var(--v);color:#fff;font-size:12px;font-weight:800;
   text-transform:uppercase;letter-spacing:.8px;cursor:pointer;font-family:'Outfit',sans-serif}
+
+/* MANTEL PROPÓSITO */
+#proposito-headers{
+  position:fixed;
+  z-index:90;
+  display:none;
+  pointer-events:none;
+}
+#proposito-headers.visible{display:flex}
+.prop-col-hdr{
+  background:rgba(20,20,20,.88);
+  border-bottom:2px solid rgba(84,201,153,.5);
+  color:var(--v);
+  font-size:9px;font-weight:900;
+  font-family:'Outfit',sans-serif;
+  letter-spacing:1.2px;text-transform:uppercase;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:4px 2px;
+  border-right:1px solid rgba(84,201,153,.15);
+}
+.prop-col-hdr:last-child{border-right:none}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -774,6 +795,7 @@ body{background:var(--mesa);color:#fff}
   <button class="mantel-opt" id="mo-rueda" onclick="setMantel('rueda')">🔵 Rueda de la Vida</button>
   <button class="mantel-opt" id="mo-dafo" onclick="setMantel('dafo')">⬡ DAFO</button>
   <button class="mantel-opt" id="mo-ikigai" onclick="setMantel('ikigai')">⊕ Ikigai</button>
+  <button class="mantel-opt" id="mo-proposito" onclick="setMantelProposito()">&#x1F5FC; Prop&#243;sito</button>
   <button class="mantel-opt" id="mo-circular" onclick="setMantelCircular()">⭕ Circular con cartas</button>
   <button class="mantel-opt" onclick="setMantel(null)">✕ Sin mantel</button>
 </div>
@@ -889,6 +911,7 @@ body{background:var(--mesa);color:#fff}
     <button id="modal-confirm" onclick="limpiarMesa()">Eliminar todo</button>
   </div>
 </div></div>
+<div id="proposito-headers"></div>
 <div id="toast"></div>
 
 <script>
@@ -1426,7 +1449,7 @@ function sel(el){if(cartaSeleccionada)cartaSeleccionada.classList.remove('select
 function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.style.opacity='0';el.style.transform='scale(.8)';setTimeout(()=>{el.remove();cartasMesa=cartasMesa.filter(c=>c!==el);if(cartaSeleccionada===el)cartaSeleccionada=null;actualizarContador();actualizarInfoSesion();if(cartasMesa.length===0)document.getElementById('empty').classList.remove('hidden');},180);}
 function pedirLimpiar(){if(cartasMesa.length===0){toast('La mesa ya est\u00e1 vac\u00eda');return;}document.getElementById('modal').classList.add('on');}
 function cerrarModal(){document.getElementById('modal').classList.remove('on');}
-function limpiarMesa(){cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');toast('Mesa limpiada');}
+function limpiarMesa(){cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');document.getElementById('proposito-headers').classList.remove('visible');toast('Mesa limpiada');}
 
 // ── PANEL ──
 function abrirPanel(tab){const p=document.getElementById('panel');if(p.classList.contains('open')&&panelTab===tab){cerrarPanel();return;}p.classList.add('open');switchTab(tab);}
@@ -1518,6 +1541,7 @@ function setMantel(nombre){
     overlay.classList.remove('on');
     overlay.innerHTML = '';
     document.getElementById('btn-girar-todas').classList.remove('visible');
+    document.getElementById('proposito-headers').classList.remove('visible');
     cartasFlip=[];
     return;
   }
@@ -2322,6 +2346,86 @@ function girarTodasFlip(){
     c.classList.toggle('girada', c._flip);
   });
   btn.textContent = todasGiradas ? '\u8635 Girar todas' : '\u21BA Ocultar todas';
+}
+
+
+// ══════════════════════════════════════════
+// MANTEL PROPÓSITO
+// ══════════════════════════════════════════
+function setMantelProposito(){
+  document.getElementById('mantel-menu').classList.remove('on');
+  // Limpiar mantel anterior
+  const overlay = document.getElementById('mantel-overlay');
+  overlay.classList.remove('on');
+  overlay.innerHTML='';
+  document.querySelectorAll('.mantel-opt').forEach(o=>o.classList.remove('on'));
+  document.getElementById('mo-proposito').classList.add('on');
+  mantelActual = 'proposito';
+  colocarCartasProposito();
+}
+
+function colocarCartasProposito(){
+  const wrap = document.getElementById('mesa-wrap');
+  const mesa = document.getElementById('mesa');
+  const W = mesa.offsetWidth;
+  const VH = wrap.offsetHeight;
+  const scrollY = wrap.scrollTop;
+  const COLS = 5, ROWS = 5;
+  const LABELS = ['PROPÓSITO','TRAMPA','CAÍDA','',''];
+  const HDR_H = 28;
+  const MARGIN = 14;
+  const GAP = 8;
+
+  // Tamaño de carta según escala actual
+  const cw = Math.floor((W - MARGIN*2 - GAP*(COLS-1)) / COLS);
+  const ch = Math.floor(cw * 0.67);
+
+  // Posicionar cabeceras
+  const hdrEl = document.getElementById('proposito-headers');
+  hdrEl.style.cssText = `top:${50}px;left:${MARGIN}px;width:${W - MARGIN*2}px;flex-direction:row;`;
+  hdrEl.innerHTML = LABELS.map(l=>`<div class="prop-col-hdr" style="width:${cw}px;height:${HDR_H}px;flex-shrink:0;margin-right:${GAP}px">${l}</div>`).join('');
+  hdrEl.classList.add('visible');
+
+  // Colocar 25 cartas
+  const usados = new Set();
+  for(let row=0; row<ROWS; row++){
+    for(let col=0; col<COLS; col++){
+      let n;
+      do{ n = Math.floor(Math.random()*107)+1; }while(usados.has(n));
+      usados.add(n);
+
+      const x = MARGIN + col*(cw+GAP);
+      const y = scrollY + HDR_H + 8 + row*(ch+GAP) + 50;
+
+      const div = document.createElement('div');
+      div.className = 'carta carta-foto';
+      div.style.cssText = `left:${x}px;top:${y}px;width:${cw}px;z-index:${++zMax}`;
+      div._mazo = 'general'; div._n = n;
+
+      const img = document.createElement('img');
+      img.src = imgUrl('general', n);
+      img.draggable = false;
+      img.style.cssText = `width:100%;height:${ch}px;object-fit:cover;display:block`;
+      div.appendChild(img);
+
+      // Franja editable
+      const fe = document.createElement('input');
+      fe.type='text'; fe.placeholder='Nota...'; fe.className='franja-edit';
+      fe.onmousedown=e=>e.stopPropagation();
+      fe.ontouchstart=e=>e.stopPropagation();
+      fe.onclick=e=>e.stopPropagation();
+      div.appendChild(fe);
+
+      addDel(div);
+      addGestos(div, ()=>verAmpliada('general', n, div));
+      document.getElementById('mesa').appendChild(div);
+      cartasMesa.push(div);
+    }
+  }
+
+  actualizarContador();
+  document.getElementById('empty').classList.add('hidden');
+  toast('Mantel Prop\u00f3sito listo \u2014 25 cartas colocadas');
 }
 
 </script>
