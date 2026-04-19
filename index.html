@@ -1044,12 +1044,14 @@ async function generarPDF(sesion, cartas, notas){
   try{
     toast('Capturando mesa...');
 
-    // Mostrar imagen en cartas flip (quitar dorso temporalmente para el PDF)
+    // Para PDF: forzar imagen visible en todas las cartas flip, guardar estado
     const cartasFlipEstado = [];
-    document.querySelectorAll('.carta-flip.girada').forEach(c=>{
-      cartasFlipEstado.push(c);
+    document.querySelectorAll('.carta-flip').forEach(c=>{
+      const estabaGirada = c.classList.contains('girada');
+      cartasFlipEstado.push({c, estabaGirada});
       c.classList.remove('girada');
-      c.querySelector('.carta-flip-inner').style.transition='none';
+      const inner = c.querySelector('.carta-flip-inner');
+      if(inner) inner.style.transition='none';
     });
 
     // Reemplazar inputs/textareas con divs visibles para html2canvas
@@ -1174,11 +1176,11 @@ async function generarPDF(sesion, cartas, notas){
     toast('Error al generar PDF \u2014 revisa la consola');
   }finally{
     wrap.scrollTop=scrollTop;
-    // Restaurar cartas flip al dorso
-    cartasFlipEstado.forEach(c=>{
-      c.classList.add('girada');
-      if(c.querySelector('.carta-flip-inner'))
-        c.querySelector('.carta-flip-inner').style.transition='';
+    // Restaurar estado original de cartas flip
+    cartasFlipEstado.forEach(({c, estabaGirada})=>{
+      c.classList.toggle('girada', estabaGirada);
+      const inner = c.querySelector('.carta-flip-inner');
+      if(inner) inner.style.transition='';
     });
     // Restaurar elementos
     pdfOverlays.forEach(({div, el})=>{
