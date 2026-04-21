@@ -682,27 +682,20 @@ body{background:var(--mesa);color:#fff}
 .franja-edit:focus::placeholder{color:rgba(255,255,255,.3)}
 
 /* ══ MANTELES ══ */
-#mantel-menu{
-  position:fixed;z-index:300;
-  background:rgba(22,22,22,.97);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:10px;padding:6px;
-  display:none;flex-direction:column;gap:4px;
-  box-shadow:0 8px 28px rgba(0,0,0,.55);
-  backdrop-filter:blur(10px);
-  min-width:160px;
-  bottom:calc(var(--tb) + 8px);
-}
-#mantel-menu.on{display:flex}
+#mantel-menu{display:none}
+#toolbar-row4{display:none;align-items:center;padding:0 8px;gap:6px;height:40px;border-top:1px solid rgba(84,201,153,.15);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+#toolbar-row4::-webkit-scrollbar{display:none}
+#toolbar-row4.on{display:flex}
 .mantel-opt{
-  padding:9px 14px;border-radius:7px;border:none;
-  font-size:12px;font-weight:700;cursor:pointer;
-  font-family:'Outfit',sans-serif;text-align:left;
-  transition:all .15s;color:rgba(255,255,255,.7);
-  background:rgba(255,255,255,.04);
+  padding:8px 18px;border-radius:14px;
+  border:1.5px solid rgba(255,255,255,.18);
+  background:transparent;font-size:11px;font-weight:700;cursor:pointer;
+  font-family:'Outfit',sans-serif;white-space:nowrap;
+  color:#fff;letter-spacing:.4px;flex-shrink:0;
+  transition:all .13s;
 }
-.mantel-opt:hover{background:rgba(84,201,153,.12);color:#fff}
-.mantel-opt.on{background:rgba(84,201,153,.2);color:var(--v);border:1px solid rgba(84,201,153,.3)}
+.mantel-opt:hover{border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.08)}
+.mantel-opt.on{border-color:var(--v);background:rgba(84,201,153,.2);color:#fff}
 
 #mantel-overlay{
   position:absolute;top:0;left:0;
@@ -845,6 +838,14 @@ body{background:var(--mesa);color:#fff}
   <div id="toolbar-row3">
     <!-- chips grupos/subgrupos se renderizan aquí -->
   </div><!-- end toolbar-row3 -->
+  <div id="toolbar-row4">
+    <button class="mantel-opt" id="mo-rueda" onclick="setMantel('rueda')">&#128309; Rueda de la Vida</button>
+    <button class="mantel-opt" id="mo-dafo" onclick="setMantel('dafo')">&#11041; DAFO</button>
+    <button class="mantel-opt" id="mo-ikigai" onclick="setMantel('ikigai')">&#8853; Ikigai</button>
+    <button class="mantel-opt" id="mo-proposito" onclick="setMantelProposito()">&#x1F5FC; Prop&#243;sito</button>
+    <button class="mantel-opt" id="mo-circular" onclick="setMantelCircular()">&#11093; Circular</button>
+    <button class="mantel-opt" onclick="setMantel(null);cerrarMantelRow()">&#10005; Sin mantel</button>
+  </div><!-- end toolbar-row4 -->
 </div>
 
 <div id="mesa-wrap"><div id="mesa">
@@ -908,14 +909,7 @@ body{background:var(--mesa);color:#fff}
   </div>
 </div>
 
-<div id="mantel-menu">
-  <button class="mantel-opt" id="mo-rueda" onclick="setMantel('rueda')">🔵 Rueda de la Vida</button>
-  <button class="mantel-opt" id="mo-dafo" onclick="setMantel('dafo')">⬡ DAFO</button>
-  <button class="mantel-opt" id="mo-ikigai" onclick="setMantel('ikigai')">⊕ Ikigai</button>
-  <button class="mantel-opt" id="mo-proposito" onclick="setMantelProposito()">&#x1F5FC; Prop&#243;sito</button>
-  <button class="mantel-opt" id="mo-circular" onclick="setMantelCircular()">⭕ Circular con cartas</button>
-  <button class="mantel-opt" onclick="setMantel(null)">✕ Sin mantel</button>
-</div>
+<div id="mantel-menu" style="display:none"></div>
 <div id="flecha-menu">
   <button class="fm-btn" onclick="crearFlecha('der')">&#8594; Derecha</button>
   <button class="fm-btn" onclick="crearFlecha('izq')">&#8592; Izquierda</button>
@@ -1177,6 +1171,11 @@ async function confirmarCerrarSesion(){
   cartasMesa=[];cartaSeleccionada=null;
   actualizarContador();
   document.getElementById('empty').classList.remove('hidden');
+  setMantel(null);
+  document.getElementById('btn-girar-todas').classList.remove('visible');
+  document.getElementById('proposito-headers').classList.remove('visible');
+  document.getElementById('btn-limpiar-despliegue').classList.remove('on');
+  document.getElementById('subgrupo-activo-wrap').classList.remove('on');
   toast('Sesi\u00f3n guardada \u2705 Mesa limpiada');
 }
 
@@ -1188,21 +1187,27 @@ async function generarPDF(sesion, cartas, notas){
   const scrollTop=wrap.scrollTop;
   wrap.scrollTop=0;
 
-  // Calcular altura real ocupada por las cartas
+  // Calcular altura real ocupada — si hay mantel usar altura del wrap
   let maxY=0;
   cartasMesa.forEach(c=>{
     const t=parseInt(c.style.top)||0;
     const h=c.offsetHeight||120;
     if(t+h>maxY) maxY=t+h;
   });
-  if(maxY===0) maxY=400;
-  const captureH=maxY+40;
+  const wrapH = wrap.offsetHeight;
+  // Con mantel activo capturar al menos la altura del viewport
+  const captureH = mantelActual ? Math.max(maxY+40, wrapH) : (maxY===0?400:maxY+40);
 
   const pdfOverlays = [];
   const flechaTexts = [];
 
   try{
     toast('Capturando mesa...');
+
+    // Forzar overlay visible durante captura
+    const overlay = document.getElementById('mantel-overlay');
+    const overlayWasHidden = !overlay.classList.contains('on');
+    if(overlayWasHidden && mantelActual) overlay.style.opacity='1';
 
     // Para PDF: ocultar dorso, mostrar imagen directamente
     const cartasFlipEstado = [];
@@ -1344,6 +1349,7 @@ async function generarPDF(sesion, cartas, notas){
     console.error('PDF error:',e);
     toast('Error al generar PDF \u2014 revisa la consola');
   }finally{
+    if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
@@ -1360,9 +1366,11 @@ async function generarPDF(sesion, cartas, notas){
     });
     // Restaurar elementos
     pdfOverlays.forEach(({div, el})=>{
-      mesa.removeChild(div);
+      if(mesa.contains(div)) mesa.removeChild(div);
       el.style.opacity = '';
     });
+    // Limpiar carta-nota-label residuales
+    document.querySelectorAll('.carta-nota-label').forEach(el=>{ el.style.display=''; });
     flechaTexts.forEach(({svg,g,fo})=>{
       svg.removeChild(g);
       fo.style.display='';
@@ -1414,13 +1422,8 @@ function crearCarta(mazo,n,x,y){
       // Nota label visible en mesa
       const nl=document.createElement('div');nl.className='carta-nota-label';
       div.appendChild(nl);div._notaLabel=nl;
-      // Etiqueta ON/OFF si aplica
-      if(onoffEtiquetas[n] && onoffEtiquetas[n].length){
-        const et=document.createElement('div');
-        et.className='etiqueta-onoff';
-        et.textContent=onoffEtiquetas[n].join(' · ');
-        div.appendChild(et);
-      }
+      // Etiqueta ON/OFF si aplica (solo desde despliegue de grupos)
+      div._onoffEtiqueta = onoffEtiquetas[n] || [];
     } else if(mazo==='s'||mazo==='n'){
       const nl2=document.createElement('div');nl2.className='carta-nota-label';
       div.appendChild(nl2);div._notaLabel=nl2;
@@ -1677,20 +1680,32 @@ let mantelActual = null;
 
 function toggleMantelMenu(e){
   e.stopPropagation();
-  const m = document.getElementById('mantel-menu');
+  const row4 = document.getElementById('toolbar-row4');
   const btn = document.getElementById('btn-mantel');
-  if(m.classList.contains('on')){
-    m.classList.remove('on');
-    return;
+  if(row4.classList.contains('on')){
+    row4.classList.remove('on');
+    btn.style.borderColor='rgba(84,201,153,.3)';
+    btn.style.color='rgba(255,255,255,.7)';
+    updateToolbarHeight(); return;
   }
-  // Position above the button
-  const rect = btn.getBoundingClientRect();
-  m.style.left = (rect.left - 10) + 'px';
-  m.classList.add('on');
+  row4.classList.add('on');
+  btn.style.borderColor='var(--v)';
+  btn.style.color='#fff';
+  updateToolbarHeight();
+}
+
+function cerrarMantelRow(){
+  const row4 = document.getElementById('toolbar-row4');
+  const btn = document.getElementById('btn-mantel');
+  row4.classList.remove('on');
+  btn.style.borderColor='rgba(84,201,153,.3)';
+  btn.style.color='rgba(255,255,255,.7)';
+  updateToolbarHeight();
 }
 
 function setMantel(nombre){
   document.getElementById('mantel-menu').classList.remove('on');
+  cerrarMantelRow();
   document.querySelectorAll('.mantel-opt').forEach(o => o.classList.remove('on'));
 
   const overlay = document.getElementById('mantel-overlay');
@@ -1844,8 +1859,9 @@ function dibujarIkigai(W, H){
 
 // Cerrar menú mantel al clicar fuera
 document.addEventListener('click', e => {
-  if(!e.target.closest('#mantel-menu') && !e.target.closest('#btn-mantel')){
-    document.getElementById('mantel-menu').classList.remove('on');
+  if(!e.target.closest('#toolbar-row4') && !e.target.closest('#btn-mantel')){
+    const r4=document.getElementById('toolbar-row4');
+    if(r4?.classList.contains('on')) cerrarMantelRow();
   }
 });
 
@@ -2233,7 +2249,16 @@ async function sacarSubgrupo(subgrupoId, subgrupoNombre, grupoNombre){
     rows.forEach((c, i)=>{
       const col = i % cols; const row = Math.floor(i / cols);
       const div = crearCarta('general', c.carta_numero, baseX + col*(cardW+gap), baseY + row*rowH);
-      if(div) div._despliegue = subgrupoId;
+      if(div){
+        div._despliegue = subgrupoId;
+        // Añadir etiqueta ON/OFF si aplica
+        if(div._onoffEtiqueta && div._onoffEtiqueta.length){
+          const et=document.createElement('div');
+          et.className='etiqueta-onoff';
+          et.textContent=div._onoffEtiqueta.join(' · ');
+          div.appendChild(et);
+        }
+      }
     });
 
     document.getElementById('empty').classList.add('hidden');
@@ -2530,6 +2555,7 @@ const FIGURAS_SVG = [
 
 function setMantelCircular(){
   document.getElementById('mantel-menu').classList.remove('on');
+  cerrarMantelRow();
   document.getElementById('modal-cantidad').style.display='flex';
   document.getElementById('modal-cantidad').classList.add('on');
 }
@@ -2707,6 +2733,7 @@ function girarTodasFlip(){
 // ══════════════════════════════════════════
 function setMantelProposito(){
   document.getElementById('mantel-menu').classList.remove('on');
+  cerrarMantelRow();
   // Limpiar mantel anterior
   const overlay = document.getElementById('mantel-overlay');
   overlay.classList.remove('on');
