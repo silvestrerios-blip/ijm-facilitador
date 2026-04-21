@@ -37,10 +37,10 @@ body{background:var(--mesa);color:#fff}
 #toolbar{position:fixed;top:0;left:0;right:0;height:var(--tb);background:rgba(28,28,28,.97);backdrop-filter:blur(14px);display:flex;flex-direction:column;align-items:stretch;padding:0;z-index:100;border-bottom:1px solid rgba(84,201,153,.22)}
 #toolbar-row1{display:flex;align-items:center;padding:0 12px;gap:8px;height:50px;flex-shrink:0}
 #toolbar-row2{display:flex;align-items:center;padding:0 8px;gap:5px;height:22px;border-top:1px solid rgba(84,201,153,.1);flex-shrink:0}
-#toolbar-row3{display:none;align-items:center;padding:0 8px;gap:5px;height:28px;border-top:1px solid rgba(84,201,153,.15);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+#toolbar-row3{display:none;align-items:center;padding:0 8px;gap:6px;height:40px;border-top:1px solid rgba(84,201,153,.15);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
 #toolbar-row3::-webkit-scrollbar{display:none}
 #toolbar-row3.on{display:flex}
-.gr-chip{padding:4px 11px;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:transparent;font-size:9px;font-weight:700;cursor:pointer;white-space:nowrap;color:#fff;font-family:'Outfit',sans-serif;letter-spacing:.3px;flex-shrink:0;transition:all .13s}
+.gr-chip{padding:8px 18px;border-radius:14px;border:1.5px solid rgba(255,255,255,.18);background:transparent;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;color:#fff;font-family:'Outfit',sans-serif;letter-spacing:.4px;flex-shrink:0;transition:all .13s}
 .gr-chip:hover{border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.08)}
 .gr-chip.on{border-color:var(--v);background:rgba(84,201,153,.2);color:#fff}
 .gr-back{padding:3px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;font-size:8.5px;font-weight:700;cursor:pointer;color:rgba(255,255,255,.45);font-family:'Outfit',sans-serif;flex-shrink:0;transition:all .12s}
@@ -363,10 +363,10 @@ body{background:var(--mesa);color:#fff}
 /* BOTONES COLUMNA IZQUIERDA */
 #col-btns{display:flex;align-items:center;gap:5px}
 .col-btn{
-  height:16px;padding:0 8px;border-radius:4px;
+  height:20px;padding:0 9px;border-radius:5px;
   border:1px solid rgba(84,201,153,.35);
   background:transparent;color:var(--v);
-  font-size:9px;font-weight:900;cursor:pointer;
+  font-size:11px;font-weight:900;cursor:pointer;
   font-family:'Outfit',sans-serif;
   display:flex;align-items:center;justify-content:center;
   transition:all .15s;flex-shrink:0;
@@ -374,7 +374,7 @@ body{background:var(--mesa);color:#fff}
 .col-btn:hover{background:rgba(84,201,153,.15);border-color:var(--v)}
 .col-btn-del{border-color:rgba(255,80,80,.25);color:rgba(255,100,100,.6);padding:0 6px}
 .col-btn-del:hover{border-color:#ff5050;color:#ff5050;background:rgba(255,80,80,.1)}
-.col-row-label{font-size:8px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px;text-transform:uppercase;margin-right:2px}
+.col-row-label{font-size:9.5px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.5px;text-transform:uppercase;margin-right:2px}
 /* MINI MENU */
 #mini-menu{position:fixed;z-index:400;background:rgba(26,26,26,.97);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px;display:none;flex-direction:column;gap:3px;box-shadow:0 8px 28px rgba(0,0,0,.55);backdrop-filter:blur(10px);min-width:150px}
 #mini-menu.on{display:flex}
@@ -770,6 +770,7 @@ body{background:var(--mesa);color:#fff}
       </svg>
     </div>
 
+    <div class="sep"></div>
     <div class="chip" onclick="crearNota()" title="Nota libre">
       <svg style="width:22px;height:18px;vertical-align:middle;flex-shrink:0" viewBox="0 0 22 18">
         <rect x="0" y="1" width="22" height="16" rx="3" fill="rgba(84,201,153,0.15)" stroke="#54C999" stroke-width="1.3"/>
@@ -822,9 +823,8 @@ body{background:var(--mesa);color:#fff}
       <span id="subgrupo-grupo-label"></span>
       <span id="subgrupo-activo-label"></span>
     </div>
-    <div style="flex:1"></div>
-    <button id="chip-grupos" class="col-btn" onclick="toggleGruposRow(event)" style="font-size:8.5px;font-weight:800;letter-spacing:.4px;padding:3px 9px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">GRUPOS</button>
-    <button class="col-btn" onclick="toggleMantelMenu(event)" id="btn-mantel" style="font-size:8.5px;font-weight:800;letter-spacing:.4px;padding:3px 9px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">DIN&#193;MICAS</button>
+    <button id="chip-grupos" class="col-btn" onclick="toggleGruposRow(event)" style="font-size:11px;font-weight:800;letter-spacing:.4px;padding:3px 11px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">GRUPOS</button>
+    <button class="col-btn" onclick="toggleMantelMenu(event)" id="btn-mantel" style="font-size:11px;font-weight:800;letter-spacing:.4px;padding:3px 11px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">DIN&#193;MICAS</button>
   </div><!-- end toolbar-row2 -->
   <div id="toolbar-row3">
     <!-- chips grupos/subgrupos se renderizan aquí -->
