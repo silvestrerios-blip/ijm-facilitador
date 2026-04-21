@@ -1259,10 +1259,12 @@ async function generarPDF(sesion, cartas, notas){
         'align-items:center',
         'justify-content:center'
       ].join(';');
+      div.className = 'pdf-overlay';
       div.textContent = val;
       mesa.appendChild(div);
+      const _prevOp = el.style.opacity || '';
       el.style.opacity = '0';
-      pdfOverlays.push({div, el});
+      pdfOverlays.push({div, el, prevOp: _prevOp});
     }
 
     // Notas T (textarea multilinea)
@@ -1364,13 +1366,17 @@ async function generarPDF(sesion, cartas, notas){
       if(back) back.style.display='';
       c.classList.toggle('girada', estabaGirada);
     });
-    // Restaurar elementos
-    pdfOverlays.forEach(({div, el})=>{
-      if(mesa.contains(div)) mesa.removeChild(div);
-      el.style.opacity = '';
+    // Restaurar elementos - limpiar por clase para mayor seguridad
+    pdfOverlays.forEach(({div, el, prevOp})=>{
+      if(div.parentNode) div.parentNode.removeChild(div);
+      el.style.opacity = prevOp !== undefined ? prevOp : '';
     });
-    // Limpiar carta-nota-label residuales
-    document.querySelectorAll('.carta-nota-label').forEach(el=>{ el.style.display=''; });
+    // Por si quedan huérfanos
+    document.querySelectorAll('.pdf-overlay').forEach(d=>{ if(d.parentNode) d.parentNode.removeChild(d); });
+    // Restaurar franja-edit con texto
+    document.querySelectorAll('.franja-edit.tiene-texto').forEach(el=>{ el.style.opacity='1'; });
+    // Restaurar textareas de flecha
+    document.querySelectorAll('.carta-flecha-wrap textarea, .carta-flecha textarea').forEach(el=>{ el.style.opacity=''; });
     flechaTexts.forEach(({svg,g,fo})=>{
       svg.removeChild(g);
       fo.style.display='';
@@ -1611,7 +1617,7 @@ function sel(el){if(cartaSeleccionada)cartaSeleccionada.classList.remove('select
 function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.style.opacity='0';el.style.transform='scale(.8)';setTimeout(()=>{el.remove();cartasMesa=cartasMesa.filter(c=>c!==el);if(cartaSeleccionada===el)cartaSeleccionada=null;actualizarContador();actualizarInfoSesion();if(cartasMesa.length===0)document.getElementById('empty').classList.remove('hidden');},180);}
 function pedirLimpiar(){if(cartasMesa.length===0){toast('La mesa ya est\u00e1 vac\u00eda');return;}document.getElementById('modal').classList.add('on');}
 function cerrarModal(){document.getElementById('modal').classList.remove('on');}
-function limpiarMesa(){cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');document.getElementById('proposito-headers').classList.remove('visible');toast('Mesa limpiada');}
+function limpiarMesa(){cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');document.getElementById('proposito-headers').classList.remove('visible');document.querySelectorAll('.pdf-overlay').forEach(d=>{if(d.parentNode)d.parentNode.removeChild(d);});toast('Mesa limpiada');}
 
 // ── PANEL ──
 function abrirPanel(tab){const p=document.getElementById('panel');if(p.classList.contains('open')&&panelTab===tab){cerrarPanel();return;}p.classList.add('open');switchTab(tab);}
