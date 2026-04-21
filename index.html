@@ -1206,13 +1206,14 @@ async function generarPDF(sesion, cartas, notas){
   const pdfOverlays = [];
   const flechaTexts = [];
   const cartasScaleEstado = [];
+  const cartasFlipEstado = [];
+  const overlay = document.getElementById('mantel-overlay');
+  const overlayWasHidden = overlay && !overlay.classList.contains('on');
 
   try{
     toast('Capturando mesa...');
 
     // Forzar overlay visible durante captura
-    const overlay = document.getElementById('mantel-overlay');
-    const overlayWasHidden = !overlay.classList.contains('on');
     if(overlayWasHidden && mantelActual) overlay.style.opacity='1';
 
     // Normalizar transform:scale para que html2canvas respete el tamaño visual
@@ -1240,7 +1241,6 @@ async function generarPDF(sesion, cartas, notas){
     });
 
     // Para PDF: ocultar dorso, mostrar imagen directamente
-    const cartasFlipEstado = [];
     document.querySelectorAll('.carta-flip').forEach(c=>{
       const estabaGirada = c.classList.contains('girada');
       cartasFlipEstado.push({c, estabaGirada});
