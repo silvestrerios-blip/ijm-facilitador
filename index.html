@@ -1159,8 +1159,13 @@ async function confirmarCerrarSesion(){
     }
   }catch(e){console.warn('Supabase error:',e);}
 
-  // Generar PDF
-  await generarPDF(sesionActual, cartasData, notas);
+  // Generar PDF (independiente del cierre — si falla, la sesión se cierra igual)
+  try{
+    await generarPDF(sesionActual, cartasData, notas);
+  }catch(e){
+    console.error('PDF error:',e);
+    toast('Error al generar PDF, pero la sesión se ha guardado');
+  }
 
   sesionActual=null;
   document.getElementById('sesion-form').style.display='block';
@@ -1208,6 +1213,31 @@ async function generarPDF(sesion, cartas, notas){
     const overlay = document.getElementById('mantel-overlay');
     const overlayWasHidden = !overlay.classList.contains('on');
     if(overlayWasHidden && mantelActual) overlay.style.opacity='1';
+
+    // Normalizar transform:scale para que html2canvas respete el tamaño visual
+    const cartasScaleEstado = [];
+    cartasMesa.forEach(el=>{
+      const tr = el.style.transform;
+      if(tr && tr.includes('scale')){
+        const match = tr.match(/scale\(([\d.]+)\)/);
+        const sc = match ? parseFloat(match[1]) : 1;
+        if(sc !== 1){
+          const origW = el.offsetWidth;
+          const origH = el.offsetHeight;
+          const origL = parseInt(el.style.left)||0;
+          const origT = parseInt(el.style.top)||0;
+          const newW = Math.round(origW * sc);
+          const newH = Math.round(origH * sc);
+          cartasScaleEstado.push({el, tr, origW, origH, origL, origT});
+          el.style.transform = 'none';
+          el.style.transformOrigin = '';
+          el.style.width = newW + 'px';
+          el.style.height = newH + 'px';
+          // Ajustar posición si el origen era top left
+          // (ya es top left por defecto en crearCarta)
+        }
+      }
+    });
 
     // Para PDF: ocultar dorso, mostrar imagen directamente
     const cartasFlipEstado = [];
@@ -1353,6 +1383,13 @@ async function generarPDF(sesion, cartas, notas){
   }finally{
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
+    // Restaurar scale transforms
+    cartasScaleEstado.forEach(({el, tr, origW, origH})=>{
+      el.style.transform = tr;
+      el.style.transformOrigin = 'top left';
+      el.style.width = '';
+      el.style.height = '';
+    });
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
       const inner = c.querySelector('.carta-flip-inner');
