@@ -2012,36 +2012,32 @@ let _tt;function toast(msg){const el=document.getElementById('toast');el.textCon
 // GRUPOS TEMÁTICOS
 // ══════════════════════════════════════════
 let onoffEtiquetas = {}; // {carta_numero: ["texto1", ...]}
-let subgruposData = {};  // {grupo_id: [{id, nombre, tipo, orden, cartas:[]}]}
+let subgruposData = {};  // {grupo_id: [{id, nombre, tipo, orden}]} — caché lazy
 
 async function cargarGrupos(){
   try{
-    const rows = await sbAuth('grupos?select=id,nombre,orden,tiene_subgrupos_filtro&order=orden.asc') || [];
+    const rows = await sbAuth('grupos?select=id,nombre,orden&order=orden.asc') || [];
     const counts = await sbAuth('grupos_cartas?select=grupo_id') || [];
     const countMap = {};
     counts.forEach(r=>{ countMap[r.grupo_id]=(countMap[r.grupo_id]||0)+1; });
     gruposData = rows.map(r=>({...r, count: countMap[r.id]||0}));
 
-    // Cargar todos los subgrupos de una vez
-    const subs = await sbAuth('subgrupos?select=id,grupo_id,nombre,tipo,orden&order=orden.asc') || [];
-    subs.forEach(s=>{
-      if(!subgruposData[s.grupo_id]) subgruposData[s.grupo_id]=[];
-      subgruposData[s.grupo_id].push(s);
-    });
-
-    // Cargar etiquetas ON/OFF
+    // Cargar etiquetas ON/OFF al inicio (son pocas)
     const onoffGrupo = gruposData.find(g=>g.nombre==='ON/OFF');
     if(onoffGrupo){
-      const etiquetas = await sbAuth('subgrupos_cartas?select=carta_numero,subgrupo_id&subgrupo_id=in.('+
-        (subgruposData[onoffGrupo.id]||[]).map(s=>s.id).join(',')+')') || [];
-      const subMap = {};
-      (subgruposData[onoffGrupo.id]||[]).forEach(s=>{ subMap[s.id]=s.nombre; });
-      etiquetas.forEach(e=>{
-        if(!onoffEtiquetas[e.carta_numero]) onoffEtiquetas[e.carta_numero]=[];
-        onoffEtiquetas[e.carta_numero].push(subMap[e.subgrupo_id]);
-      });
+      const subs = await sbAuth('subgrupos?select=id,nombre&grupo_id=eq.'+onoffGrupo.id) || [];
+      if(subs.length){
+        const ids = subs.map(s=>s.id).join(',');
+        const subMap = {}; subs.forEach(s=>{ subMap[s.id]=s.nombre; });
+        const et = await sbAuth('subgrupos_cartas?select=carta_numero,subgrupo_id&subgrupo_id=in.('+ids+')') || [];
+        et.forEach(e=>{
+          if(!onoffEtiquetas[e.carta_numero]) onoffEtiquetas[e.carta_numero]=[];
+          const txt = subMap[e.subgrupo_id];
+          if(txt && !onoffEtiquetas[e.carta_numero].includes(txt))
+            onoffEtiquetas[e.carta_numero].push(txt);
+        });
+      }
     }
-
     renderGruposMenu();
   }catch(e){ console.warn('Error cargando grupos:',e); }
 }
@@ -2050,44 +2046,61 @@ function renderGruposMenu(){
   const menu = document.getElementById('grupos-menu');
   const loading = document.getElementById('gm-loading');
   if(loading) loading.remove();
-  menu.querySelectorAll('.gm-btn,.gm-back,.gm-sub-btn,.gm-sep,.gm-title-sub').forEach(b=>b.remove());
+  menu.querySelectorAll('.gm-btn,.gm-back,.gm-sub-btn,.gm-sep,.gm-loading2').forEach(b=>b.remove());
   const title = menu.querySelector('.gm-title');
   if(title) title.textContent = 'Grupos temáticos';
   gruposData.forEach(g=>{
     const btn = document.createElement('button');
     btn.className = 'gm-btn';
-    const arrow = g.tiene_subgrupos_filtro ? ' <span style="opacity:.4;font-size:9px">›</span>' : '';
+    const isOnOff = g.nombre === 'ON/OFF';
+    const arrow = !isOnOff ? ' <span style="opacity:.4;font-size:9px">›</span>' : '';
     btn.innerHTML = `<span>${g.nombre}${arrow}</span><span class="gm-count">${g.count}</span>`;
     btn.onclick = () => {
-      if(g.nombre==='ON/OFF'){ sacarGrupoOnOff(g.id); }
-      else if(g.tiene_subgrupos_filtro){ mostrarSubgruposEnMenu(g); }
-      else { sacarGrupoDirecto(g.id, g.nombre); }
+      if(isOnOff){ sacarGrupoOnOff(g.id); }
+      else { mostrarSubgruposEnMenu(g); }
     };
     menu.appendChild(btn);
   });
 }
 
-function mostrarSubgruposEnMenu(grupo){
+async function mostrarSubgruposEnMenu(grupo){
   const menu = document.getElementById('grupos-menu');
-  menu.querySelectorAll('.gm-btn,.gm-back,.gm-sub-btn,.gm-sep,.gm-title-sub').forEach(b=>b.remove());
+  menu.querySelectorAll('.gm-btn,.gm-back,.gm-sub-btn,.gm-sep,.gm-loading2').forEach(b=>b.remove());
   const title = menu.querySelector('.gm-title');
   if(title) title.textContent = grupo.nombre;
 
-  // Botón volver
   const back = document.createElement('button');
   back.className = 'gm-back';
   back.innerHTML = '&#8592; Grupos';
   back.onclick = (e)=>{ e.stopPropagation(); renderGruposMenu(); };
   menu.appendChild(back);
 
-  const sep = document.createElement('div'); sep.className='gm-sep';
-  menu.appendChild(sep);
+  const sep = document.createElement('div'); sep.className='gm-sep'; menu.appendChild(sep);
+
+  // Carga lazy de subgrupos
+  if(!subgruposData[grupo.id]){
+    const ld = document.createElement('div');
+    ld.className='gm-loading2'; ld.style.cssText='padding:8px 14px;font-size:10px;color:rgba(255,255,255,.35)';
+    ld.textContent='Cargando...'; menu.appendChild(ld);
+    try{
+      subgruposData[grupo.id] = await sbAuth('subgrupos?select=id,nombre,orden&grupo_id=eq.'+grupo.id+'&order=orden.asc') || [];
+    }catch(e){
+      console.error('Error subgrupos:',e);
+      subgruposData[grupo.id] = [];
+    }
+    ld.remove();
+  }
 
   const subs = subgruposData[grupo.id] || [];
+  if(!subs.length){
+    const empty = document.createElement('div');
+    empty.style.cssText='padding:8px 14px;font-size:10px;color:rgba(255,255,255,.3)';
+    empty.textContent='Sin subgrupos'; menu.appendChild(empty); return;
+  }
   subs.forEach(s=>{
     const btn = document.createElement('button');
     btn.className = 'gm-sub-btn';
-    btn.innerHTML = `<span>${s.nombre}</span>`;
+    btn.textContent = s.nombre;
     btn.onclick = ()=> sacarSubgrupo(s.id, s.nombre, grupo.nombre);
     menu.appendChild(btn);
   });
@@ -2112,37 +2125,27 @@ async function sacarSubgrupo(subgrupoId, subgrupoNombre, grupoNombre){
     if(!rows.length){ toast('Subgrupo vacío'); return; }
 
     const wrap = document.getElementById('mesa-wrap');
-    const mesaW = document.getElementById('mesa').offsetWidth || window.innerWidth;
-    const cardW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw'))||180;
-    const gap = 14;
+    const mesaW = window.innerWidth;
+    const cardW = 180; const gap = 14;
     const cols = Math.max(1, Math.floor((mesaW - 40) / (cardW + gap)));
-    const baseX = 20;
-    const baseY = 20 + wrap.scrollTop;
-    const rowH = (cardW * 0.72) + gap + 24; // altura aprox carta + gap
+    const rowH = 148 + gap;
+    const baseX = 20; const baseY = 30 + wrap.scrollTop;
 
     rows.forEach((c, i)=>{
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = baseX + col * (cardW + gap);
-      const y = baseY + row * rowH;
-      const div = crearCarta('general', c.carta_numero, x, y);
+      const col = i % cols; const row = Math.floor(i / cols);
+      const div = crearCarta('general', c.carta_numero, baseX + col*(cardW+gap), baseY + row*rowH);
       if(div) div._despliegue = subgrupoId;
     });
 
     document.getElementById('empty').classList.add('hidden');
-
-    // Mostrar label en toolbar-row2
     document.getElementById('subgrupo-grupo-label').textContent = grupoNombre + ' ·';
     document.getElementById('subgrupo-activo-label').textContent = subgrupoNombre;
     document.getElementById('subgrupo-activo-wrap').classList.add('on');
-
-    // Mostrar botón limpiar en mesa
     document.getElementById('btn-limpiar-despliegue').classList.add('on');
-
     toast(subgrupoNombre + ': ' + rows.length + ' cartas ✅');
   }catch(e){
     console.error('Error sacarSubgrupo:',e);
-    toast('Error al cargar subgrupo');
+    toast('Error: ' + e.message);
   }
 }
 
@@ -2154,45 +2157,25 @@ async function sacarGrupoOnOff(grupoId){
     const cartas = await sbAuth('grupos_cartas?select=carta_numero&grupo_id=eq.'+grupoId+'&order=carta_numero.asc') || [];
     if(!cartas.length){ toast('Grupo vacío'); return; }
     const wrap = document.getElementById('mesa-wrap');
-    const baseX = 30;
-    const baseY = 40 + wrap.scrollTop;
+    const mesaW = window.innerWidth;
+    const cardW = 180; const gap = 14;
+    const cols = Math.max(1, Math.floor((mesaW - 40) / (cardW + gap)));
+    const rowH = 148 + gap; const baseX = 20; const baseY = 30 + wrap.scrollTop;
     cartas.forEach((c,i)=>{
-      const x = baseX + (Math.random()*8-4);
-      const y = baseY + (Math.random()*8-4);
-      crearCarta('general', c.carta_numero, x, y);
+      const col = i % cols; const row = Math.floor(i / cols);
+      crearCarta('general', c.carta_numero, baseX + col*(cardW+gap), baseY + row*rowH);
     });
     document.getElementById('empty').classList.add('hidden');
-    toast('ON/OFF: ' + cartas.length + ' cartas en mesa ✅');
-  }catch(e){
-    toast('Error al cargar ON/OFF');
-  }
-}
-
-async function sacarGrupoDirecto(grupoId, nombre){
-  document.getElementById('grupos-menu').classList.remove('on');
-  renderGruposMenu();
-  toast('Cargando ' + nombre + '...');
-  try{
-    const cartas = await sbAuth('grupos_cartas?select=carta_numero&grupo_id=eq.'+grupoId+'&order=carta_numero.asc') || [];
-    if(!cartas.length){ toast('Grupo vacío'); return; }
-    const wrap = document.getElementById('mesa-wrap');
-    cartas.forEach(c=>{
-      crearCarta('general', c.carta_numero, 30+(Math.random()*8-4), 40+wrap.scrollTop+(Math.random()*8-4));
-    });
-    document.getElementById('empty').classList.add('hidden');
-    toast(nombre + ': ' + cartas.length + ' cartas ✅');
-  }catch(e){ toast('Error al cargar grupo'); }
+    toast('ON/OFF: ' + cartas.length + ' cartas ✅');
+  }catch(e){ toast('Error: ' + e.message); }
 }
 
 function limpiarDespliegueSubgrupo(){
-  // Eliminar cartas del despliegue activo
   const aEliminar = cartasMesa.filter(c=>c._despliegue);
-  aEliminar.forEach(c=>{ c.remove(); });
+  aEliminar.forEach(c=>c.remove());
   cartasMesa = cartasMesa.filter(c=>!c._despliegue);
   actualizarContador(); actualizarInfoSesion();
   if(!cartasMesa.length) document.getElementById('empty').classList.remove('hidden');
-
-  // Ocultar label y botón
   document.getElementById('subgrupo-activo-wrap').classList.remove('on');
   document.getElementById('btn-limpiar-despliegue').classList.remove('on');
 }
