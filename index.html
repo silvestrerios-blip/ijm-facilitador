@@ -36,7 +36,16 @@ body{background:var(--mesa);color:#fff}
 /* TOOLBAR */
 #toolbar{position:fixed;top:0;left:0;right:0;height:var(--tb);background:rgba(28,28,28,.97);backdrop-filter:blur(14px);display:flex;flex-direction:column;align-items:stretch;padding:0;z-index:100;border-bottom:1px solid rgba(84,201,153,.22)}
 #toolbar-row1{display:flex;align-items:center;padding:0 12px;gap:8px;height:50px;flex-shrink:0}
-#toolbar-row2{display:flex;align-items:center;padding:0 12px;gap:6px;height:22px;border-top:1px solid rgba(84,201,153,.1);flex-shrink:0}
+#toolbar-row2{display:flex;align-items:center;padding:0 8px;gap:5px;height:22px;border-top:1px solid rgba(84,201,153,.1);flex-shrink:0}
+#toolbar-row3{display:none;align-items:center;padding:0 8px;gap:5px;height:28px;border-top:1px solid rgba(84,201,153,.15);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+#toolbar-row3::-webkit-scrollbar{display:none}
+#toolbar-row3.on{display:flex}
+.gr-chip{padding:4px 11px;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:transparent;font-size:9px;font-weight:700;cursor:pointer;white-space:nowrap;color:#fff;font-family:'Outfit',sans-serif;letter-spacing:.3px;flex-shrink:0;transition:all .13s}
+.gr-chip:hover{border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.08)}
+.gr-chip.on{border-color:var(--v);background:rgba(84,201,153,.2);color:#fff}
+.gr-back{padding:3px 8px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:transparent;font-size:8.5px;font-weight:700;cursor:pointer;color:rgba(255,255,255,.45);font-family:'Outfit',sans-serif;flex-shrink:0;transition:all .12s}
+.gr-back:hover{color:#fff}
+.gr-sep-v{width:1px;height:16px;background:rgba(255,255,255,.1);flex-shrink:0}
 #ijm-logo{display:flex;align-items:center;gap:7px;flex-shrink:0;user-select:none}
 .ijm-spiral{width:26px;height:26px;flex-shrink:0}
 .ijm-text{font-size:9.5px;font-weight:900;letter-spacing:1.4px;white-space:nowrap}
@@ -149,18 +158,7 @@ body{background:var(--mesa);color:#fff}
 .empty-p .ei{font-size:32px;margin-bottom:8px}
 
 /* GRUPOS MENU */
-#grupos-menu{
-  position:fixed;z-index:300;
-  background:rgba(22,22,22,.97);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:10px;padding:6px;
-  display:none;flex-direction:column;gap:3px;
-  box-shadow:0 8px 28px rgba(0,0,0,.55);
-  backdrop-filter:blur(10px);
-  min-width:190px;
-  bottom:calc(var(--tb) + 8px);
-}
-#grupos-menu.on{display:flex}
+#grupos-menu{display:none!important}
 .gm-title{font-size:8px;font-weight:700;text-transform:uppercase;
   letter-spacing:.8px;color:rgba(255,255,255,.3);
   padding:4px 10px 2px;pointer-events:none}
@@ -771,13 +769,7 @@ body{background:var(--mesa);color:#fff}
         <path d="M4 16L6 13L10.5 9L13 6L13 16Z" fill="rgba(244,160,32,0.2)" stroke="#F4A020" stroke-width=".8"/>
       </svg>
     </div>
-    <div class="chip" id="chip-grupos" onclick="toggleGruposMenu(event)" title="Grupos temáticos">
-      <svg style="width:14px;height:14px;flex-shrink:0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
-      </svg>
-      <span style="font-size:9px;font-weight:900;letter-spacing:.4px">GRUPOS</span>
-    </div>
+
     <div class="chip" onclick="crearNota()" title="Nota libre">
       <svg style="width:22px;height:18px;vertical-align:middle;flex-shrink:0" viewBox="0 0 22 18">
         <rect x="0" y="1" width="22" height="16" rx="3" fill="rgba(84,201,153,0.15)" stroke="#54C999" stroke-width="1.3"/>
@@ -808,15 +800,7 @@ body{background:var(--mesa);color:#fff}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
     </button>
     
-    <button class="tb-btn" id="btn-mantel" onclick="toggleMantelMenu(event)" title="Manteles">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <circle cx="12" cy="12" r="9"/>
-        <line x1="12" y1="3" x2="12" y2="21"/>
-        <line x1="3" y1="12" x2="21" y2="12"/>
-        <path d="M12 3 C16 7,16 17,12 21"/>
-        <path d="M12 3 C8 7,8 17,12 21"/>
-      </svg>
-    </button>
+
     <button id="btn-limpiar" onclick="pedirLimpiar()">&#128465; Limpiar</button>
   </div>
   </div><!-- end toolbar-row1 -->
@@ -838,7 +822,13 @@ body{background:var(--mesa);color:#fff}
       <span id="subgrupo-grupo-label"></span>
       <span id="subgrupo-activo-label"></span>
     </div>
+    <div style="flex:1"></div>
+    <button id="chip-grupos" class="col-btn" onclick="toggleGruposRow(event)" style="font-size:8.5px;font-weight:800;letter-spacing:.4px;padding:3px 9px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">GRUPOS</button>
+    <button class="col-btn" onclick="toggleMantelMenu(event)" id="btn-mantel" style="font-size:8.5px;font-weight:800;letter-spacing:.4px;padding:3px 9px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">DIN&#193;MICAS</button>
   </div><!-- end toolbar-row2 -->
+  <div id="toolbar-row3">
+    <!-- chips grupos/subgrupos se renderizan aquí -->
+  </div><!-- end toolbar-row3 -->
 </div>
 
 <div id="mesa-wrap"><div id="mesa">
@@ -1488,7 +1478,7 @@ function drag(el){
   el.addEventListener('mousedown',e=>{
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON')return;
     e.preventDefault();sel(el);el.style.zIndex=++zMax;const w=document.getElementById('mesa-wrap');
-    sx=e.clientX;sy=e.clientY+w.scrollTop;sl=parseInt(el.style.left)||0;st=parseInt(el.style.top)||0;mv2=false;el.classList.add('dragging');
+    sx=e.clientX;sy=e.clientY+w.scrollTop;sl=parseInt(el.style.left)||0;st=parseInt(el.style.top)||0;mv2=false;el.classList.add('dragging');el._movida=true;
     function mv(e){const dx=e.clientX-sx,dy=(e.clientY+w.scrollTop)-sy;if(Math.abs(dx)>3||Math.abs(dy)>3)mv2=true;if(!mv2)return;const mesa=document.getElementById('mesa');el.style.left=Math.max(0,Math.min(sl+dx,mesa.offsetWidth-el.offsetWidth))+'px';el.style.top=Math.max(0,Math.min(st+dy,mesa.offsetHeight-el.offsetHeight))+'px';}
     function up(){el.classList.remove('dragging');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
     document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
@@ -1498,7 +1488,7 @@ function drag(el){
     if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON')return;
     const now=Date.now();if(now-lt<280){e.preventDefault();mostrarMM(e.touches[0].clientX,e.touches[0].clientY,el);lt=0;return;}lt=now;
     sel(el);el.style.zIndex=++zMax;const w=document.getElementById('mesa-wrap');const t=e.touches[0];
-    sx=t.clientX;sy=t.clientY+w.scrollTop;sl=parseInt(el.style.left)||0;st=parseInt(el.style.top)||0;mv2=false;el.classList.add('dragging');
+    sx=t.clientX;sy=t.clientY+w.scrollTop;sl=parseInt(el.style.left)||0;st=parseInt(el.style.top)||0;mv2=false;el.classList.add('dragging');el._movida=true;
     function tm(e){e.preventDefault();mv2=true;const t=e.touches[0];const mesa=document.getElementById('mesa');el.style.left=Math.max(0,Math.min(sl+(t.clientX-sx),mesa.offsetWidth-el.offsetWidth))+'px';el.style.top=Math.max(0,Math.min(st+(t.clientY+w.scrollTop-sy),mesa.offsetHeight-el.offsetHeight))+'px';}
     function tu(){el.classList.remove('dragging');el.removeEventListener('touchmove',tm);el.removeEventListener('touchend',tu);}
     el.addEventListener('touchmove',tm,{passive:false});el.addEventListener('touchend',tu);
@@ -2107,15 +2097,90 @@ async function mostrarSubgruposEnMenu(grupo){
   });
 }
 
-function toggleGruposMenu(e){
-  e.stopPropagation();
-  const m = document.getElementById('grupos-menu');
-  const btn = document.getElementById('chip-grupos');
-  if(m.classList.contains('on')){ m.classList.remove('on'); renderGruposMenu(); return; }
-  const rect = btn.getBoundingClientRect();
-  m.style.left = (rect.left - 10) + 'px';
-  m.classList.add('on');
+function updateToolbarHeight(){
+  const h = document.getElementById('toolbar').offsetHeight;
+  document.documentElement.style.setProperty('--tb', h+'px');
 }
+
+function toggleGruposRow(e){
+  e.stopPropagation();
+  const row3 = document.getElementById('toolbar-row3');
+  const btn = document.getElementById('chip-grupos');
+  if(row3.classList.contains('on')){
+    row3.classList.remove('on');
+    btn.style.borderColor='rgba(84,201,153,.3)';
+    btn.style.color='rgba(255,255,255,.7)';
+    updateToolbarHeight();
+    return;
+  }
+  row3.classList.add('on');
+  btn.style.borderColor='var(--v)';
+  btn.style.color='#fff';
+  renderGruposRow3();
+  updateToolbarHeight();
+}
+
+function renderGruposRow3(){
+  const row3 = document.getElementById('toolbar-row3');
+  row3.innerHTML = '';
+  gruposData.forEach(g=>{
+    const chip = document.createElement('button');
+    chip.className = 'gr-chip';
+    chip.textContent = g.nombre;
+    chip.onclick = (e)=>{
+      e.stopPropagation();
+      if(g.nombre==='ON/OFF'){ sacarGrupoOnOff(g.id); cerrarGruposRow(); }
+      else { mostrarSubgruposEnRow3(g); }
+    };
+    row3.appendChild(chip);
+  });
+}
+
+async function mostrarSubgruposEnRow3(grupo){
+  const row3 = document.getElementById('toolbar-row3');
+  row3.innerHTML = '';
+
+  const back = document.createElement('button');
+  back.className = 'gr-back';
+  back.innerHTML = '&#8592;';
+  back.onclick = (e)=>{ e.stopPropagation(); renderGruposRow3(); };
+  row3.appendChild(back);
+
+  const sep = document.createElement('div'); sep.className='gr-sep-v';
+  row3.appendChild(sep);
+
+  // Carga lazy
+  if(!subgruposData[grupo.id]){
+    const ld = document.createElement('span');
+    ld.style.cssText='font-size:9px;color:rgba(255,255,255,.35);padding:0 8px';
+    ld.textContent='...'; row3.appendChild(ld);
+    try{
+      subgruposData[grupo.id] = await sbAuth('subgrupos?select=id,nombre,orden&grupo_id=eq.'+grupo.id+'&order=orden.asc') || [];
+    }catch(e){ subgruposData[grupo.id]=[]; }
+    ld.remove();
+  }
+
+  const subs = subgruposData[grupo.id] || [];
+  subs.forEach(s=>{
+    const chip = document.createElement('button');
+    chip.className = 'gr-chip';
+    chip.textContent = s.nombre;
+    chip.onclick = (e)=>{ e.stopPropagation(); sacarSubgrupo(s.id, s.nombre, grupo.nombre); cerrarGruposRow(); };
+    row3.appendChild(chip);
+  });
+}
+
+function cerrarGruposRow(){
+  const row3 = document.getElementById('toolbar-row3');
+  const btn = document.getElementById('chip-grupos');
+  row3.classList.remove('on');
+  btn.style.borderColor='rgba(84,201,153,.3)';
+  btn.style.color='rgba(255,255,255,.7)';
+  updateToolbarHeight();
+}
+
+// toggleGruposMenu: compatibilidad (ya no se usa como dropdown)
+function toggleGruposMenu(e){ toggleGruposRow(e); }
 
 async function sacarSubgrupo(subgrupoId, subgrupoNombre, grupoNombre){
   document.getElementById('grupos-menu').classList.remove('on');
@@ -2172,9 +2237,12 @@ async function sacarGrupoOnOff(grupoId){
 }
 
 function limpiarDespliegueSubgrupo(){
-  const aEliminar = cartasMesa.filter(c=>c._despliegue);
+  // Solo elimina las que no han sido movidas por el participante
+  const aEliminar = cartasMesa.filter(c=>c._despliegue && !c._movida);
   aEliminar.forEach(c=>c.remove());
-  cartasMesa = cartasMesa.filter(c=>!c._despliegue);
+  cartasMesa = cartasMesa.filter(c=>!(c._despliegue && !c._movida));
+  // Limpiar marca de despliegue en las que quedan (ya fueron escogidas)
+  cartasMesa.forEach(c=>{ if(c._despliegue) delete c._despliegue; });
   actualizarContador(); actualizarInfoSesion();
   if(!cartasMesa.length) document.getElementById('empty').classList.remove('hidden');
   document.getElementById('subgrupo-activo-wrap').classList.remove('on');
@@ -2628,7 +2696,7 @@ function colocarCartasProposito(){
   const MARGIN = 14;
   const GAP_X = 6;    // espacio horizontal entre cartas
   const GAP_Y = 6;    // espacio vertical mínimo
-  const TOOLBAR_H = 50; // altura toolbar
+  const TOOLBAR_H = document.getElementById('toolbar').offsetHeight; // altura toolbar dinámica
   const HDR_MARGIN = 4; // espacio entre cabecera y primera fila
 
   // Tamaño ajustado para que quepan 5 filas en pantalla
