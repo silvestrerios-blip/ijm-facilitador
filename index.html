@@ -283,6 +283,19 @@ body{background:var(--mesa);color:#fff}
   font-weight:900;z-index:10;line-height:1;padding:0;}
 .carta-flip:hover .btn-del{display:flex}
 
+/* Badge sin sesión activa */
+#badge-sin-sesion{
+  display:none;position:fixed;top:calc(var(--tb) + 6px);left:50%;
+  transform:translateX(-50%);z-index:90;
+  background:rgba(255,160,0,.15);border:1px solid rgba(255,160,0,.4);
+  color:rgba(255,190,60,.9);font-size:9px;font-weight:800;
+  font-family:'Outfit',sans-serif;letter-spacing:.6px;text-transform:uppercase;
+  padding:4px 14px;border-radius:20px;cursor:pointer;
+  backdrop-filter:blur(6px);transition:all .2s;white-space:nowrap;
+}
+#badge-sin-sesion.on{display:block}
+#badge-sin-sesion:hover{background:rgba(255,160,0,.25);border-color:rgba(255,160,0,.7)}
+
 /* Botón flotante girar todas */
 #btn-girar-todas{
   position:fixed;top:calc(var(--tb) + 12px);left:12px;z-index:200;
@@ -825,6 +838,9 @@ body{background:var(--mesa);color:#fff}
     </div>
     <button id="chip-grupos" class="col-btn" onclick="toggleGruposRow(event)" style="font-size:11px;font-weight:800;letter-spacing:.4px;padding:3px 11px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">GRUPOS</button>
     <button class="col-btn" onclick="toggleMantelMenu(event)" id="btn-mantel" style="font-size:11px;font-weight:800;letter-spacing:.4px;padding:3px 11px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">DIN&#193;MICAS</button>
+    <div style="flex:1"></div>
+    <button id="btn-sesion-tb" class="col-btn" onclick="abrirPanel('sesion')" style="font-size:11px;font-weight:800;padding:3px 11px;border-color:rgba(84,201,153,.4);color:rgba(255,255,255,.8)">&#9654; SESI&#211;N</button>
+    <button id="btn-cerrar-sesion-tb" class="col-btn" onclick="cerrarSesion()" style="display:none;font-size:11px;font-weight:800;padding:3px 11px;border-color:rgba(255,80,80,.35);color:rgba(255,100,100,.75)">&#9632; CERRAR</button>
   </div><!-- end toolbar-row2 -->
   <div id="toolbar-row3">
     <!-- chips grupos/subgrupos se renderizan aquí -->
@@ -833,6 +849,7 @@ body{background:var(--mesa);color:#fff}
 
 <div id="mesa-wrap"><div id="mesa">
   <button id="btn-limpiar-despliegue" onclick="limpiarDespliegueSubgrupo()">&#10005; Limpiar despliegue</button>
+  <button id="badge-sin-sesion" onclick="abrirPanel('sesion')">&#9888; Sin sesi&#243;n activa</button>
   <svg id="mantel-overlay" xmlns="http://www.w3.org/2000/svg"></svg>
   <div id="empty">
     <svg viewBox="0 0 24 24" fill="none" stroke="#54C999" stroke-width="1.2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M12 9v6M9 12h6"/></svg>
@@ -1056,6 +1073,7 @@ async function doLogin(){
     const now=new Date();document.getElementById('inp-hora').value=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
     toast(`Bienvenido, ${usuario.nombre} \u{1F44B}`);
     cargarGrupos();
+    actualizarBtnSesionToolbar();
   }catch(e){errEl.textContent=e.message;}
   document.getElementById('btn-login').textContent='Entrar';
 }
@@ -1090,6 +1108,8 @@ async function iniciarSesion(){
   document.getElementById('sesion-activa-info').style.display='block';
   document.getElementById('info-participante').textContent=participante;
   document.getElementById('info-fecha').textContent=fFecha(fecha)+(hora?' · '+hora:'');
+  cerrarPanel();
+  actualizarBtnSesionToolbar();
   toast(`Sesi\u00f3n iniciada con ${participante}`);
 }
 
@@ -1098,6 +1118,18 @@ function cerrarSesion(){
   const m=document.getElementById('modal-cerrar');
   m.style.display='flex';
   m.classList.add('on');
+}
+
+function actualizarBtnSesionToolbar(){
+  const activa = !!sesionActual;
+  const btnCerrar = document.getElementById('btn-cerrar-sesion-tb');
+  const btnSesion = document.getElementById('btn-sesion-tb');
+  const badge = document.getElementById('badge-sin-sesion');
+  if(btnCerrar) btnCerrar.style.display = activa ? 'flex' : 'none';
+  if(btnSesion) btnSesion.innerHTML = activa
+    ? `&#9654; ${sesionActual.participante||'SESI\u00d3N'}`
+    : '&#9654; SESI\u00d3N';
+  if(badge){ activa ? badge.classList.remove('on') : badge.classList.add('on'); }
 }
 
 async function confirmarCerrarSesion(){
@@ -1139,6 +1171,7 @@ async function confirmarCerrarSesion(){
   sesionActual=null;
   document.getElementById('sesion-form').style.display='block';
   document.getElementById('sesion-activa-info').style.display='none';
+  actualizarBtnSesionToolbar();
   // Limpiar mesa
   cartasMesa.forEach(c=>c.remove());
   cartasMesa=[];cartaSeleccionada=null;
