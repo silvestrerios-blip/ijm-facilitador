@@ -1205,6 +1205,7 @@ async function generarPDF(sesion, cartas, notas){
 
   const pdfOverlays = [];
   const flechaTexts = [];
+  const cartasScaleEstado = [];
 
   try{
     toast('Capturando mesa...');
@@ -1215,7 +1216,6 @@ async function generarPDF(sesion, cartas, notas){
     if(overlayWasHidden && mantelActual) overlay.style.opacity='1';
 
     // Normalizar transform:scale para que html2canvas respete el tamaño visual
-    const cartasScaleEstado = [];
     cartasMesa.forEach(el=>{
       const tr = el.style.transform;
       if(tr && tr.includes('scale')){
