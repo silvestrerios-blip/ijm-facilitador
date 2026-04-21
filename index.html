@@ -2055,7 +2055,8 @@ function renderGruposMenu(){
     const isOnOff = g.nombre === 'ON/OFF';
     const arrow = !isOnOff ? ' <span style="opacity:.4;font-size:9px">›</span>' : '';
     btn.innerHTML = `<span>${g.nombre}${arrow}</span><span class="gm-count">${g.count}</span>`;
-    btn.onclick = () => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
       if(isOnOff){ sacarGrupoOnOff(g.id); }
       else { mostrarSubgruposEnMenu(g); }
     };
@@ -2101,7 +2102,7 @@ async function mostrarSubgruposEnMenu(grupo){
     const btn = document.createElement('button');
     btn.className = 'gm-sub-btn';
     btn.textContent = s.nombre;
-    btn.onclick = ()=> sacarSubgrupo(s.id, s.nombre, grupo.nombre);
+    btn.onclick = (e)=>{ e.stopPropagation(); sacarSubgrupo(s.id, s.nombre, grupo.nombre); };
     menu.appendChild(btn);
   });
 }
