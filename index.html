@@ -157,7 +157,7 @@ body{background:var(--mesa);color:#fff}
   display:none;flex-direction:column;gap:3px;
   box-shadow:0 8px 28px rgba(0,0,0,.55);
   backdrop-filter:blur(10px);
-  min-width:170px;
+  min-width:190px;
   bottom:calc(var(--tb) + 8px);
 }
 #grupos-menu.on{display:flex}
@@ -173,6 +173,61 @@ body{background:var(--mesa);color:#fff}
 }
 .gm-btn:hover{background:rgba(84,201,153,.12);color:#fff}
 .gm-count{font-size:9px;color:rgba(84,201,153,.7);font-weight:700}
+.gm-back{
+  padding:6px 10px;border-radius:6px;border:none;
+  font-size:10px;font-weight:700;cursor:pointer;
+  font-family:'Outfit',sans-serif;text-align:left;
+  background:rgba(255,255,255,.06);color:rgba(255,255,255,.45);
+  transition:all .12s;display:flex;align-items:center;gap:5px;
+  margin-bottom:2px;
+}
+.gm-back:hover{color:#fff;background:rgba(255,255,255,.1)}
+.gm-sub-btn{
+  padding:8px 14px;border-radius:7px;border:none;
+  font-size:10.5px;font-weight:600;cursor:pointer;
+  font-family:'Outfit',sans-serif;text-align:left;
+  background:rgba(84,201,153,.06);color:rgba(255,255,255,.75);
+  border-left:2px solid rgba(84,201,153,.3);
+  transition:all .12s;display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.gm-sub-btn:hover{background:rgba(84,201,153,.15);color:#fff;border-left-color:var(--v)}
+.gm-sep{height:1px;background:rgba(255,255,255,.07);margin:3px 4px}
+/* Chip subgrupo activo en toolbar-row2 */
+#subgrupo-activo-wrap{display:none;align-items:center;gap:5px;flex:1;overflow:hidden}
+#subgrupo-activo-wrap.on{display:flex}
+#subgrupo-activo-label{
+  font-size:9px;font-weight:700;color:var(--v);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:260px;
+  padding:2px 8px;border-radius:8px;
+  background:rgba(84,201,153,.12);border:1px solid rgba(84,201,153,.25);
+}
+#subgrupo-grupo-label{font-size:8px;color:rgba(255,255,255,.3);font-weight:600;white-space:nowrap}
+/* Botón limpiar despliegue en mesa */
+#btn-limpiar-despliegue{
+  position:absolute;top:8px;left:8px;z-index:80;
+  display:none;
+  padding:5px 10px;border-radius:7px;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+  border:1px solid rgba(255,80,80,.35);
+  color:rgba(255,110,110,.8);font-size:9px;font-weight:700;
+  font-family:'Outfit',sans-serif;cursor:pointer;
+  transition:all .15s;white-space:nowrap;
+}
+#btn-limpiar-despliegue:hover{border-color:#ff5050;color:#ff5050;background:rgba(0,0,0,.8)}
+#btn-limpiar-despliegue.on{display:block}
+/* Etiqueta ON/OFF sobre carta */
+.etiqueta-onoff{
+  position:absolute;top:-18px;left:0;right:0;
+  text-align:center;
+  font-size:8px;font-weight:800;letter-spacing:.5px;
+  color:rgba(255,220,80,.9);
+  text-transform:uppercase;
+  pointer-events:none;
+  text-shadow:0 1px 4px rgba(0,0,0,.8);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  padding:0 4px;
+}
 .gm-loading{padding:10px 14px;font-size:11px;color:rgba(255,255,255,.3);text-align:center}
 
 /* LINEA FLECHA SVG */
@@ -779,10 +834,15 @@ body{background:var(--mesa);color:#fff}
         </svg>
       </button>
     </div>
+    <div id="subgrupo-activo-wrap">
+      <span id="subgrupo-grupo-label"></span>
+      <span id="subgrupo-activo-label"></span>
+    </div>
   </div><!-- end toolbar-row2 -->
 </div>
 
 <div id="mesa-wrap"><div id="mesa">
+  <button id="btn-limpiar-despliegue" onclick="limpiarDespliegueSubgrupo()">&#10005; Limpiar despliegue</button>
   <svg id="mantel-overlay" xmlns="http://www.w3.org/2000/svg"></svg>
   <div id="empty">
     <svg viewBox="0 0 24 24" fill="none" stroke="#54C999" stroke-width="1.2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M12 9v6M9 12h6"/></svg>
@@ -1331,6 +1391,13 @@ function crearCarta(mazo,n,x,y){
       // Nota label visible en mesa
       const nl=document.createElement('div');nl.className='carta-nota-label';
       div.appendChild(nl);div._notaLabel=nl;
+      // Etiqueta ON/OFF si aplica
+      if(onoffEtiquetas[n] && onoffEtiquetas[n].length){
+        const et=document.createElement('div');
+        et.className='etiqueta-onoff';
+        et.textContent=onoffEtiquetas[n].join(' · ');
+        div.appendChild(et);
+      }
     } else if(mazo==='s'||mazo==='n'){
       const nl2=document.createElement('div');nl2.className='carta-nota-label';
       div.appendChild(nl2);div._notaLabel=nl2;
@@ -1944,14 +2011,37 @@ let _tt;function toast(msg){const el=document.getElementById('toast');el.textCon
 // ══════════════════════════════════════════
 // GRUPOS TEMÁTICOS
 // ══════════════════════════════════════════
+let onoffEtiquetas = {}; // {carta_numero: ["texto1", ...]}
+let subgruposData = {};  // {grupo_id: [{id, nombre, tipo, orden, cartas:[]}]}
+
 async function cargarGrupos(){
   try{
-    const rows = await sbAuth('grupos?select=id,nombre,orden&order=orden.asc') || [];
-    // Para cada grupo cargamos el conteo de cartas
+    const rows = await sbAuth('grupos?select=id,nombre,orden,tiene_subgrupos_filtro&order=orden.asc') || [];
     const counts = await sbAuth('grupos_cartas?select=grupo_id') || [];
     const countMap = {};
     counts.forEach(r=>{ countMap[r.grupo_id]=(countMap[r.grupo_id]||0)+1; });
     gruposData = rows.map(r=>({...r, count: countMap[r.id]||0}));
+
+    // Cargar todos los subgrupos de una vez
+    const subs = await sbAuth('subgrupos?select=id,grupo_id,nombre,tipo,orden&order=orden.asc') || [];
+    subs.forEach(s=>{
+      if(!subgruposData[s.grupo_id]) subgruposData[s.grupo_id]=[];
+      subgruposData[s.grupo_id].push(s);
+    });
+
+    // Cargar etiquetas ON/OFF
+    const onoffGrupo = gruposData.find(g=>g.nombre==='ON/OFF');
+    if(onoffGrupo){
+      const etiquetas = await sbAuth('subgrupos_cartas?select=carta_numero,subgrupo_id&subgrupo_id=in.('+
+        (subgruposData[onoffGrupo.id]||[]).map(s=>s.id).join(',')+')') || [];
+      const subMap = {};
+      (subgruposData[onoffGrupo.id]||[]).forEach(s=>{ subMap[s.id]=s.nombre; });
+      etiquetas.forEach(e=>{
+        if(!onoffEtiquetas[e.carta_numero]) onoffEtiquetas[e.carta_numero]=[];
+        onoffEtiquetas[e.carta_numero].push(subMap[e.subgrupo_id]);
+      });
+    }
+
     renderGruposMenu();
   }catch(e){ console.warn('Error cargando grupos:',e); }
 }
@@ -1960,13 +2050,45 @@ function renderGruposMenu(){
   const menu = document.getElementById('grupos-menu');
   const loading = document.getElementById('gm-loading');
   if(loading) loading.remove();
-  // Limpiar botones anteriores
-  menu.querySelectorAll('.gm-btn').forEach(b=>b.remove());
+  menu.querySelectorAll('.gm-btn,.gm-back,.gm-sub-btn,.gm-sep,.gm-title-sub').forEach(b=>b.remove());
+  const title = menu.querySelector('.gm-title');
+  if(title) title.textContent = 'Grupos temáticos';
   gruposData.forEach(g=>{
     const btn = document.createElement('button');
     btn.className = 'gm-btn';
-    btn.innerHTML = `<span>${g.nombre}</span><span class="gm-count">${g.count}</span>`;
-    btn.onclick = () => sacarGrupo(g.id, g.nombre);
+    const arrow = g.tiene_subgrupos_filtro ? ' <span style="opacity:.4;font-size:9px">›</span>' : '';
+    btn.innerHTML = `<span>${g.nombre}${arrow}</span><span class="gm-count">${g.count}</span>`;
+    btn.onclick = () => {
+      if(g.nombre==='ON/OFF'){ sacarGrupoOnOff(g.id); }
+      else if(g.tiene_subgrupos_filtro){ mostrarSubgruposEnMenu(g); }
+      else { sacarGrupoDirecto(g.id, g.nombre); }
+    };
+    menu.appendChild(btn);
+  });
+}
+
+function mostrarSubgruposEnMenu(grupo){
+  const menu = document.getElementById('grupos-menu');
+  menu.querySelectorAll('.gm-btn,.gm-back,.gm-sub-btn,.gm-sep,.gm-title-sub').forEach(b=>b.remove());
+  const title = menu.querySelector('.gm-title');
+  if(title) title.textContent = grupo.nombre;
+
+  // Botón volver
+  const back = document.createElement('button');
+  back.className = 'gm-back';
+  back.innerHTML = '&#8592; Grupos';
+  back.onclick = (e)=>{ e.stopPropagation(); renderGruposMenu(); };
+  menu.appendChild(back);
+
+  const sep = document.createElement('div'); sep.className='gm-sep';
+  menu.appendChild(sep);
+
+  const subs = subgruposData[grupo.id] || [];
+  subs.forEach(s=>{
+    const btn = document.createElement('button');
+    btn.className = 'gm-sub-btn';
+    btn.innerHTML = `<span>${s.nombre}</span>`;
+    btn.onclick = ()=> sacarSubgrupo(s.id, s.nombre, grupo.nombre);
     menu.appendChild(btn);
   });
 }
@@ -1975,39 +2097,111 @@ function toggleGruposMenu(e){
   e.stopPropagation();
   const m = document.getElementById('grupos-menu');
   const btn = document.getElementById('chip-grupos');
-  if(m.classList.contains('on')){ m.classList.remove('on'); return; }
+  if(m.classList.contains('on')){ m.classList.remove('on'); renderGruposMenu(); return; }
   const rect = btn.getBoundingClientRect();
   m.style.left = (rect.left - 10) + 'px';
   m.classList.add('on');
 }
 
-async function sacarGrupo(grupoId, nombre){
+async function sacarSubgrupo(subgrupoId, subgrupoNombre, grupoNombre){
   document.getElementById('grupos-menu').classList.remove('on');
-  toast('Cargando grupo ' + nombre + '...');
+  renderGruposMenu();
+  toast('Cargando ' + subgrupoNombre + '...');
+  try{
+    const rows = await sbAuth('subgrupos_cartas?select=carta_numero&subgrupo_id=eq.'+subgrupoId+'&order=carta_numero.asc') || [];
+    if(!rows.length){ toast('Subgrupo vacío'); return; }
+
+    const wrap = document.getElementById('mesa-wrap');
+    const mesaW = document.getElementById('mesa').offsetWidth || window.innerWidth;
+    const cardW = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw'))||180;
+    const gap = 14;
+    const cols = Math.max(1, Math.floor((mesaW - 40) / (cardW + gap)));
+    const baseX = 20;
+    const baseY = 20 + wrap.scrollTop;
+    const rowH = (cardW * 0.72) + gap + 24; // altura aprox carta + gap
+
+    rows.forEach((c, i)=>{
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = baseX + col * (cardW + gap);
+      const y = baseY + row * rowH;
+      const div = crearCarta('general', c.carta_numero, x, y);
+      if(div) div._despliegue = subgrupoId;
+    });
+
+    document.getElementById('empty').classList.add('hidden');
+
+    // Mostrar label en toolbar-row2
+    document.getElementById('subgrupo-grupo-label').textContent = grupoNombre + ' ·';
+    document.getElementById('subgrupo-activo-label').textContent = subgrupoNombre;
+    document.getElementById('subgrupo-activo-wrap').classList.add('on');
+
+    // Mostrar botón limpiar en mesa
+    document.getElementById('btn-limpiar-despliegue').classList.add('on');
+
+    toast(subgrupoNombre + ': ' + rows.length + ' cartas ✅');
+  }catch(e){
+    console.error('Error sacarSubgrupo:',e);
+    toast('Error al cargar subgrupo');
+  }
+}
+
+async function sacarGrupoOnOff(grupoId){
+  document.getElementById('grupos-menu').classList.remove('on');
+  renderGruposMenu();
+  toast('Cargando ON/OFF...');
   try{
     const cartas = await sbAuth('grupos_cartas?select=carta_numero&grupo_id=eq.'+grupoId+'&order=carta_numero.asc') || [];
-    if(cartas.length === 0){ toast('El grupo está vacío'); return; }
+    if(!cartas.length){ toast('Grupo vacío'); return; }
     const wrap = document.getElementById('mesa-wrap');
-    // Apilar todas las cartas en el centro-izquierda con ligero offset aleatorio
     const baseX = 30;
     const baseY = 40 + wrap.scrollTop;
-    cartas.forEach((c, i) => {
-      const x = baseX + (Math.random() * 8 - 4);
-      const y = baseY + (Math.random() * 8 - 4);
+    cartas.forEach((c,i)=>{
+      const x = baseX + (Math.random()*8-4);
+      const y = baseY + (Math.random()*8-4);
       crearCarta('general', c.carta_numero, x, y);
     });
     document.getElementById('empty').classList.add('hidden');
-    toast(nombre + ': ' + cartas.length + ' cartas en mesa ✅');
+    toast('ON/OFF: ' + cartas.length + ' cartas en mesa ✅');
   }catch(e){
-    console.error('Error sacarGrupo:',e);
-    toast('Error al cargar el grupo');
+    toast('Error al cargar ON/OFF');
   }
+}
+
+async function sacarGrupoDirecto(grupoId, nombre){
+  document.getElementById('grupos-menu').classList.remove('on');
+  renderGruposMenu();
+  toast('Cargando ' + nombre + '...');
+  try{
+    const cartas = await sbAuth('grupos_cartas?select=carta_numero&grupo_id=eq.'+grupoId+'&order=carta_numero.asc') || [];
+    if(!cartas.length){ toast('Grupo vacío'); return; }
+    const wrap = document.getElementById('mesa-wrap');
+    cartas.forEach(c=>{
+      crearCarta('general', c.carta_numero, 30+(Math.random()*8-4), 40+wrap.scrollTop+(Math.random()*8-4));
+    });
+    document.getElementById('empty').classList.add('hidden');
+    toast(nombre + ': ' + cartas.length + ' cartas ✅');
+  }catch(e){ toast('Error al cargar grupo'); }
+}
+
+function limpiarDespliegueSubgrupo(){
+  // Eliminar cartas del despliegue activo
+  const aEliminar = cartasMesa.filter(c=>c._despliegue);
+  aEliminar.forEach(c=>{ c.remove(); });
+  cartasMesa = cartasMesa.filter(c=>!c._despliegue);
+  actualizarContador(); actualizarInfoSesion();
+  if(!cartasMesa.length) document.getElementById('empty').classList.remove('hidden');
+
+  // Ocultar label y botón
+  document.getElementById('subgrupo-activo-wrap').classList.remove('on');
+  document.getElementById('btn-limpiar-despliegue').classList.remove('on');
 }
 
 // Cerrar menú grupos al clicar fuera
 document.addEventListener('click', e=>{
   if(!e.target.closest('#grupos-menu') && !e.target.closest('#chip-grupos')){
-    document.getElementById('grupos-menu')?.classList.remove('on');
+    const m = document.getElementById('grupos-menu');
+    if(m?.classList.contains('on')){ m.classList.remove('on'); renderGruposMenu(); }
   }
 });
 
