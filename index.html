@@ -1271,17 +1271,14 @@ async function generarPDF(sesion, cartas, notas){
         if(sc !== 1){
           const origW = el.offsetWidth;
           const origH = el.offsetHeight;
-          const origL = parseInt(el.style.left)||0;
-          const origT = parseInt(el.style.top)||0;
-          const newW = Math.round(origW * sc);
-          const newH = Math.round(origH * sc);
-          cartasScaleEstado.push({el, tr, origW, origH, origL, origT});
+          const img = el.querySelector('img');
+          const origImgH = img ? img.offsetHeight : 0;
+          cartasScaleEstado.push({el, tr, origW, origH, img, origImgH});
           el.style.transform = 'none';
           el.style.transformOrigin = '';
-          el.style.width = newW + 'px';
-          el.style.height = newH + 'px';
-          // Ajustar posición si el origen era top left
-          // (ya es top left por defecto en crearCarta)
+          el.style.width = Math.round(origW * sc) + 'px';
+          el.style.height = Math.round(origH * sc) + 'px';
+          if(img) img.style.height = Math.round(origImgH * sc) + 'px';
         }
       }
     });
@@ -1462,11 +1459,12 @@ async function generarPDF(sesion, cartas, notas){
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
-    cartasScaleEstado.forEach(({el, tr, origW, origH})=>{
+    cartasScaleEstado.forEach(({el, tr, origW, origH, img, origImgH})=>{
       el.style.transform = tr;
       el.style.transformOrigin = 'top left';
       el.style.width = '';
       el.style.height = '';
+      if(img) img.style.height = '';
     });
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
