@@ -1285,6 +1285,10 @@ async function generarPDF(sesion, cartas, notas){
       }
     });
 
+    // Ocultar botones de borrar y elementos UI durante captura
+    document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display='none'; });
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el._prevDisplay=el.style.display; el.style.display='none'; });
+
     // Para PDF: ocultar dorso, mostrar imagen directamente
     document.querySelectorAll('.carta-flip').forEach(c=>{
       const estabaGirada = c.classList.contains('girada');
@@ -1426,6 +1430,9 @@ async function generarPDF(sesion, cartas, notas){
     console.error('PDF error:',e);
     toast('Error al generar PDF \u2014 revisa la consola');
   }finally{
+    // Restaurar elementos UI
+    document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=''; });
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el.style.display=el._prevDisplay||''; });
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
