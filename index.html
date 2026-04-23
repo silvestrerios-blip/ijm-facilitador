@@ -1289,7 +1289,17 @@ async function generarPDF(sesion, cartas, notas){
     // Ocultar botones de borrar y elementos UI durante captura
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display='none'; });
     // Mostrar nombres de cartas en el PDF
-    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el._prevDisplay=el.style.display; el.style.display='block'; });
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{
+      el._prevDisplay=el.style.display;
+      el.style.display='block';
+      el.style.zIndex='20';
+    });
+    // Asegurar que nota-label no solapa con nombre-label
+    document.querySelectorAll('.carta-nota-label').forEach(el=>{
+      el._prevTop = el.style.top;
+      // si tiene texto, asegurar que está visible y no tapado
+      if(el.textContent.trim()) el.style.zIndex='19';
+    });
 
     // Para PDF: ocultar dorso, mostrar imagen directamente
     document.querySelectorAll('.carta-flip').forEach(c=>{
@@ -1402,9 +1412,12 @@ async function generarPDF(sesion, cartas, notas){
       y:0
     });
 
-    // PDF landscape A4
-    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-    const PW=297,PH=210,M=10,HDR=16;
+    // Orientación según ratio real del canvas
+    const isLandscape = canvas.width >= canvas.height;
+    const doc=new jsPDF({orientation: isLandscape ? 'landscape' : 'portrait', unit:'mm', format:'a4'});
+    const PW = isLandscape ? 297 : 210;
+    const PH = isLandscape ? 210 : 297;
+    const M=10, HDR=16;
 
     // Cabecera verde
     doc.setFillColor(84,201,153);
@@ -1441,7 +1454,8 @@ async function generarPDF(sesion, cartas, notas){
   }finally{
     // Restaurar elementos UI
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=''; });
-    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el.style.display=el._prevDisplay||''; });
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el.style.display=el._prevDisplay||''; el.style.zIndex=''; });
+    document.querySelectorAll('.carta-nota-label').forEach(el=>{ el.style.zIndex=''; });
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
