@@ -1245,8 +1245,9 @@ async function generarPDF(sesion, cartas, notas){
     if(t+h>maxY) maxY=t+h;
   });
   const wrapH = wrap.offsetHeight;
-  // Con mantel activo capturar al menos la altura del viewport
-  const captureH = mantelActual ? Math.max(maxY+40, wrapH) : (maxY===0?400:maxY+40);
+  const mesaW = document.getElementById('mesa').offsetWidth;
+  // Con mantel activo capturar exactamente el viewport visible (landscape)
+  const captureH = mantelActual ? wrapH : (maxY===0?400:maxY+40);
 
   const pdfOverlays = [];
   const flechaTexts = [];
@@ -1411,14 +1412,17 @@ async function generarPDF(sesion, cartas, notas){
     doc.setFontSize(8);
     doc.text(`Participante: ${sesion.participante}  \u00b7  Facilitador: ${usuario.nombre}  \u00b7  Fecha: ${fFecha(sesion.fecha)}${sesion.hora?" · "+sesion.hora:""}  \u00b7  ${cartas.length} cartas`,M,13);
 
-    // Imagen de la mesa centrada
-    const imgData=canvas.toDataURL('image/jpeg',0.85);
+    // Imagen de la mesa centrada — forzar ancho completo
+    const imgData=canvas.toDataURL('image/jpeg',0.88);
     const availW=PW-M*2;
     const availH=PH-HDR-M-5;
     const ratio=canvas.width/canvas.height;
-    let iw=availW,ih=availW/ratio;
-    if(ih>availH){ih=availH;iw=availH*ratio;}
-    doc.addImage(imgData,'JPEG',M+(availW-iw)/2,HDR+3,iw,ih);
+    // Priorizar ancho completo; si excede alto, recortar proporcionalmente
+    let iw=availW, ih=availW/ratio;
+    if(ih>availH){ ih=availH; iw=availH*ratio; }
+    // Si la imagen es más ancha que alta (mantel landscape) centrar verticalmente
+    const yImg = HDR+3 + (ih < availH ? (availH-ih)/2 : 0);
+    doc.addImage(imgData,'JPEG',M+(availW-iw)/2, yImg, iw, ih);
 
     // Footer
     doc.setFontSize(7);doc.setTextColor(160,160,160);
