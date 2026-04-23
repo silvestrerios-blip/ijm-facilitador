@@ -1390,23 +1390,16 @@ async function generarPDF(sesion, cartas, notas){
     const captureW = wrap.offsetWidth;
     const captureHFinal = mantelActual ? wrap.offsetHeight : captureH;
 
-    const canvas=await html2canvas(document.getElementById('mesa'),{
+    const canvas=await html2canvas(wrap,{
       useCORS:true,
       allowTaint:false,
       scale:1.5,
-      width:captureW,
-      height:captureHFinal,
-      x:0,
-      y:scrollTop,
-      scrollX:0,
-      scrollY:-scrollTop,
       backgroundColor:'#606060',
       logging:false,
-      onclone:(doc)=>{
-        // En el clon, forzar mesa al tamaño del viewport
-        const m=doc.getElementById('mesa');
-        if(m){ m.style.width=captureW+'px'; m.style.minWidth=captureW+'px'; }
-      }
+      scrollX:0,
+      scrollY:0,
+      x:0,
+      y:0
     });
 
     // PDF landscape A4
