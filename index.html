@@ -1396,14 +1396,17 @@ async function generarPDF(sesion, cartas, notas){
       flechaTexts.push({svg,g,fo});
     });
 
-    // Dimensiones exactas — usar el wrap (viewport visible) como referencia
     const captureW = wrap.offsetWidth;
-    const captureHFinal = mantelActual ? wrap.offsetHeight : captureH;
+    const captureHFinal = wrap.offsetHeight;
 
     const canvas=await html2canvas(wrap,{
       useCORS:true,
       allowTaint:false,
       scale:1.5,
+      width:captureW,
+      height:captureHFinal,
+      windowWidth:captureW,
+      windowHeight:captureHFinal,
       backgroundColor:'#606060',
       logging:false,
       scrollX:0,
