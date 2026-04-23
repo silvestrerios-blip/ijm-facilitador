@@ -1130,10 +1130,27 @@ async function confirmarCerrarSesion(){
   const _mc=document.getElementById('modal-cerrar');_mc.classList.remove('on');_mc.style.display='';
   toast('Guardando sesi\u00f3n...');
 
-  // Recoger cartas de la mesa
+  // Recoger cartas de la mesa con datos de posición y estado
   const cartasData = cartasMesa
     .filter(c=>c._mazo && c._n)
-    .map(c=>({mazo:c._mazo, numero:c._n, nombre:c._mazo==='general'?NOMBRES[c._n]||null:null}));
+    .map(c=>{
+      const tr = c.style.transform||'';
+      const scMatch = tr.match(/scale\(([\d.]+)\)/);
+      const rotMatch = tr.match(/rotate\((-?[\d.]+)deg\)/);
+      const notaEl = c._notaLabel || c.querySelector('.franja-edit');
+      const notaInterior = notaEl ? (notaEl.dataset.value||notaEl.textContent||'').trim() : '';
+      return {
+        mazo: c._mazo,
+        numero: c._n,
+        nombre: c._mazo==='general' ? NOMBRES[c._n]||null : null,
+        pos_x: parseInt(c.style.left)||0,
+        pos_y: parseInt(c.style.top)||0,
+        escala: scMatch ? parseFloat(scMatch[1]) : 1,
+        rotacion: rotMatch ? parseInt(rotMatch[1]) : 0,
+        flip: c.classList.contains('girada')||false,
+        nota_interior: notaInterior
+      };
+    });
 
   // Recoger notas de post-its
   const notas = cartasMesa
@@ -1141,20 +1158,48 @@ async function confirmarCerrarSesion(){
     .map(c=>{const ta=c.querySelector('textarea');return ta?ta.value.trim():''})
     .filter(t=>t.length>0);
 
+  // Recoger elementos exteriores (notas y flechas)
+  const elementosData = cartasMesa
+    .filter(c=>c.classList.contains('carta-nota')||c.classList.contains('carta-flecha-wrap'))
+    .map(c=>{
+      const esFlecha = c.classList.contains('carta-flecha-wrap');
+      const ta = c.querySelector('textarea');
+      const texto = ta ? ta.value.trim() : '';
+      return {
+        tipo: esFlecha ? 'flecha' : 'nota',
+        pos_x: parseInt(c.style.left)||0,
+        pos_y: parseInt(c.style.top)||0,
+        texto,
+        direccion: c._direccion||'',
+        ancho: c.offsetWidth||200,
+        alto: c.offsetHeight||80
+      };
+    });
+
   // Guardar en Supabase
   try{
+    const mantelGuardar = mantelActual||'';
     if(sesionActual.id){
-      await sbAuth(`sesiones?id=eq.${sesionActual.id}`,{method:'PATCH',prefer:'return=minimal',body:{n_cartas:cartasData.length}});
+      await sbAuth(`sesiones?id=eq.${sesionActual.id}`,{method:'PATCH',prefer:'return=minimal',body:{n_cartas:cartasData.length, mantel:mantelGuardar}});
       if(cartasData.length>0){
         const rows=cartasData.map(c=>({sesion_id:sesionActual.id,...c}));
         await sbAuth('cartas_sesion',{method:'POST',prefer:'return=minimal',body:rows});
       }
+      if(elementosData.length>0){
+        const erows=elementosData.map(e=>({sesion_id:sesionActual.id,...e}));
+        await sbAuth('elementos_sesion',{method:'POST',prefer:'return=minimal',body:erows});
+      }
     } else {
-      // Crear sesion nueva si no existe
-      const [row]=await sbAuth('sesiones',{method:'POST',body:{participante:sesionActual.participante,fecha:sesionActual.fecha,hora:sesionActual.hora||null,facilitador_id:usuario.id,facilitador_nombre:usuario.nombre,n_cartas:cartasData.length}});
-      if(row && cartasData.length>0){
-        const rows=cartasData.map(c=>({sesion_id:row.id,...c}));
-        await sbAuth('cartas_sesion',{method:'POST',prefer:'return=minimal',body:rows});
+      const [row]=await sbAuth('sesiones',{method:'POST',body:{participante:sesionActual.participante,fecha:sesionActual.fecha,hora:sesionActual.hora||null,facilitador_id:usuario.id,facilitador_nombre:usuario.nombre,n_cartas:cartasData.length,mantel:mantelGuardar}});
+      if(row){
+        if(cartasData.length>0){
+          const rows=cartasData.map(c=>({sesion_id:row.id,...c}));
+          await sbAuth('cartas_sesion',{method:'POST',prefer:'return=minimal',body:rows});
+        }
+        if(elementosData.length>0){
+          const erows=elementosData.map(e=>({sesion_id:row.id,...e}));
+          await sbAuth('elementos_sesion',{method:'POST',prefer:'return=minimal',body:erows});
+        }
       }
     }
   }catch(e){console.warn('Supabase error:',e);}
@@ -1700,8 +1745,79 @@ async function toggleDetalle(sesionId){
   try{
     const cartas=await sbAuth(`cartas_sesion?sesion_id=eq.${sesionId}&order=created_at.asc`)||[];
     if(cartas.length===0){det.innerHTML='<p style="font-size:11px;color:rgba(255,255,255,.3);margin-top:6px">Sin cartas registradas</p>';return;}
-    det.innerHTML=`<div class="h-thumbs">${cartas.map(c=>`<img class="h-thumb" src="${imgUrl(c.mazo,c.numero)}" title="${c.nombre||c.mazo+' '+c.numero}" onclick="verAmpliada('${c.mazo}',${c.numero});event.stopPropagation()">`).join('')}</div>`;
+    det.innerHTML=`
+      <div style="display:flex;justify-content:flex-end;margin-bottom:6px">
+        <button onclick="reproducirSesion('${sesionId}');event.stopPropagation()" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(84,201,153,.4);background:rgba(84,201,153,.1);color:var(--v);font-size:9px;font-weight:800;font-family:'Outfit',sans-serif;cursor:pointer;letter-spacing:.5px">&#9654; REPRODUCIR EN MESA</button>
+      </div>
+      <div class="h-thumbs">${cartas.map(c=>`<img class="h-thumb" src="${imgUrl(c.mazo,c.numero)}" title="${c.nombre||c.mazo+' '+c.numero}" onclick="verAmpliada('${c.mazo}',${c.numero});event.stopPropagation()">`).join('')}</div>`;
   }catch(e){det.innerHTML='<p style="font-size:11px;color:rgba(255,80,80,.5);margin-top:6px">Error al cargar cartas</p>';}
+}
+
+async function reproducirSesion(sesionId){
+  try{
+    toast('Cargando sesión...');
+    // Cargar datos de la sesión
+    const [ses] = await sbAuth(`sesiones?id=eq.${sesionId}`) || [];
+    const cartas = await sbAuth(`cartas_sesion?sesion_id=eq.${sesionId}&order=created_at.asc`) || [];
+    const elementos = await sbAuth(`elementos_sesion?sesion_id=eq.${sesionId}&order=created_at.asc`) || [];
+
+    // Limpiar mesa actual
+    limpiarMesa();
+
+    // Aplicar mantel si había uno
+    if(ses?.mantel){
+      if(ses.mantel==='proposito') setMantelProposito();
+      else if(ses.mantel==='circular') setMantelCircular();
+      else setMantel(ses.mantel);
+    }
+
+    // Reproducir cartas con su estado
+    cartas.forEach(c=>{
+      const div = crearCarta(c.mazo, c.numero, c.pos_x||20, c.pos_y||20);
+      if(!div) return;
+      // Aplicar escala
+      if(c.escala && c.escala!==1){
+        const tr = div.style.transform||'';
+        div.style.transform = tr.replace(/scale\([\d.]+\)/,'')+` scale(${c.escala})`;
+        div.style.transformOrigin='top left';
+      }
+      // Aplicar rotación
+      if(c.rotacion){
+        const tr = div.style.transform||'';
+        div.style.transform = tr+` rotate(${c.rotacion}deg)`;
+      }
+      // Aplicar flip
+      if(c.flip){
+        div.classList.add('girada');
+        const inner = div.querySelector('.carta-flip-inner');
+        if(inner) inner.style.transform='rotateY(180deg)';
+      }
+      // Restaurar nota interior
+      if(c.nota_interior && div._notaLabel){
+        div._notaLabel.textContent = c.nota_interior;
+        div._notaLabel.dataset.value = c.nota_interior;
+        div._notaLabel.style.display='block';
+      }
+    });
+
+    // Reproducir elementos exteriores (notas y flechas)
+    elementos.forEach(e=>{
+      if(e.tipo==='nota'){
+        const nota = crearNota(e.pos_x, e.pos_y);
+        if(nota){
+          const ta = nota.querySelector('textarea');
+          if(ta && e.texto) ta.value=e.texto;
+        }
+      }
+    });
+
+    document.getElementById('empty').classList.add('hidden');
+    cerrarPanel();
+    toast(`Sesión de ${ses?.participante||'—'} reproducida ✅`);
+  }catch(err){
+    console.error('Error reproducirSesion:',err);
+    toast('Error al reproducir sesión');
+  }
 }
 
 async function cargarStats(){
