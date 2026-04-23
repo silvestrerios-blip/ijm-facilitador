@@ -1288,7 +1288,8 @@ async function generarPDF(sesion, cartas, notas){
 
     // Ocultar botones de borrar y elementos UI durante captura
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display='none'; });
-    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el._prevDisplay=el.style.display; el.style.display='none'; });
+    // Mostrar nombres de cartas en el PDF
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el._prevDisplay=el.style.display; el.style.display='block'; });
 
     // Para PDF: ocultar dorso, mostrar imagen directamente
     document.querySelectorAll('.carta-flip').forEach(c=>{
@@ -1385,16 +1386,27 @@ async function generarPDF(sesion, cartas, notas){
       flechaTexts.push({svg,g,fo});
     });
 
-    const canvas=await html2canvas(mesa,{
+    // Dimensiones exactas — usar el wrap (viewport visible) como referencia
+    const captureW = wrap.offsetWidth;
+    const captureHFinal = mantelActual ? wrap.offsetHeight : captureH;
+
+    const canvas=await html2canvas(document.getElementById('mesa'),{
       useCORS:true,
       allowTaint:false,
-      scale:1.2,
-      width:mesa.offsetWidth,
-      height:captureH,
-      y:0,
-      scrollY:0,
+      scale:1.5,
+      width:captureW,
+      height:captureHFinal,
+      x:0,
+      y:scrollTop,
+      scrollX:0,
+      scrollY:-scrollTop,
       backgroundColor:'#606060',
-      logging:false
+      logging:false,
+      onclone:(doc)=>{
+        // En el clon, forzar mesa al tamaño del viewport
+        const m=doc.getElementById('mesa');
+        if(m){ m.style.width=captureW+'px'; m.style.minWidth=captureW+'px'; }
+      }
     });
 
     // PDF landscape A4
