@@ -1059,7 +1059,7 @@ async function doLogin(){
     const r=await fetch(`${SB_URL}/auth/v1/token?grant_type=password`,{method:'POST',headers:{'apikey':SB_KEY,'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
     const d=await r.json();
     if(!r.ok) throw new Error(d.error_description||d.msg||'Error de acceso');
-    usuario={id:d.user.id,email:d.user.email,nombre:d.user.user_metadata?.nombre||email.split('@')[0],token:d.access_token,esAdmin:d.user.email===ADMIN_EMAIL};
+    usuario={id:d.user.id,email:d.user.email,nombre:d.user.user_metadata?.nombre||email.split('@')[0],token:d.access_token,_refreshToken:d.refresh_token||'',esAdmin:d.user.email===ADMIN_EMAIL};
     document.getElementById('login-screen').classList.add('hidden');
     document.getElementById('user-badge').innerHTML=`<span class="ub-name">${usuario.nombre}</span>${usuario.esAdmin?' &middot; admin':''}`;
     if(usuario.esAdmin){document.getElementById('btn-stats').classList.add('visible');document.getElementById('ptab-stats').style.display='block';}
@@ -1068,6 +1068,7 @@ async function doLogin(){
     toast(`Bienvenido, ${usuario.nombre} \u{1F44B}`);
     cargarGrupos();
     actualizarBtnSesionToolbar();
+    iniciarRefreshJWT();
   }catch(e){errEl.textContent=e.message;}
   document.getElementById('btn-login').textContent='Entrar';
 }
@@ -1394,7 +1395,7 @@ async function generarPDF(sesion, cartas, notas){
     });
 
     const captureW = wrap.offsetWidth;
-    const captureHFinal = wrap.offsetHeight;
+    const captureHFinal = (mantelActual==='proposito') ? document.getElementById('mesa').scrollHeight : wrap.offsetHeight;
 
     const canvas=await html2canvas(wrap,{
       useCORS:true,
@@ -1428,7 +1429,7 @@ async function generarPDF(sesion, cartas, notas){
     doc.text('INNER JOURNEY METHOD\u2122',M,7);
     doc.setFont('helvetica','normal');
     doc.setFontSize(8);
-    doc.text(`Participante: ${sesion.participante}  \u00b7  Facilitador: ${usuario.nombre}  \u00b7  Fecha: ${fFecha(sesion.fecha)}${sesion.hora?" · "+sesion.hora:""}  \u00b7  ${cartas.length} cartas`,M,13);
+    doc.text(`Participante: ${sesion.participante}  \u00b7  Facilitador: ${usuario.nombre}  \u00b7  Fecha: ${fFecha(sesion.fecha)}${sesion.hora?" · "+sesion.hora:""}`,M,13);
 
     // Imagen de la mesa centrada — forzar ancho completo
     const imgData=canvas.toDataURL('image/jpeg',0.88);
@@ -1567,7 +1568,7 @@ function crearNota(){
   div.style.cssText=`left:${20+Math.random()*18}px;top:${18+wrap.scrollTop+Math.random()*14}px;z-index:${++zMax}`;
   const hdr=document.createElement('div');hdr.className='nota-hdr';
   hdr.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#54C999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Nota</span>';
-  const ta=document.createElement('textarea');ta.className='nota-body';ta.placeholder='Escribe aqu\u00ed...';
+  const ta=document.createElement('textarea');ta.className='nota-body';ta.placeholder='Escribe aqu\u00ed...';ta.autocomplete='off';
   ta.onmousedown=e=>e.stopPropagation();ta.ontouchstart=e=>e.stopPropagation();
   div.appendChild(hdr);div.appendChild(ta);
   let sx,sy,sl,st;
@@ -1852,15 +1853,40 @@ async function reproducirSesion(sesionId){
 }
 
 async function cargarStats(){
-  if(!usuario.esAdmin){document.getElementById('stats-content').innerHTML='<div class="empty-p"><div class="ei">\ud83d\udd12</div>Solo administrador</div>';return;}
-  const el=document.getElementById('stats-content');el.innerHTML='<div class="empty-p"><div class="ei">\u23f3</div>Calculando...</div>';
+  if(!usuario.esAdmin){document.getElementById('stats-content').innerHTML='<div class="empty-p"><div class="ei">&#128274;</div>Solo administrador</div>';return;}
+  const el=document.getElementById('stats-content');
+  el.innerHTML='<div class="empty-p"><div class="ei">&#8987;</div>Calculando...</div>';
   try{
     const rows=await sbAuth('sesiones?select=*&order=created_at.desc&limit=500')||[];
-    if(rows.length===0){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udced</div>Sin datos a\u00fan</div>';return;}
-    const totalSes=rows.length,totalCartas=rows.reduce((a,r)=>a+(r.n_cartas||0),0),mediaCartas=totalSes>0?(totalCartas/totalSes).toFixed(1):0,participantes=new Set(rows.map(r=>r.participante)).size;
-    const porFac={};rows.forEach(r=>{const f=r.facilitador_nombre||'\u2014';if(!porFac[f])porFac[f]={ses:0,parts:new Set()};porFac[f].ses++;porFac[f].parts.add(r.participante);});
-    el.innerHTML=`<div class="stats-grid"><div class="sg-card"><div class="sg-n">${totalSes}</div><div class="sg-l">Sesiones</div></div><div class="sg-card"><div class="sg-n">${participantes}</div><div class="sg-l">Participantes</div></div><div class="sg-card"><div class="sg-n">${mediaCartas}</div><div class="sg-l">Cartas/sesi\u00f3n</div></div><div class="sg-card"><div class="sg-n">${Object.keys(porFac).length}</div><div class="sg-l">Facilitadores</div></div></div><div class="stat-card"><h3>Por facilitador</h3>${Object.entries(porFac).sort((a,b)=>b[1].ses-a[1].ses).map(([n,d])=>`<div class="stat-row"><span class="sr-name">${n}</span><span class="sr-val">${d.ses} ses \u00b7 ${d.parts.size} part.</span></div>`).join('')}</div>`;
-  }catch(e){el.innerHTML='<div class="empty-p"><div class="ei">\ud83d\udce1</div>Sin conexi\u00f3n</div>';}
+    if(!rows.length){el.innerHTML='<div class="empty-p"><div class="ei">&#128237;</div>Sin datos aún</div>';return;}
+    const facs=[...new Set(rows.map(r=>r.facilitador_nombre||'—'))].sort();
+    const render=(fF,fP)=>{
+      let d=rows;
+      if(fF) d=d.filter(r=>(r.facilitador_nombre||'—')===fF);
+      if(fP) d=d.filter(r=>r.participante&&r.participante.toLowerCase().includes(fP.toLowerCase()));
+      const ts=d.length,tc=d.reduce((a,r)=>a+(r.n_cartas||0),0),mc=ts?(tc/ts).toFixed(1):0,ps=new Set(d.map(r=>r.participante)).size;
+      const pf={};d.forEach(r=>{const f=r.facilitador_nombre||'—';if(!pf[f])pf[f]={ses:0,pts:new Set()};pf[f].ses++;pf[f].pts.add(r.participante);});
+      document.getElementById('stats-results').innerHTML=
+        '<div class="stats-grid">'
+        +'<div class="sg-card"><div class="sg-n">'+ts+'</div><div class="sg-l">Sesiones</div></div>'
+        +'<div class="sg-card"><div class="sg-n">'+ps+'</div><div class="sg-l">Participantes</div></div>'
+        +'<div class="sg-card"><div class="sg-n">'+mc+'</div><div class="sg-l">Cartas/sesión</div></div>'
+        +'<div class="sg-card"><div class="sg-n">'+Object.keys(pf).length+'</div><div class="sg-l">Facilitadores</div></div>'
+        +'</div><div class="stat-card"><h3>Por facilitador</h3>'
+        +Object.entries(pf).sort((a,b)=>b[1].ses-a[1].ses).map(([n,v])=>'<div class="stat-row"><span class="sr-name">'+n+'</span><span class="sr-val">'+v.ses+' ses · '+v.pts.size+' part.</span></div>').join('')
+        +'</div>';
+    };
+    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'
+      +'<select id="sf" style="flex:1;min-width:120px;padding:5px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-size:10px;font-family:Outfit,sans-serif">'
+      +'<option value="">Todos los facilitadores</option>'
+      +facs.map(f=>'<option>'+f+'</option>').join('')+'</select>'
+      +'<input id="sp" type="text" placeholder="Buscar participante..." autocomplete="off" '
+      +'style="flex:1;min-width:120px;padding:5px 8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.06);color:#fff;font-size:10px;font-family:Outfit,sans-serif;outline:none">'
+      +'</div><div id="stats-results"></div>';
+    const sf=el.querySelector('#sf'),sp=el.querySelector('#sp');
+    const upd=()=>render(sf.value,sp.value);
+    sf.addEventListener('change',upd);sp.addEventListener('input',upd);upd();
+  }catch(e){el.innerHTML='<div class="empty-p"><div class="ei">&#128225;</div>Sin conexión</div>';}
 }
 
 // ═══════════════════════════════════════════
@@ -1896,6 +1922,8 @@ function cerrarMantelRow(){
 function setMantel(nombre){
   document.getElementById('mantel-menu').classList.remove('on');
   cerrarMantelRow();
+  if(nombre && escala<100){window._escalaAntesMantel=escala;setScale(100);document.getElementById('scale-slider').value=100;}
+  else if(!nombre && window._escalaAntesMantel){setScale(window._escalaAntesMantel);document.getElementById('scale-slider').value=window._escalaAntesMantel;window._escalaAntesMantel=undefined;}
   document.querySelectorAll('.mantel-opt').forEach(o => o.classList.remove('on'));
 
   const overlay = document.getElementById('mantel-overlay');
@@ -2238,6 +2266,18 @@ function fFecha(f){if(!f)return '';const[y,m,d]=f.split('-');return `${d}/${m}/$
 let _tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';clearTimeout(_tt);_tt=setTimeout(()=>el.style.display='none',2600);}
 
 // ══════════════════════════════════════════
+// JWT AUTO-REFRESH
+function iniciarRefreshJWT(){
+  setInterval(async ()=>{
+    try{
+      const SB_URL='https://lynqikyddjogbndaonia.supabase.co';
+      const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5bnFpa3lkZGpvZ2JuZGFvbmlhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU1MzY4NzIsImV4cCI6MjAzMTExMjg3Mn0.NQxqg4rFaWBMUJGnDgMIBkPDWYKuHMPdkzKKLBblVtI';
+      const res=await fetch(SB_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'Content-Type':'application/json','apikey':SB_KEY},body:JSON.stringify({refresh_token:usuario._refreshToken||''})});
+      if(res.ok){const d=await res.json();if(d.access_token){usuario.token=d.access_token;if(d.refresh_token)usuario._refreshToken=d.refresh_token;}}
+    }catch(e){console.warn('JWT refresh:',e);}
+  },50*60*1000);
+}
+
 // GRUPOS TEMÁTICOS
 // ══════════════════════════════════════════
 let onoffEtiquetas = {}; // {carta_numero: ["texto1", ...]}
