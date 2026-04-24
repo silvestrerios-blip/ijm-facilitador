@@ -1273,13 +1273,15 @@ async function generarPDF(sesion, cartas, notas){
           const origW = el.offsetWidth;
           const origH = el.offsetHeight;
           const img = el.querySelector('img');
-          const origImgH = img ? img.offsetHeight : 0;
-          cartasScaleEstado.push({el, tr, origW, origH, img, origImgH});
+          // Calcular altura real de la imagen desde CSS variable
+          const chVal = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch')) || img?.offsetHeight || 120;
+          const scaledH = Math.round(chVal * sc);
+          cartasScaleEstado.push({el, tr, origW, origH, img, scaledH});
           el.style.transform = 'none';
           el.style.transformOrigin = '';
           el.style.width = Math.round(origW * sc) + 'px';
           el.style.height = Math.round(origH * sc) + 'px';
-          if(img) img.style.height = Math.round(origImgH * sc) + 'px';
+          if(img) img.style.height = scaledH + 'px';
         }
       }
     });
@@ -1467,7 +1469,7 @@ async function generarPDF(sesion, cartas, notas){
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
-    cartasScaleEstado.forEach(({el, tr, origW, origH, img, origImgH})=>{
+    cartasScaleEstado.forEach(({el, tr, img})=>{
       el.style.transform = tr;
       el.style.transformOrigin = 'top left';
       el.style.width = '';
