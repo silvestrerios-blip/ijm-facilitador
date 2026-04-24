@@ -1794,68 +1794,59 @@ async function toggleDetalle(sesionId){
 
 async function reproducirSesion(sesionId){
   try{
-    toast('Cargando sesión...');
-    // Cargar datos de la sesión
+    toast('Cargando sesi\u00f3n...');
     const [ses] = await sbAuth(`sesiones?id=eq.${sesionId}`) || [];
     const cartas = await sbAuth(`cartas_sesion?sesion_id=eq.${sesionId}&order=created_at.asc`) || [];
     const elementos = await sbAuth(`elementos_sesion?sesion_id=eq.${sesionId}&order=created_at.asc`) || [];
 
-    // Limpiar mesa actual
-    limpiarMesa();
+    // Limpiar mesa completamente
+    cartasMesa.forEach(c=>c.remove());
+    cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];
+    cerrarModal();actualizarContador();actualizarInfoSesion();
+    document.getElementById('empty').classList.add('hidden');
+    document.querySelectorAll('.pdf-overlay').forEach(d=>{if(d.parentNode)d.parentNode.removeChild(d);});
+    document.getElementById('btn-girar-todas').classList.remove('visible');
+    document.getElementById('proposito-headers').classList.remove('visible');
+    mantelActual=null;
+    const ov=document.getElementById('mantel-overlay');
+    ov.innerHTML='';ov.classList.remove('on');
+    document.querySelectorAll('.mantel-opt').forEach(o=>o.classList.remove('on'));
 
-    // Aplicar mantel si había uno
+    cerrarPanel();
+    await new Promise(r=>setTimeout(r,80));
+
     if(ses?.mantel){
       if(ses.mantel==='proposito') setMantelProposito();
       else if(ses.mantel==='circular') setMantelCircular();
       else setMantel(ses.mantel);
+      await new Promise(r=>setTimeout(r,150));
     }
 
-    // Reproducir cartas con su estado
     cartas.forEach(c=>{
-      const div = crearCarta(c.mazo, c.numero, c.pos_x||20, c.pos_y||20);
+      const div=crearCarta(c.mazo,c.numero,c.pos_x||20,c.pos_y||20);
       if(!div) return;
-      // Aplicar escala
-      if(c.escala && c.escala!==1){
-        const tr = div.style.transform||'';
-        div.style.transform = tr.replace(/scale\([\d.]+\)/,'')+` scale(${c.escala})`;
-        div.style.transformOrigin='top left';
-      }
-      // Aplicar rotación
-      if(c.rotacion){
-        const tr = div.style.transform||'';
-        div.style.transform = tr+` rotate(${c.rotacion}deg)`;
-      }
-      // Aplicar flip
-      if(c.flip){
-        div.classList.add('girada');
-        const inner = div.querySelector('.carta-flip-inner');
-        if(inner) inner.style.transform='rotateY(180deg)';
-      }
-      // Restaurar nota interior
-      if(c.nota_interior && div._notaLabel){
-        div._notaLabel.textContent = c.nota_interior;
-        div._notaLabel.dataset.value = c.nota_interior;
-        div._notaLabel.style.display='block';
-      }
+      if(c.escala&&c.escala!=1){div.style.transform=(div.style.transform||'').replace(/scale\([\d.]+\)/,'')+` scale(${c.escala})`;div.style.transformOrigin='top left';}
+      if(c.rotacion){div.style.transform=(div.style.transform||'')+` rotate(${c.rotacion}deg)`;}
+      if(c.flip){div.classList.add('girada');const inner=div.querySelector('.carta-flip-inner');if(inner)inner.style.transform='rotateY(180deg)';}
+      if(c.nota_interior&&div._notaLabel){div._notaLabel.textContent=c.nota_interior;div._notaLabel.dataset.value=c.nota_interior;div._notaLabel.style.display='block';}
     });
 
-    // Reproducir elementos exteriores (notas y flechas)
     elementos.forEach(e=>{
       if(e.tipo==='nota'){
-        const nota = crearNota(e.pos_x, e.pos_y);
-        if(nota){
-          const ta = nota.querySelector('textarea');
-          if(ta && e.texto) ta.value=e.texto;
-        }
+        const nota=crearNota(e.pos_x,e.pos_y);
+        if(nota){const ta=nota.querySelector('textarea');if(ta&&e.texto)ta.value=e.texto;}
+      } else if(e.tipo==='flecha'){
+        crearFlecha(e.direccion||'der');
+        const fs=document.querySelectorAll('.carta-flecha-wrap,.carta-flecha');
+        const f=fs[fs.length-1];
+        if(f){f.style.left=e.pos_x+'px';f.style.top=e.pos_y+'px';const ta=f.querySelector('textarea');if(ta&&e.texto)ta.value=e.texto;}
       }
     });
 
-    document.getElementById('empty').classList.add('hidden');
-    cerrarPanel();
-    toast(`Sesión de ${ses?.participante||'—'} reproducida ✅`);
+    toast(`Sesi\u00f3n de ${ses?.participante||'\u2014'} reproducida \u2705`);
   }catch(err){
     console.error('Error reproducirSesion:',err);
-    toast('Error al reproducir sesión');
+    toast('Error al reproducir sesi\u00f3n');
   }
 }
 
