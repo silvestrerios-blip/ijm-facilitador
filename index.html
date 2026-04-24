@@ -1816,25 +1816,18 @@ async function reproducirSesion(sesionId){
     await new Promise(r=>setTimeout(r,80));
 
     if(ses?.mantel){
-      if(ses.mantel==='proposito') setMantelProposito();
-      else if(ses.mantel==='circular') setMantelCircular();
+      if(ses.mantel==='proposito'){
+        // Activar mantel PROPÓSITO sin generar cartas aleatorias
+        mantelActual='proposito';
+        document.getElementById('mo-proposito')?.classList.add('on');
+      } else if(ses.mantel==='circular') setMantelCircular();
       else setMantel(ses.mantel);
       await new Promise(r=>setTimeout(r,150));
     }
 
     const esProposito = ses?.mantel==='proposito';
     if(esProposito){
-      // PROPÓSITO ya colocó las cartas via colocarCartasProposito
-      // Solo restaurar notas interiores en las cartas ya en mesa
-      cartas.forEach(c=>{
-        if(!c.nota_interior) return;
-        const div = cartasMesa.find(d=>d._n===c.numero && d._mazo===c.mazo);
-        if(div && div._notaLabel){
-          div._notaLabel.textContent=c.nota_interior;
-          div._notaLabel.dataset.value=c.nota_interior;
-          div._notaLabel.style.display='block';
-        }
-      });
+      reproducirCartasProposito(cartas);
     } else {
       cartas.forEach(c=>{
         const div=crearCarta(c.mazo,c.numero,c.pos_x||20,c.pos_y||20);
@@ -2989,6 +2982,60 @@ function setMantelProposito(){
   document.getElementById('mo-proposito').classList.add('on');
   mantelActual = 'proposito';
   colocarCartasProposito();
+}
+
+function reproducirCartasProposito(cartasGuardadas){
+  const wrap = document.getElementById('mesa-wrap');
+  const mesa = document.getElementById('mesa');
+  const W = mesa.offsetWidth;
+  const VH = wrap.offsetHeight;
+  const scrollY = wrap.scrollTop;
+  const COLS = 5, ROWS = 5;
+  const LABELS = ['PROPÓSITO','TRAMPA','CAÍDA','',''];
+  const HDR_H = 30, MARGIN = 14, GAP_X = 6, GAP_Y = 6;
+  const TOOLBAR_H = document.getElementById('toolbar').offsetHeight;
+  const HDR_MARGIN = 4;
+  const availH = VH - TOOLBAR_H - HDR_H - HDR_MARGIN - GAP_Y*(ROWS-1);
+  const ch = Math.floor(availH / ROWS);
+  const cw = Math.floor(ch / 0.67);
+
+  // Posicionar cabeceras
+  const hdrEl = document.getElementById('proposito-headers');
+  hdrEl.style.cssText = `top:${TOOLBAR_H}px;left:${MARGIN}px;width:${W - MARGIN*2}px;flex-direction:row;gap:${GAP_X}px;`;
+  hdrEl.innerHTML = LABELS.map(l=>`<div class="prop-col-hdr" style="width:${cw}px;height:${HDR_H}px;flex-shrink:0">${l}</div>`).join('');
+  hdrEl.classList.add('visible');
+
+  // Colocar cartas guardadas en el grid (max 25)
+  const total = Math.min(cartasGuardadas.length, COLS*ROWS);
+  for(let i=0; i<total; i++){
+    const c = cartasGuardadas[i];
+    const row = Math.floor(i/COLS), col = i%COLS;
+    const x = MARGIN + col*(cw+GAP_X);
+    const y = scrollY + TOOLBAR_H + HDR_H + HDR_MARGIN + row*(ch+GAP_Y);
+
+    const div = document.createElement('div');
+    div.className = 'carta carta-foto';
+    div.style.cssText = `left:${x}px;top:${y}px;width:${cw}px;z-index:${++zMax}`;
+    div._mazo = c.mazo; div._n = c.numero;
+
+    const img = document.createElement('img');
+    img.src = imgUrl(c.mazo, c.numero); img.draggable = false;
+    img.style.cssText = `width:100%;height:calc(var(--ch,120px));object-fit:cover;display:block`;
+    div.appendChild(img);
+
+    const nlp = document.createElement('div'); nlp.className='carta-nota-label';
+    div.appendChild(nlp); div._notaLabel = nlp;
+
+    // Restaurar nota interior
+    if(c.nota_interior){ nlp.textContent=c.nota_interior; nlp.dataset.value=c.nota_interior; nlp.style.display='block'; }
+
+    addDel(div);
+    addGestos(div, ()=>verAmpliada(c.mazo, c.numero, div));
+    mesa.appendChild(div);
+    cartasMesa.push(div);
+  }
+  actualizarContador();
+  document.getElementById('empty').classList.add('hidden');
 }
 
 function colocarCartasProposito(){
