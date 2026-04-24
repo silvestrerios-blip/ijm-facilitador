@@ -1387,11 +1387,9 @@ async function generarPDF(sesion, cartas, notas){
 
     const captureW = wrap.offsetWidth;
     const wrapH = wrap.offsetHeight;
-    // A4 landscape ratio = 297/210 = 1.414
     const a4H = Math.round(captureW / 1.414);
-    const captureHFinal = mantelActual
-      ? (mantelActual==='proposito' ? document.getElementById('mesa').scrollHeight : Math.min(wrapH, a4H))
-      : (maxY===0 ? 400 : maxY+40);
+    // Todos los manteles usan el viewport visible (A4 landscape)
+    const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
 
     const canvas = await html2canvas(wrap, {
       useCORS: true,
