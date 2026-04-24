@@ -1266,24 +1266,21 @@ async function generarPDF(sesion, cartas, notas){
     // Normalizar transform:scale para que html2canvas respete el tamaño visual
     cartasMesa.forEach(el=>{
       const tr = el.style.transform;
-      if(tr && tr.includes('scale')){
-        const match = tr.match(/scale\(([\d.]+)\)/);
-        const sc = match ? parseFloat(match[1]) : 1;
-        if(sc !== 1){
-          const origW = el.offsetWidth;
-          const origH = el.offsetHeight;
-          const img = el.querySelector('img');
-          // Calcular altura real de la imagen desde CSS variable
-          const chVal = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch')) || img?.offsetHeight || 120;
-          const scaledH = Math.round(chVal * sc);
-          cartasScaleEstado.push({el, tr, origW, origH, img, scaledH});
-          el.style.transform = 'none';
-          el.style.transformOrigin = '';
-          el.style.width = Math.round(origW * sc) + 'px';
-          el.style.height = Math.round(origH * sc) + 'px';
-          if(img) img.style.height = scaledH + 'px';
-        }
-      }
+      if(!tr || !tr.includes('scale')) return;
+      const match = tr.match(/scale\(([\d.]+)\)/);
+      const sc = match ? parseFloat(match[1]) : 1;
+      if(sc === 1) return;
+      const cwVal = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw')) || el.offsetWidth || 180;
+      const chVal = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch')) || 120;
+      const scaledW = Math.round(cwVal * sc);
+      const scaledH = Math.round(chVal * sc);
+      const img = el.querySelector('img');
+      cartasScaleEstado.push({el, tr, img});
+      el.style.transform = 'none';
+      el.style.transformOrigin = '';
+      el.style.width = scaledW + 'px';
+      el.style.height = 'auto';
+      if(img) img.style.height = scaledH + 'px';
     });
 
     // Ocultar botones de borrar y elementos UI durante captura
