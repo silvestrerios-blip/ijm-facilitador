@@ -1286,18 +1286,9 @@ async function generarPDF(sesion, cartas, notas){
 
     // Ocultar botones de borrar y elementos UI durante captura
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display='none'; });
-    // Mostrar nombres de cartas en el PDF
-    document.querySelectorAll('.carta-nombre-label').forEach(el=>{
-      el._prevDisplay=el.style.display;
-      el.style.display='block';
-      el.style.zIndex='20';
-    });
-    // Asegurar que nota-label no solapa con nombre-label
-    document.querySelectorAll('.carta-nota-label').forEach(el=>{
-      el._prevTop = el.style.top;
-      // si tiene texto, asegurar que está visible y no tapado
-      if(el.textContent.trim()) el.style.zIndex='19';
-    });
+    // Preservar estado nombres (no forzar visibilidad)
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el._prevDisplay=el.style.display; });
+    document.querySelectorAll('.carta-nota-label').forEach(el=>{ el._prevTop=el.style.top; });
 
     // Para PDF: ocultar dorso, mostrar imagen directamente
     document.querySelectorAll('.carta-flip').forEach(c=>{
@@ -1418,6 +1409,18 @@ async function generarPDF(sesion, cartas, notas){
       y: 0
     });
 
+    // Si hay mantel y el canvas es portrait, recortarlo a A4 landscape
+    let finalCanvas = canvas;
+    if(mantelActual && mantelActual!=='proposito' && canvas.height > canvas.width){
+      const targetH = Math.round(canvas.width / 1.414);
+      const clipped = document.createElement('canvas');
+      clipped.width = canvas.width;
+      clipped.height = Math.min(targetH, canvas.height);
+      const ctx2 = clipped.getContext('2d');
+      ctx2.drawImage(canvas, 0, 0);
+      finalCanvas = clipped;
+    }
+
     // Orientación: landscape si hay mantel, si no según ratio del canvas
     const forceLandscape = !!mantelActual;
     const isLandscape = forceLandscape || canvas.width >= canvas.height;
@@ -1438,10 +1441,10 @@ async function generarPDF(sesion, cartas, notas){
     doc.text(`Participante: ${sesion.participante}  \u00b7  Facilitador: ${usuario.nombre}  \u00b7  Fecha: ${fFecha(sesion.fecha)}${sesion.hora?" · "+sesion.hora:""}`,M,13);
 
     // Imagen de la mesa centrada — forzar ancho completo
-    const imgData=canvas.toDataURL('image/jpeg',0.88);
+    const imgData=finalCanvas.toDataURL('image/jpeg',0.88);
     const availW=PW-M*2;
     const availH=PH-HDR-M-5;
-    const ratio=canvas.width/canvas.height;
+    const ratio=finalCanvas.width/finalCanvas.height;
     // Priorizar ancho completo; si excede alto, recortar proporcionalmente
     let iw=availW, ih=availW/ratio;
     if(ih>availH){ ih=availH; iw=availH*ratio; }
@@ -1461,8 +1464,8 @@ async function generarPDF(sesion, cartas, notas){
   }finally{
     // Restaurar elementos UI
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=''; });
-    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el.style.display=el._prevDisplay||''; el.style.zIndex=''; });
-    document.querySelectorAll('.carta-nota-label').forEach(el=>{ el.style.zIndex=''; });
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el.style.display=el._prevDisplay!==undefined?el._prevDisplay:''; });
+    document.querySelectorAll('.carta-nota-label').forEach(el=>{ if(el._prevTop!==undefined) el.style.top=el._prevTop; });
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
