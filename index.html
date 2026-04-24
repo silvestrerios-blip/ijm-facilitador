@@ -1068,6 +1068,7 @@ async function doLogin(){
     toast(`Bienvenido, ${usuario.nombre} \u{1F44B}`);
     cargarGrupos();
     actualizarBtnSesionToolbar();
+    aplicarEscala();
     iniciarRefreshJWT();
   }catch(e){errEl.textContent=e.message;}
   document.getElementById('btn-login').textContent='Entrar';
@@ -1263,17 +1264,16 @@ async function generarPDF(sesion, cartas, notas){
     // Forzar overlay visible durante captura
     if(overlayWasHidden && mantelActual) overlay.style.opacity='1';
 
-    // html2canvas no lee CSS variables — forzar valores computados inline
-    const chComputed = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch')) || 120;
-    const cwComputed = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw')) || 180;
+    // Forzar dimensiones computadas inline para html2canvas (no lee CSS vars)
+    const s = escala / 100;
+    const chComputed = Math.round(120 * s);
+    const cwComputed = Math.round(180 * s);
     cartasMesa.forEach(el=>{
+      if(!el._mazo) return; // solo cartas de imagen
       const img = el.querySelector('img');
-      if(img){
-        img._prevHeight = img.style.height;
-        img.style.height = chComputed + 'px';
-      }
-      el._prevWidth = el.style.width;
-      if(!el.style.width) el.style.width = cwComputed + 'px';
+      if(img){ img._prevHeight=img.style.height; img.style.height=chComputed+'px'; }
+      el._prevWidth=el.style.width;
+      el.style.width=cwComputed+'px';
       cartasScaleEstado.push({el, img});
     });
 
