@@ -1415,7 +1415,8 @@ async function generarPDF(sesion, cartas, notas){
       }
     }
 
-    // Orientación según finalCanvas
+    // DEBUG temporal — borrar después
+    toast(`Canvas: ${canvas.width}×${canvas.height} | Final: ${finalCanvas.width}×${finalCanvas.height}`);
     const isLandscape = finalCanvas.width >= finalCanvas.height;
     const doc=new jsPDF({orientation: isLandscape ? 'landscape' : 'portrait', unit:'mm', format:'a4'});
     const PW = isLandscape ? 297 : 210;
