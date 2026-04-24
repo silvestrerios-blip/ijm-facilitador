@@ -1822,14 +1822,33 @@ async function reproducirSesion(sesionId){
       await new Promise(r=>setTimeout(r,150));
     }
 
-    cartas.forEach(c=>{
-      const div=crearCarta(c.mazo,c.numero,c.pos_x||20,c.pos_y||20);
-      if(!div) return;
-      if(c.escala&&c.escala!=1){div.style.transform=(div.style.transform||'').replace(/scale\([\d.]+\)/,'')+` scale(${c.escala})`;div.style.transformOrigin='top left';}
-      if(c.rotacion){div.style.transform=(div.style.transform||'')+` rotate(${c.rotacion}deg)`;}
-      if(c.flip){div.classList.add('girada');const inner=div.querySelector('.carta-flip-inner');if(inner)inner.style.transform='rotateY(180deg)';}
-      if(c.nota_interior&&div._notaLabel){div._notaLabel.textContent=c.nota_interior;div._notaLabel.dataset.value=c.nota_interior;div._notaLabel.style.display='block';}
-    });
+    const esProposito = ses?.mantel==='proposito';
+    if(esProposito){
+      // PROPÓSITO ya colocó las cartas via colocarCartasProposito
+      // Solo restaurar notas interiores en las cartas ya en mesa
+      cartas.forEach(c=>{
+        if(!c.nota_interior) return;
+        const div = cartasMesa.find(d=>d._n===c.numero && d._mazo===c.mazo);
+        if(div && div._notaLabel){
+          div._notaLabel.textContent=c.nota_interior;
+          div._notaLabel.dataset.value=c.nota_interior;
+          div._notaLabel.style.display='block';
+        }
+      });
+    } else {
+      cartas.forEach(c=>{
+        const div=crearCarta(c.mazo,c.numero,c.pos_x||20,c.pos_y||20);
+        if(!div) return;
+        if(c.escala&&c.escala!=1){div.style.transform=(div.style.transform||'').replace(/scale\([\d.]+\)/,'')+` scale(${c.escala})`;div.style.transformOrigin='top left';}
+        if(c.rotacion){div.style.transform=(div.style.transform||'')+` rotate(${c.rotacion}deg)`;}
+        if(c.flip){div.classList.add('girada');const inner=div.querySelector('.carta-flip-inner');if(inner)inner.style.transform='rotateY(180deg)';}
+        if(c.nota_interior&&div._notaLabel){
+          div._notaLabel.textContent=c.nota_interior;
+          div._notaLabel.dataset.value=c.nota_interior;
+          div._notaLabel.style.display='block';
+        }
+      });
+    }
 
     elementos.forEach(e=>{
       if(e.tipo==='nota'){
