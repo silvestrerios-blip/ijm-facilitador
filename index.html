@@ -1395,7 +1395,9 @@ async function generarPDF(sesion, cartas, notas){
     });
 
     const captureW = wrap.offsetWidth;
-    const captureHFinal = (mantelActual==='proposito') ? document.getElementById('mesa').scrollHeight : wrap.offsetHeight;
+    const captureHRaw = (mantelActual==='proposito') ? document.getElementById('mesa').scrollHeight : wrap.offsetHeight;
+    // Con mantel: si el wrap es portrait, forzar landscape intercambiando dimensiones
+    const captureHFinal = (mantelActual && captureHRaw > captureW) ? captureW * 0.65 : captureHRaw;
 
     const canvas=await html2canvas(wrap,{
       useCORS:true,
@@ -1413,8 +1415,9 @@ async function generarPDF(sesion, cartas, notas){
       y:0
     });
 
-    // Orientación según ratio real del canvas
-    const isLandscape = canvas.width >= canvas.height;
+    // Orientación: landscape si hay mantel, si no según ratio del canvas
+    const forceLandscape = !!mantelActual;
+    const isLandscape = forceLandscape || canvas.width >= canvas.height;
     const doc=new jsPDF({orientation: isLandscape ? 'landscape' : 'portrait', unit:'mm', format:'a4'});
     const PW = isLandscape ? 297 : 210;
     const PH = isLandscape ? 210 : 297;
