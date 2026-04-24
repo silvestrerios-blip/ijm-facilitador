@@ -1263,24 +1263,18 @@ async function generarPDF(sesion, cartas, notas){
     // Forzar overlay visible durante captura
     if(overlayWasHidden && mantelActual) overlay.style.opacity='1';
 
-    // Normalizar transform:scale para que html2canvas respete el tamaño visual
+    // html2canvas no lee CSS variables — forzar valores computados inline
+    const chComputed = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch')) || 120;
+    const cwComputed = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw')) || 180;
     cartasMesa.forEach(el=>{
-      const tr = el.style.transform;
-      if(!tr || !tr.includes('scale')) return;
-      const match = tr.match(/scale\(([\d.]+)\)/);
-      const sc = match ? parseFloat(match[1]) : 1;
-      if(sc === 1) return;
-      const cwVal = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cw')) || el.offsetWidth || 180;
-      const chVal = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ch')) || 120;
-      const scaledW = Math.round(cwVal * sc);
-      const scaledH = Math.round(chVal * sc);
       const img = el.querySelector('img');
-      cartasScaleEstado.push({el, tr, img});
-      el.style.transform = 'none';
-      el.style.transformOrigin = '';
-      el.style.width = scaledW + 'px';
-      el.style.height = 'auto';
-      if(img) img.style.height = scaledH + 'px';
+      if(img){
+        img._prevHeight = img.style.height;
+        img.style.height = chComputed + 'px';
+      }
+      el._prevWidth = el.style.width;
+      if(!el.style.width) el.style.width = cwComputed + 'px';
+      cartasScaleEstado.push({el, img});
     });
 
     // Ocultar botones de borrar y elementos UI durante captura
@@ -1468,12 +1462,9 @@ async function generarPDF(sesion, cartas, notas){
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
-    cartasScaleEstado.forEach(({el, tr, img})=>{
-      el.style.transform = tr;
-      el.style.transformOrigin = 'top left';
-      el.style.width = '';
-      el.style.height = '';
-      if(img) img.style.height = '';
+    cartasScaleEstado.forEach(({el, img})=>{
+      if(img) img.style.height = img._prevHeight || '';
+      el.style.width = el._prevWidth || '';
     });
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
