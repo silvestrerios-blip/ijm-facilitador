@@ -1409,21 +1409,23 @@ async function generarPDF(sesion, cartas, notas){
       y: 0
     });
 
-    // Si hay mantel y el canvas es portrait, recortarlo a A4 landscape
+    // Recortar canvas si es portrait para que el PDF salga landscape
     let finalCanvas = canvas;
-    if(mantelActual && mantelActual!=='proposito' && canvas.height > canvas.width){
+    if(canvas.height > canvas.width * 0.8){
+      // Canvas portrait o casi cuadrado — recortar a ratio A4 landscape
       const targetH = Math.round(canvas.width / 1.414);
-      const clipped = document.createElement('canvas');
-      clipped.width = canvas.width;
-      clipped.height = Math.min(targetH, canvas.height);
-      const ctx2 = clipped.getContext('2d');
-      ctx2.drawImage(canvas, 0, 0);
-      finalCanvas = clipped;
+      if(targetH < canvas.height){
+        const clipped = document.createElement('canvas');
+        clipped.width = canvas.width;
+        clipped.height = targetH;
+        const ctx2 = clipped.getContext('2d');
+        ctx2.drawImage(canvas, 0, 0);
+        finalCanvas = clipped;
+      }
     }
 
-    // Orientación: landscape si hay mantel, si no según ratio del canvas
-    const forceLandscape = !!mantelActual;
-    const isLandscape = forceLandscape || canvas.width >= canvas.height;
+    // Orientación según finalCanvas
+    const isLandscape = finalCanvas.width >= finalCanvas.height;
     const doc=new jsPDF({orientation: isLandscape ? 'landscape' : 'portrait', unit:'mm', format:'a4'});
     const PW = isLandscape ? 297 : 210;
     const PH = isLandscape ? 210 : 297;
