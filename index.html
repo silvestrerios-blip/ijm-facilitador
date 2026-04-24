@@ -1799,8 +1799,8 @@ async function reproducirSesion(sesionId){
     const cartas = await sbAuth(`cartas_sesion?sesion_id=eq.${sesionId}&order=created_at.asc`) || [];
     const elementos = await sbAuth(`elementos_sesion?sesion_id=eq.${sesionId}&order=created_at.asc`) || [];
 
-    // Limpiar mesa completamente
-    cartasMesa.forEach(c=>c.remove());
+    // Limpiar mesa completamente — DOM + array
+    document.querySelectorAll('#mesa .carta, #mesa .carta-nota, #mesa .carta-flecha-wrap, #mesa .carta-flecha').forEach(el=>el.remove());
     cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];
     cerrarModal();actualizarContador();actualizarInfoSesion();
     document.getElementById('empty').classList.add('hidden');
