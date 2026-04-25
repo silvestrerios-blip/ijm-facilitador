@@ -1376,14 +1376,22 @@ async function generarPDF(sesion, cartas, notas){
     // Todos los manteles usan el viewport visible (A4 landscape)
     const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
 
-    // Aplicar CSS vars directamente antes de capturar
+    // Aplicar tamaño directamente en cada carta antes de capturar
     const s = escala / 100;
-    const root = document.documentElement;
-    const prevCw = root.style.getPropertyValue('--cw');
-    const prevCh = root.style.getPropertyValue('--ch');
-    root.style.setProperty('--cw', Math.round(180*s)+'px');
-    root.style.setProperty('--ch', Math.round(120*s)+'px');
-    await new Promise(r=>setTimeout(r,50)); // esperar reflow
+    const cwPx = Math.round(180*s);
+    const chPx = Math.round(120*s);
+    const cartasModificadas = [];
+    document.querySelectorAll('#mesa .carta').forEach(el=>{
+      const img = el.querySelector('img');
+      const prevW = el.style.width;
+      const prevH = el.style.height;
+      const prevImgH = img ? img.style.height : '';
+      el.style.setProperty('width', cwPx+'px', 'important');
+      el.style.setProperty('height', chPx+'px', 'important');
+      if(img) img.style.setProperty('height', chPx+'px', 'important');
+      cartasModificadas.push({el, img, prevW, prevH, prevImgH});
+    });
+    await new Promise(r=>setTimeout(r,80));
 
     const canvas = await html2canvas(wrap, {
       useCORS: true,
@@ -1401,9 +1409,12 @@ async function generarPDF(sesion, cartas, notas){
       y: 0
     });
 
-    // Restaurar CSS vars
-    root.style.setProperty('--cw', prevCw);
-    root.style.setProperty('--ch', prevCh);
+    // Restaurar estilos
+    cartasModificadas.forEach(({el, img, prevW, prevH, prevImgH})=>{
+      el.style.width = prevW;
+      el.style.height = prevH;
+      if(img) img.style.height = prevImgH;
+    });
 
     // Recortar canvas si es portrait para que el PDF salga landscape
     let finalCanvas = canvas;
@@ -1469,9 +1480,6 @@ async function generarPDF(sesion, cartas, notas){
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
     cartasScaleEstado.forEach(({el, img})=>{ /* nada que restaurar */ });
-    // Asegurar restauración CSS vars
-    if(typeof prevCw !== 'undefined') document.documentElement.style.setProperty('--cw', prevCw);
-    if(typeof prevCh !== 'undefined') document.documentElement.style.setProperty('--ch', prevCh);
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
       const inner = c.querySelector('.carta-flip-inner');
