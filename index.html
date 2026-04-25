@@ -1153,7 +1153,7 @@ async function confirmarCerrarSesion(){
         rotacion: rotMatch ? parseInt(rotMatch[1]) : 0,
         flip: c.classList.contains('girada')||false,
         nota_interior: notaInterior,
-        nombre_visible: !!(c._nombreLabel && c._nombreLabel.style.display === 'block')
+        nombre_visible: !!(c._nombreLabel && getComputedStyle(c._nombreLabel).display !== 'none')
       };
     });
 
