@@ -1216,9 +1216,10 @@ async function confirmarCerrarSesion(){
     }
   }catch(e){console.warn('Supabase error:',e);}
 
-  // Generar PDF (independiente del cierre — si falla, la sesión se cierra igual)
+  // Generar PDF antes de limpiar (necesita las cartas en mesa)
+  const sesionParaPDF = {...sesionActual};
   try{
-    await generarPDF(sesionActual, cartasData, notas);
+    await generarPDF(sesionParaPDF, cartasData, notas);
   }catch(e){
     console.error('PDF error:',e);
     toast('Error al generar PDF, pero la sesión se ha guardado');
@@ -1260,12 +1261,10 @@ async function generarPDF(sesion, cartas, notas){
     </div>`;
   document.body.insertBefore(hdr, document.body.firstChild);
 
-  // Imprimir
-  await new Promise(r=>setTimeout(r,80));
-  window.print();
+  // Imprimir — usar setTimeout para no bloquear el flujo
+  setTimeout(()=>{ window.print(); hdr.remove(); }, 300);
 
-  // Limpiar
-  hdr.remove();
+  // Limpiar btn-del inmediatamente  
   document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=el._prevDisplay||''; });
 }
 async function cargarHistorial(){
