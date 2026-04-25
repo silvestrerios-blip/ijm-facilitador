@@ -1243,12 +1243,16 @@ async function generarPDF(sesion, cartas, notas){
   wrap.scrollTop=0;
 
   // Calcular altura real ocupada — si hay mantel usar altura del wrap
-  let maxY=0;
+  let maxY=0, minY=99999;
   cartasMesa.forEach(c=>{
     const t=parseInt(c.style.top)||0;
     const h=c.offsetHeight||120;
     if(t+h>maxY) maxY=t+h;
+    if(t<minY) minY=t;
   });
+  if(minY===99999) minY=0;
+  const contentH = maxY - minY + 40;
+  const offsetY = Math.max(0, minY - 20); // 20px de margen arriba
   const wrapH = wrap.offsetHeight;
   const mesaW = document.getElementById('mesa').offsetWidth;
   // Con mantel activo capturar exactamente el viewport visible (landscape)
@@ -1375,8 +1379,8 @@ async function generarPDF(sesion, cartas, notas){
     const captureW = wrap.offsetWidth;
     const wrapH = wrap.offsetHeight;
     const a4H = Math.round(captureW / 1.414);
-    // Todos los manteles usan el viewport visible (A4 landscape)
-    const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
+    const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : Math.min(contentH, wrapH);
+    const captureY = mantelActual ? 0 : offsetY;
 
     const canvas = await html2canvas(wrap, {
       useCORS: true,
@@ -1389,9 +1393,9 @@ async function generarPDF(sesion, cartas, notas){
       backgroundColor: '#606060',
       logging: false,
       scrollX: 0,
-      scrollY: 0,
+      scrollY: -captureY,
       x: 0,
-      y: 0
+      y: captureY
     });
 
     // Restaurar estilos
