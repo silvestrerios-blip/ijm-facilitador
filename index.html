@@ -1264,18 +1264,8 @@ async function generarPDF(sesion, cartas, notas){
     // Forzar overlay visible durante captura
     if(overlayWasHidden && mantelActual) overlay.style.opacity='1';
 
-    // Forzar dimensiones computadas inline para html2canvas (no lee CSS vars)
-    const s = escala / 100;
-    const chComputed = Math.round(120 * s);
-    const cwComputed = Math.round(180 * s);
-    cartasMesa.forEach(el=>{
-      if(!el._mazo) return; // solo cartas de imagen
-      const img = el.querySelector('img');
-      if(img){ img._prevHeight=img.style.height; img.style.height=chComputed+'px'; }
-      el._prevWidth=el.style.width;
-      el.style.width=cwComputed+'px';
-      cartasScaleEstado.push({el, img});
-    });
+    // No manipular estilos — el scale de html2canvas gestiona el tamaño
+    cartasMesa.forEach(el=>{ cartasScaleEstado.push({el, img: el.querySelector('img')}); });
 
     // Ocultar botones de borrar y elementos UI durante captura
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display='none'; });
@@ -1384,10 +1374,14 @@ async function generarPDF(sesion, cartas, notas){
     // Todos los manteles usan el viewport visible (A4 landscape)
     const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
 
+    // Capturar con scale proporcional a la escala actual
+    // Así html2canvas renderiza las cartas al tamaño visual correcto
+    const captureScale = (escala / 100) * 1.5;
+
     const canvas = await html2canvas(wrap, {
       useCORS: true,
       allowTaint: false,
-      scale: 1.5,
+      scale: captureScale,
       width: captureW,
       height: captureHFinal,
       windowWidth: captureW,
@@ -1463,10 +1457,7 @@ async function generarPDF(sesion, cartas, notas){
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
-    cartasScaleEstado.forEach(({el, img})=>{
-      if(img) img.style.height = img._prevHeight || '';
-      el.style.width = el._prevWidth || '';
-    });
+    cartasScaleEstado.forEach(({el, img})=>{ /* nada que restaurar */ });
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
       const inner = c.querySelector('.carta-flip-inner');
