@@ -1152,7 +1152,8 @@ async function confirmarCerrarSesion(){
         escala: scMatch ? parseFloat(scMatch[1]) : 1,
         rotacion: rotMatch ? parseInt(rotMatch[1]) : 0,
         flip: c.classList.contains('girada')||false,
-        nota_interior: notaInterior
+        nota_interior: notaInterior,
+        nombre_visible: !!(c._nombreLabel && c._nombreLabel.style.display === 'block')
       };
     });
 
@@ -1830,6 +1831,7 @@ async function reproducirSesion(sesionId){
           div._notaLabel.dataset.value=c.nota_interior;
           div._notaLabel.style.display='block';
         }
+        if(c.nombre_visible&&div._nombreLabel) div._nombreLabel.style.display='block';
       });
     }
 
