@@ -1376,8 +1376,14 @@ async function generarPDF(sesion, cartas, notas){
     // Todos los manteles usan el viewport visible (A4 landscape)
     const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
 
-    // Capturar — usar onclone para forzar CSS vars en el clon
+    // Aplicar CSS vars directamente antes de capturar
     const s = escala / 100;
+    const root = document.documentElement;
+    const prevCw = root.style.getPropertyValue('--cw');
+    const prevCh = root.style.getPropertyValue('--ch');
+    root.style.setProperty('--cw', Math.round(180*s)+'px');
+    root.style.setProperty('--ch', Math.round(120*s)+'px');
+    await new Promise(r=>setTimeout(r,50)); // esperar reflow
 
     const canvas = await html2canvas(wrap, {
       useCORS: true,
@@ -1392,16 +1398,12 @@ async function generarPDF(sesion, cartas, notas){
       scrollX: 0,
       scrollY: 0,
       x: 0,
-      y: 0,
-      onclone: (clonedDoc) => {
-        const root = clonedDoc.documentElement;
-        root.style.setProperty('--cw', Math.round(180*s)+'px');
-        root.style.setProperty('--ch', Math.round(120*s)+'px');
-        root.style.setProperty('--pw', Math.round(300*s)+'px');
-        root.style.setProperty('--ph', Math.round(44*s)+'px');
-        root.style.setProperty('--ich', Math.round(140*s)+'px');
-      }
+      y: 0
     });
+
+    // Restaurar CSS vars
+    root.style.setProperty('--cw', prevCw);
+    root.style.setProperty('--ch', prevCh);
 
     // Recortar canvas si es portrait para que el PDF salga landscape
     let finalCanvas = canvas;
@@ -1467,6 +1469,9 @@ async function generarPDF(sesion, cartas, notas){
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
     cartasScaleEstado.forEach(({el, img})=>{ /* nada que restaurar */ });
+    // Asegurar restauración CSS vars
+    if(typeof prevCw !== 'undefined') document.documentElement.style.setProperty('--cw', prevCw);
+    if(typeof prevCh !== 'undefined') document.documentElement.style.setProperty('--ch', prevCh);
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
       const inner = c.querySelector('.carta-flip-inner');
