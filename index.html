@@ -1623,7 +1623,7 @@ async function reproducirSesion(sesionId){
         // Activar mantel PROPÓSITO sin generar cartas aleatorias
         mantelActual='proposito';
         document.getElementById('mo-proposito')?.classList.add('on');
-      } else if(ses.mantel==='circular') setMantelCircular();
+      } else if(ses.mantel==='circular') activarMantelCircular();
       else setMantel(ses.mantel);
       await new Promise(r=>setTimeout(r,150));
     }
