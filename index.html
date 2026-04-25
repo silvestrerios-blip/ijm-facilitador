@@ -1259,6 +1259,17 @@ async function generarPDF(sesion, cartas, notas){
     + '</div></div></div>';
     document.body.insertBefore(hdr, document.body.firstChild);
 
+  // Voltear cartas giradas para mostrar imagen en PDF
+  const cartasGiradas = [];
+  document.querySelectorAll('.carta-flip.girada').forEach(c=>{
+    const inner = c.querySelector('.carta-flip-inner');
+    if(inner){
+      cartasGiradas.push({c, inner});
+      inner.style.transition = 'none';
+      inner.style.transform = 'rotateY(0deg)';
+    }
+  });
+
   await new Promise(r=>setTimeout(r,100));
   window.print();
 
@@ -1266,6 +1277,11 @@ async function generarPDF(sesion, cartas, notas){
     hdr.remove();
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=el._prevDisplay||''; });
     if(toastEl) toastEl.style.opacity=toastPrev;
+    // Restaurar cartas giradas
+    cartasGiradas.forEach(({c, inner})=>{
+      inner.style.transition = '';
+      inner.style.transform = 'rotateY(180deg)';
+    });
   }, 500);
 }
 
