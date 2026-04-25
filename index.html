@@ -1263,11 +1263,21 @@ async function generarPDF(sesion, cartas, notas){
     + '</div></div></div>';
     document.body.insertBefore(hdr, document.body.firstChild);
 
-  // Recalcular mantel para que el SVG coincida con el área de impresión
-  if(mantelActual){
-    if(mantelActual==='circular') setMantelCircular();
-    else if(mantelActual==='proposito') { /* no recalcular */ }
-    else setMantel(mantelActual);
+  // Recalcular SVG del mantel para área de impresión (sin abrir modales)
+  if(mantelActual && mantelActual !== 'proposito'){
+    const overlayEl = document.getElementById('mantel-overlay');
+    if(overlayEl && overlayEl.classList.contains('on')){
+      // Re-renderizar el SVG con las dimensiones actuales
+      const mesa = document.getElementById('mesa');
+      const wrapEl = document.getElementById('mesa-wrap');
+      const W = mesa.offsetWidth;
+      const VH = wrapEl.offsetHeight;
+      overlayEl.setAttribute('viewBox', `0 0 ${W} ${VH}`);
+      overlayEl.setAttribute('width', W);
+      overlayEl.setAttribute('height', VH);
+      overlayEl.style.width = W+'px';
+      overlayEl.style.height = VH+'px';
+    }
   }
 
   // Voltear cartas giradas y forzar carga de imágenes
