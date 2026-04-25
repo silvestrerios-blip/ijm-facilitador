@@ -1377,24 +1377,8 @@ async function generarPDF(sesion, cartas, notas){
     // Todos los manteles usan el viewport visible (A4 landscape)
     const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
 
-    // Aplicar tamaño directamente en cada carta antes de capturar
-    const s = escala / 100;
-    const cwPx = Math.round(180*s);
-    const chPx = Math.round(120*s);
-    document.querySelectorAll('#mesa .carta').forEach(el=>{
-      const img = el.querySelector('img');
-      const prevW = el.style.width;
-      const prevH = el.style.height;
-      const prevImgH = img ? img.style.height : '';
-      el.style.setProperty('width', cwPx+'px', 'important');
-      el.style.setProperty('height', chPx+'px', 'important');
-      if(img){
-        img.style.setProperty('height', chPx+'px', 'important');
-        img.style.setProperty('min-height', chPx+'px', 'important');
-      }
-      cartasModificadas.push({el, img, prevW, prevH, prevImgH});
-    });
-    await new Promise(r=>setTimeout(r,80));
+    // Las cartas se modifican via onclone (no tocar el DOM real)
+    await new Promise(r=>setTimeout(r,50));
 
     const canvas = await html2canvas(wrap, {
       useCORS: true,
@@ -1409,7 +1393,31 @@ async function generarPDF(sesion, cartas, notas){
       scrollX: 0,
       scrollY: 0,
       x: 0,
-      y: 0
+      y: 0,
+      onclone: (clonedDoc) => {
+        // Aplicar dimensiones visuales reales a cada carta en el clon
+        cartasMesa.forEach(orig => {
+          // Buscar carta correspondiente en el clon
+          const cloned = clonedDoc.querySelector(`[style*="z-index:${orig.style.zIndex}"]`) ||
+                         clonedDoc.querySelector('.carta[style*="left:'+orig.style.left+'"]');
+          if(!cloned) return;
+          // Calcular tamaño visual real (considerando transform:scale)
+          const tr = orig.style.transform || '';
+          const scMatch = tr.match(/scale\(([\d.]+)\)/);
+          const sc = scMatch ? parseFloat(scMatch[1]) : 1;
+          const s = escala / 100;
+          const visualW = Math.round(180 * s * sc);
+          const visualH = Math.round(120 * s * sc);
+          cloned.style.setProperty('width', visualW+'px', 'important');
+          cloned.style.setProperty('height', visualH+'px', 'important');
+          cloned.style.setProperty('transform', 'none', 'important');
+          const img = cloned.querySelector('img');
+          if(img){
+            img.style.setProperty('height', visualH+'px', 'important');
+            img.style.setProperty('min-height', visualH+'px', 'important');
+          }
+        });
+      }
     });
 
     // Restaurar estilos
@@ -1483,13 +1491,6 @@ async function generarPDF(sesion, cartas, notas){
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
     cartasScaleEstado.forEach(({el, img})=>{ /* nada que restaurar */ });
-    // Restaurar cartas modificadas para PDF
-    if(typeof cartasModificadas !== 'undefined'){
-      cartasModificadas.forEach(({el, img, prevW, prevH, prevImgH})=>{
-        el.style.width = prevW; el.style.height = prevH;
-        if(img){ img.style.height = prevImgH; img.style.minHeight = ''; }
-      });
-    }
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
       const inner = c.querySelector('.carta-flip-inner');
