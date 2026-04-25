@@ -291,6 +291,7 @@ body{background:var(--mesa);color:#fff}
   #proposito-headers,#empty,#toast,#ver-overlay { display:none!important }
   #mesa-wrap{ position:static!important;top:0!important;height:auto!important;overflow:visible!important }
   #mesa{ position:relative!important;min-height:0!important }
+  #mantel-overlay{ position:absolute!important;top:0!important;left:0!important; }
   body{ background:#fff!important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   #print-header{ display:block!important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .carta{ break-inside:avoid }
@@ -1261,6 +1262,13 @@ async function generarPDF(sesion, cartas, notas){
     + sesion.participante+' · '+(sesion.facilitador_nombre||usuario.nombre)+' · '+fFecha(sesion.fecha)+(sesion.hora?' · '+sesion.hora:'')
     + '</div></div></div>';
     document.body.insertBefore(hdr, document.body.firstChild);
+
+  // Recalcular mantel para que el SVG coincida con el área de impresión
+  if(mantelActual){
+    if(mantelActual==='circular') setMantelCircular();
+    else if(mantelActual==='proposito') { /* no recalcular */ }
+    else setMantel(mantelActual);
+  }
 
   // Voltear cartas giradas y forzar carga de imágenes
   const cartasGiradas = [];
