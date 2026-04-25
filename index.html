@@ -1395,13 +1395,12 @@ async function generarPDF(sesion, cartas, notas){
       x: 0,
       y: 0,
       onclone: (clonedDoc) => {
-        // Aplicar dimensiones visuales reales a cada carta en el clon
-        cartasMesa.forEach(orig => {
-          // Buscar carta correspondiente en el clon
-          const cloned = clonedDoc.querySelector(`[style*="z-index:${orig.style.zIndex}"]`) ||
-                         clonedDoc.querySelector('.carta[style*="left:'+orig.style.left+'"]');
+        // Marcar cartas originales con data-pdfidx
+        cartasMesa.forEach((orig, idx) => { orig.setAttribute('data-pdfidx', idx); });
+
+        cartasMesa.forEach((orig, idx) => {
+          const cloned = clonedDoc.querySelector(`[data-pdfidx="${idx}"]`);
           if(!cloned) return;
-          // Calcular tamaño visual real (considerando transform:scale)
           const tr = orig.style.transform || '';
           const scMatch = tr.match(/scale\(([\d.]+)\)/);
           const sc = scMatch ? parseFloat(scMatch[1]) : 1;
@@ -1491,6 +1490,7 @@ async function generarPDF(sesion, cartas, notas){
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
     cartasScaleEstado.forEach(({el, img})=>{ /* nada que restaurar */ });
+    cartasMesa.forEach(el=>el.removeAttribute('data-pdfidx'));
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
       const inner = c.querySelector('.carta-flip-inner');
