@@ -286,13 +286,9 @@ body{background:var(--mesa);color:#fff}
 @media print{
   #toolbar, #panel, #modal-cerrar, #modal-carta, #flecha-menu,
   .btn-del, #badge-sin-sesion, #btn-limpiar-despliegue,
-  #btn-girar-todas, #grupos-menu, #toolbar-row3, #toolbar-row4 { display:none !important; }
-  #mesa-wrap { position:static !important; top:0 !important; height:auto !important; overflow:visible !important; }
-  #mesa { position:relative !important; min-height:0 !important; }
-  body { background:#fff !important; }
-  #print-header { display:block !important; }
-  .carta { break-inside:avoid; }
-  .mantel-opt, #proposito-headers { display:none !important; }
+  #btn-girar-todas, #grupos-menu, #toolbar-row3, #toolbar-row4,
+  .mantel-opt { display:none !important; }
+  body { background:#606060 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
 }
 #print-header { display:none; }
 #badge-sin-sesion{
