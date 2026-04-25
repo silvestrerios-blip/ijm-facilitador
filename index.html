@@ -284,17 +284,19 @@ body{background:var(--mesa);color:#fff}
 .carta-flip:hover .btn-del{display:flex}
 
 @media print{
+  @page { margin: 10mm; }
   #toolbar,#panel,#modal-cerrar,#modal-carta,#flecha-menu,
   .btn-del,#badge-sin-sesion,#btn-limpiar-despliegue,
   #btn-girar-todas,#grupos-menu,#toolbar-row3,#toolbar-row4,
-  #proposito-headers,#empty{display:none!important}
-  #mesa-wrap{position:static!important;top:0!important;height:auto!important;overflow:visible!important}
-  #mesa{position:relative!important;min-height:0!important}
-  body{background:#fff!important}
-  #print-header{display:block!important}
-  .carta{break-inside:avoid}
+  #proposito-headers,#empty,#toast,#ver-overlay { display:none!important }
+  #mesa-wrap{ position:static!important;top:0!important;height:auto!important;overflow:visible!important }
+  #mesa{ position:relative!important;min-height:0!important }
+  body{ background:#fff!important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  #print-header{ display:block!important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .carta{ break-inside:avoid }
+  * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
 }
-#print-header{display:none}
+#print-header{ display:none }
 
 /* Badge sin sesión activa */
 #badge-sin-sesion{
@@ -1236,6 +1238,10 @@ async function confirmarCerrarSesion(){
 // ── PDF (captura completa de mesa) ──
 async function generarPDF(sesion, cartas, notas){
   document.querySelectorAll('.btn-del').forEach(el=>{ el._prevDisplay=el.style.display; el.style.display='none'; });
+  // Ocultar toast si está visible
+  const toastEl = document.getElementById('toast');
+  const toastPrev = toastEl ? toastEl.style.opacity : '';
+  if(toastEl) toastEl.style.opacity='0';
 
   const hdr = document.createElement('div');
   hdr.id = 'print-header';
@@ -1261,6 +1267,7 @@ async function generarPDF(sesion, cartas, notas){
   setTimeout(()=>{
     hdr.remove();
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=el._prevDisplay||''; });
+    if(toastEl) toastEl.style.opacity=toastPrev;
   }, 500);
 }
 
