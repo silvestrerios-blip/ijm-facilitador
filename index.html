@@ -1245,21 +1245,19 @@ async function generarPDF(sesion, cartas, notas){
 
   const hdr = document.createElement('div');
   hdr.id = 'print-header';
-  hdr.innerHTML = '<div style="background:#54C999;padding:10px 16px;display:flex;align-items:center;gap:12px;font-family:Outfit,sans-serif">'
-    + '<svg width="32" height="32" viewBox="0 0 32 32" fill="none">'
-    + '<path d="M16 4 C10 4 5 9 5 16 C5 22 9 27 16 28 C14 24 13 20 14 16 C15 12 18 9 22 8 C20 5.5 18 4 16 4Z" fill="white" opacity=".9"/>'
-    + '<path d="M22 8 C26 10 28 14 27 18 C26 22 23 25 19 26 C22 25 24 22 25 18 C26 14 24 10 22 8Z" fill="white" opacity=".7"/>'
-    + '<circle cx="9" cy="8" r="1.2" fill="white" opacity=".8"/>'
-    + '<circle cx="25" cy="6" r="0.8" fill="white" opacity=".6"/>'
-    + '<circle cx="27" cy="22" r="1" fill="white" opacity=".7"/>'
+  hdr.innerHTML = '<div style="border-top:5px solid #54C999;border-bottom:1px solid #ddd;padding:8px 16px;display:flex;align-items:center;gap:12px;font-family:Outfit,sans-serif;background:#f9fffe">'
+    + '<svg width="28" height="28" viewBox="0 0 32 32" fill="none">'
+    + '<path d="M16 4 C10 4 5 9 5 16 C5 22 9 27 16 28 C14 24 13 20 14 16 C15 12 18 9 22 8 C20 5.5 18 4 16 4Z" fill="#54C999"/>'
+    + '<path d="M22 8 C26 10 28 14 27 18 C26 22 23 25 19 26 C22 25 24 22 25 18 C26 14 24 10 22 8Z" fill="#54C999" opacity=".7"/>'
+    + '<circle cx="9" cy="8" r="1.2" fill="#54C999"/>'
+    + '<circle cx="25" cy="6" r="0.8" fill="#54C999" opacity=".6"/>'
     + '</svg>'
     + '<div>'
-    + '<div style="color:#fff;font-size:13px;font-weight:800;letter-spacing:1.5px">INNER JOURNEY METHOD™</div>'
-    + '<div style="color:rgba(255,255,255,.85);font-size:9.5px;margin-top:2px">'
+    + '<div style="color:#333;font-size:13px;font-weight:800;letter-spacing:1.5px"><span style="color:#666">INNER </span><span style="color:#54C999">JOURNEY</span><span style="color:#666"> METHOD™</span></div>'
+    + '<div style="color:#666;font-size:9px;margin-top:2px">'
     + sesion.participante+' · '+(sesion.facilitador_nombre||usuario.nombre)+' · '+fFecha(sesion.fecha)+(sesion.hora?' · '+sesion.hora:'')
-    + '</div>'
-    + '</div></div>';
-  document.body.insertBefore(hdr, document.body.firstChild);
+    + '</div></div></div>';
+    document.body.insertBefore(hdr, document.body.firstChild);
 
   await new Promise(r=>setTimeout(r,100));
   window.print();
