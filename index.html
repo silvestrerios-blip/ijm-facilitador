@@ -283,14 +283,7 @@ body{background:var(--mesa);color:#fff}
   font-weight:900;z-index:10;line-height:1;padding:0;}
 .carta-flip:hover .btn-del{display:flex}
 
-@media print{
-  #toolbar, #panel, #modal-cerrar, #modal-carta, #flecha-menu,
-  .btn-del, #badge-sin-sesion, #btn-limpiar-despliegue,
-  #btn-girar-todas, #grupos-menu, #toolbar-row3, #toolbar-row4,
-  .mantel-opt { display:none !important; }
-  body { background:#606060 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-}
-#print-header { display:none; }
+/* Badge sin sesión activa */
 #badge-sin-sesion{
   display:none;position:fixed;top:calc(var(--tb) + 6px);left:50%;
   transform:translateX(-50%);z-index:90;
@@ -372,11 +365,11 @@ body{background:var(--mesa);color:#fff}
   position:absolute;bottom:0;left:0;right:0;
   background:rgba(0,0,0,.75);
   border-top:2px solid rgba(84,201,153,.4);
-  color:#fff;font-size:calc(var(--ch,120px) * 0.09);font-weight:600;
+  color:#fff;font-size:11px;font-weight:600;
   font-family:'Outfit',sans-serif;
-  text-align:center;padding:calc(var(--ch,120px) * 0.04) 4px;
+  text-align:center;padding:5px 6px;
   display:none;z-index:4;
-  word-break:break-word;line-height:1.3;overflow:hidden;
+  word-break:break-word;line-height:1.3;
 }
 .carta-nota-label.visible{display:block}
 
@@ -432,14 +425,14 @@ body{background:var(--mesa);color:#fff}
 #empty small{font-size:10px;color:rgba(255,255,255,.3);display:block;margin-top:3px}
 /* Nombre carta en parte superior */
 .carta-nombre-label{
-  position:absolute;bottom:calc(var(--ch,120px) * 0.18);left:0;right:0;
+  position:absolute;top:0;left:0;right:0;
   background:rgba(0,0,0,0.72);
-  color:#fff;font-size:calc(var(--ch,120px) * 0.09);font-weight:800;
+  color:#fff;font-size:11px;font-weight:800;
   font-family:'Outfit',sans-serif;
-  text-align:center;padding:calc(var(--ch,120px) * 0.025) 4px;
-  letter-spacing:.6px;text-transform:uppercase;
+  text-align:center;padding:4px 6px;
+  letter-spacing:1px;text-transform:uppercase;
+  border-radius:6px 6px 0 0;
   pointer-events:none;z-index:4;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 /* Botones en vista ampliada */
 #ver-btns{
@@ -1159,8 +1152,7 @@ async function confirmarCerrarSesion(){
         escala: scMatch ? parseFloat(scMatch[1]) : 1,
         rotacion: rotMatch ? parseInt(rotMatch[1]) : 0,
         flip: c.classList.contains('girada')||false,
-        nota_interior: notaInterior,
-        nombre_visible: !!(c._nombreLabel && getComputedStyle(c._nombreLabel).display !== 'none')
+        nota_interior: notaInterior
       };
     });
 
@@ -1182,7 +1174,7 @@ async function confirmarCerrarSesion(){
         pos_x: parseInt(c.style.left)||0,
         pos_y: parseInt(c.style.top)||0,
         texto,
-        direccion: c._direccion||c.dataset.direccion||'',
+        direccion: c._direccion||'',
         ancho: c.offsetWidth||200,
         alto: c.offsetHeight||80
       };
@@ -1216,10 +1208,9 @@ async function confirmarCerrarSesion(){
     }
   }catch(e){console.warn('Supabase error:',e);}
 
-  // Generar PDF antes de limpiar (necesita las cartas en mesa)
-  const sesionParaPDF = {...sesionActual};
+  // Generar PDF (independiente del cierre — si falla, la sesión se cierra igual)
   try{
-    await generarPDF(sesionParaPDF, cartasData, notas);
+    await generarPDF(sesionActual, cartasData, notas);
   }catch(e){
     console.error('PDF error:',e);
     toast('Error al generar PDF, pero la sesión se ha guardado');
@@ -1244,29 +1235,520 @@ async function confirmarCerrarSesion(){
 
 // ── PDF (captura completa de mesa) ──
 async function generarPDF(sesion, cartas, notas){
-  const wrap = document.getElementById('mesa-wrap');
+  const {jsPDF}=window.jspdf;
+  const mesa=document.getElementById('mesa');
+  const wrap=document.getElementById('mesa-wrap');
+  const scrollTop=wrap.scrollTop;
+  wrap.scrollTop=0;
 
-  // Mostrar btn-del ocultos, nombres de carta visibles para PDF
-  document.querySelectorAll('.btn-del').forEach(el=>{ el._prevDisplay=el.style.display; el.style.display='none'; });
+  // Calcular altura real ocupada — si hay mantel usar altura del wrap
+  let maxY=0;
+  cartasMesa.forEach(c=>{
+    const t=parseInt(c.style.top)||0;
+    const h=c.offsetHeight||120;
+    if(t+h>maxY) maxY=t+h;
+  });
+  const wrapH = wrap.offsetHeight;
+  const mesaW = document.getElementById('mesa').offsetWidth;
+  // Con mantel activo capturar exactamente el viewport visible (landscape)
+  const captureH = mantelActual ? wrapH : (maxY===0?400:maxY+40);
 
-  // Crear cabecera de impresión
-  const hdr = document.createElement('div');
-  hdr.id = 'print-header';
-  hdr.innerHTML = `
-    <div style="background:#54C999;color:#fff;padding:10px 16px;font-family:'Outfit',sans-serif">
-      <div style="font-size:13px;font-weight:800;letter-spacing:1px">INNER JOURNEY METHOD™</div>
-      <div style="font-size:10px;margin-top:2px;opacity:.85">
-        Participante: ${sesion.participante} · Facilitador: ${sesion.facilitador_nombre||usuario.nombre} · Fecha: ${fFecha(sesion.fecha)}${sesion.hora?' · '+sesion.hora:''}
-      </div>
-    </div>`;
-  document.body.insertBefore(hdr, document.body.firstChild);
+  const pdfOverlays = [];
+  const flechaTexts = [];
+  const cartasScaleEstado = [];
+  const cartasFlipEstado = [];
+  const overlay = document.getElementById('mantel-overlay');
+  const overlayWasHidden = overlay && !overlay.classList.contains('on');
 
-  // Imprimir — usar setTimeout para no bloquear el flujo
-  setTimeout(()=>{ window.print(); hdr.remove(); }, 300);
+  try{
+    toast('Capturando mesa...');
 
-  // Limpiar btn-del inmediatamente  
-  document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=el._prevDisplay||''; });
+    // Forzar overlay visible durante captura
+    if(overlayWasHidden && mantelActual) overlay.style.opacity='1';
+
+    // No manipular estilos — el scale de html2canvas gestiona el tamaño
+    cartasMesa.forEach(el=>{ cartasScaleEstado.push({el, img: el.querySelector('img')}); });
+
+    // Ocultar botones de borrar y elementos UI durante captura
+    document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display='none'; });
+    // Preservar estado nombres (no forzar visibilidad)
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el._prevDisplay=el.style.display; });
+    document.querySelectorAll('.carta-nota-label').forEach(el=>{ el._prevTop=el.style.top; });
+
+    // Para PDF: ocultar dorso, mostrar imagen directamente
+    document.querySelectorAll('.carta-flip').forEach(c=>{
+      const estabaGirada = c.classList.contains('girada');
+      cartasFlipEstado.push({c, estabaGirada});
+      const inner = c.querySelector('.carta-flip-inner');
+      if(inner){
+        inner.style.transition = 'none';
+        inner.style.transform = 'rotateY(0deg)';
+      }
+      // Ocultar el back (dorso) y mostrar el front (imagen)
+      const front = c.querySelector('.carta-flip-front');
+      const back = c.querySelector('.carta-flip-back');
+      if(front) front.style.cssText='position:absolute;inset:0;backface-visibility:visible;-webkit-backface-visibility:visible;border-radius:8px;overflow:hidden;z-index:2';
+      if(back) back.style.display='none';
+    });
+    // Forzar reflow antes de capturar
+    await new Promise(r=>setTimeout(r,120));
+
+    // Reemplazar inputs/textareas con divs visibles para html2canvas
+
+    // Funcion helper: reemplaza un input/textarea con un div
+    function mkOverlay(el, multiline){
+      if(!el.value && !el.textContent) return;
+      const val = el.value || el.textContent || '';
+      if(!val.trim()) return;
+      const rect = el.getBoundingClientRect();
+      const mesaRect = mesa.getBoundingClientRect();
+      const wrap = document.getElementById('mesa-wrap');
+      const div = document.createElement('div');
+      div.style.cssText = [
+        'position:absolute',
+        'left:' + (rect.left - mesaRect.left) + 'px',
+        'top:' + (rect.top - mesaRect.top + wrap.scrollTop) + 'px',
+        'width:' + rect.width + 'px',
+        'min-height:' + rect.height + 'px',
+        'background:rgba(0,0,0,0.7)',
+        'color:#fff',
+        'font-size:' + (multiline ? '11px' : '13px'),
+        'font-weight:700',
+        'font-family:Outfit,sans-serif',
+        'text-align:center',
+        'padding:6px',
+        'z-index:9999',
+        'word-break:break-word',
+        'white-space:pre-wrap',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center'
+      ].join(';');
+      div.className = 'pdf-overlay';
+      div.textContent = val;
+      mesa.appendChild(div);
+      const _prevOp = el.style.opacity || '';
+      el.style.opacity = '0';
+      pdfOverlays.push({div, el, prevOp: _prevOp});
+    }
+
+    // Notas T (textarea multilinea)
+    document.querySelectorAll('.carta-nota .nota-body').forEach(ta => mkOverlay(ta, true));
+
+    // Franjas editables (input pie de carta)
+    document.querySelectorAll('.franja-edit').forEach(inp => mkOverlay(inp, false));
+
+    // Flechas: textarea -> overlay div
+    document.querySelectorAll('.carta-flecha-wrap textarea').forEach(ta=>{
+      mkOverlay(ta, true);
+    });
+    document.querySelectorAll('.carta-flecha textarea').forEach(ta=>{
+      if(!ta.value.trim()) return;
+      const svg = ta.closest('svg');
+      const fo = ta.closest('foreignObject');
+      if(!svg || !fo) return;
+      const x = parseFloat(fo.getAttribute('x'))||0;
+      const y = parseFloat(fo.getAttribute('y'))||0;
+      const w = parseFloat(fo.getAttribute('width'))||72;
+      const lines = ta.value.split('\n');
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      lines.forEach((line,i)=>{
+        if(!line.trim()) return;
+        const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+        t.setAttribute('x', x + w/2);
+        t.setAttribute('y', y + 14 + i*13);
+        t.setAttribute('text-anchor','middle');
+        t.setAttribute('font-size','10');
+        t.setAttribute('font-weight','700');
+        t.setAttribute('font-family','Outfit,sans-serif');
+        t.setAttribute('fill','white');
+        t.textContent = line;
+        g.appendChild(t);
+      });
+      svg.appendChild(g);
+      fo.style.display='none';
+      flechaTexts.push({svg,g,fo});
+    });
+
+    const captureW = wrap.offsetWidth;
+    const wrapH = wrap.offsetHeight;
+    const a4H = Math.round(captureW / 1.414);
+    // Todos los manteles usan el viewport visible (A4 landscape)
+    const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
+
+    // Aplicar CSS vars directamente antes de capturar
+    const s = escala / 100;
+    const root = document.documentElement;
+    const prevCw = root.style.getPropertyValue('--cw');
+    const prevCh = root.style.getPropertyValue('--ch');
+    root.style.setProperty('--cw', Math.round(180*s)+'px');
+    root.style.setProperty('--ch', Math.round(120*s)+'px');
+    await new Promise(r=>setTimeout(r,50)); // esperar reflow
+
+    const canvas = await html2canvas(wrap, {
+      useCORS: true,
+      allowTaint: false,
+      scale: 1.5,
+      width: captureW,
+      height: captureHFinal,
+      windowWidth: captureW,
+      windowHeight: captureHFinal,
+      backgroundColor: '#606060',
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0
+    });
+
+    // Restaurar CSS vars
+    root.style.setProperty('--cw', prevCw);
+    root.style.setProperty('--ch', prevCh);
+
+    // Recortar canvas si es portrait para que el PDF salga landscape
+    let finalCanvas = canvas;
+    if(canvas.height > canvas.width * 0.8){
+      // Canvas portrait o casi cuadrado — recortar a ratio A4 landscape
+      const targetH = Math.round(canvas.width / 1.414);
+      if(targetH < canvas.height){
+        const clipped = document.createElement('canvas');
+        clipped.width = canvas.width;
+        clipped.height = targetH;
+        const ctx2 = clipped.getContext('2d');
+        ctx2.drawImage(canvas, 0, 0);
+        finalCanvas = clipped;
+      }
+    }
+
+    // DEBUG temporal — borrar después
+    toast(`Canvas: ${canvas.width}×${canvas.height} | Final: ${finalCanvas.width}×${finalCanvas.height}`);
+    const isLandscape = finalCanvas.width >= finalCanvas.height;
+    const doc=new jsPDF({orientation: isLandscape ? 'landscape' : 'portrait', unit:'mm', format:'a4'});
+    const PW = isLandscape ? 297 : 210;
+    const PH = isLandscape ? 210 : 297;
+    const M=10, HDR=16;
+
+    // Cabecera verde
+    doc.setFillColor(84,201,153);
+    doc.rect(0,0,PW,HDR,'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(11);
+    doc.text('INNER JOURNEY METHOD\u2122',M,7);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.text(`Participante: ${sesion.participante}  \u00b7  Facilitador: ${usuario.nombre}  \u00b7  Fecha: ${fFecha(sesion.fecha)}${sesion.hora?" · "+sesion.hora:""}`,M,13);
+
+    // Imagen de la mesa centrada — forzar ancho completo
+    const imgData=finalCanvas.toDataURL('image/jpeg',0.88);
+    const availW=PW-M*2;
+    const availH=PH-HDR-M-5;
+    const ratio=finalCanvas.width/finalCanvas.height;
+    // Priorizar ancho completo; si excede alto, recortar proporcionalmente
+    let iw=availW, ih=availW/ratio;
+    if(ih>availH){ ih=availH; iw=availH*ratio; }
+    // Si la imagen es más ancha que alta (mantel landscape) centrar verticalmente
+    const yImg = HDR+3 + (ih < availH ? (availH-ih)/2 : 0);
+    doc.addImage(imgData,'JPEG',M+(availW-iw)/2, yImg, iw, ih);
+
+    // Footer
+    doc.setFontSize(7);doc.setTextColor(160,160,160);
+    doc.text(`IJM Facilitador \u00b7 ${new Date().toLocaleDateString('es-ES')}`,PW/2,PH-2,{align:'center'});
+
+    const fname=`IJM_${sesion.participante.replace(/\s+/g,'_')}_${sesion.fecha}.pdf`;
+    doc.save(fname);
+  }catch(e){
+    console.error('PDF error:',e);
+    toast('Error al generar PDF \u2014 revisa la consola');
+  }finally{
+    // Restaurar elementos UI
+    document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=''; });
+    document.querySelectorAll('.carta-nombre-label').forEach(el=>{ el.style.display=el._prevDisplay!==undefined?el._prevDisplay:''; });
+    document.querySelectorAll('.carta-nota-label').forEach(el=>{ if(el._prevTop!==undefined) el.style.top=el._prevTop; });
+    if(overlayWasHidden && mantelActual) overlay.style.opacity='';
+    wrap.scrollTop=scrollTop;
+    // Restaurar scale transforms
+    cartasScaleEstado.forEach(({el, img})=>{ /* nada que restaurar */ });
+    // Asegurar restauración CSS vars
+    if(typeof prevCw !== 'undefined') document.documentElement.style.setProperty('--cw', prevCw);
+    if(typeof prevCh !== 'undefined') document.documentElement.style.setProperty('--ch', prevCh);
+    // Restaurar estado original de cartas flip
+    cartasFlipEstado.forEach(({c, estabaGirada})=>{
+      const inner = c.querySelector('.carta-flip-inner');
+      if(inner){
+        inner.style.transition = '';
+        inner.style.transform = '';
+      }
+      const front = c.querySelector('.carta-flip-front');
+      const back = c.querySelector('.carta-flip-back');
+      if(front) front.style.cssText='';
+      if(back) back.style.display='';
+      c.classList.toggle('girada', estabaGirada);
+    });
+    // Restaurar elementos - limpiar por clase para mayor seguridad
+    pdfOverlays.forEach(({div, el, prevOp})=>{
+      if(div.parentNode) div.parentNode.removeChild(div);
+      el.style.opacity = prevOp !== undefined ? prevOp : '';
+    });
+    // Por si quedan huérfanos
+    document.querySelectorAll('.pdf-overlay').forEach(d=>{ if(d.parentNode) d.parentNode.removeChild(d); });
+    // Restaurar franja-edit con texto
+    document.querySelectorAll('.franja-edit.tiene-texto').forEach(el=>{ el.style.opacity='1'; });
+    // Restaurar textareas de flecha
+    document.querySelectorAll('.carta-flecha-wrap textarea, .carta-flecha textarea').forEach(el=>{ el.style.opacity=''; });
+    flechaTexts.forEach(({svg,g,fo})=>{
+      svg.removeChild(g);
+      fo.style.display='';
+    });
+  }
 }
+
+function actualizarInfoSesion(){
+  if(sesionActual){
+    const n=cartasMesa.filter(c=>c._mazo).length;
+    document.getElementById('info-cartas').textContent=`${n} carta${n!==1?'s':''} en mesa`;
+  }
+}
+
+// ── CARTAS ──
+function sacarCarta(mazo,el){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
+  if(el) el.classList.add('on');
+  const m=MAZOS[mazo],n=Math.floor(Math.random()*m.n)+1;
+  const wrap=document.getElementById('mesa-wrap');
+  crearCarta(mazo,n,14+Math.random()*18,14+wrap.scrollTop+Math.random()*14);
+  document.getElementById('empty').classList.add('hidden');
+}
+
+function crearCarta(mazo,n,x,y){
+  const m=MAZOS[mazo];
+  const div=document.createElement('div');
+  div.className=`carta carta-${m.tipo==='foto'?'foto':m.tipo}`;
+  div.style.cssText=`left:${x}px;top:${y}px;z-index:${++zMax}`;
+  div._mazo=mazo; div._n=n;
+  // Si hay mantel activo, reducir al 50%
+  if(mantelActual && mantelActual !== 'proposito' && mantelActual !== 'circular'){
+    div._mini = true;
+    div.style.transform = 'scale(0.5)';
+    div.style.transformOrigin = 'top left';
+  }
+
+  if(m.tipo==='foto'){
+    const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
+    if(m.banda){const b=document.createElement('div');b.className=`banda ${m.banda}`;div.appendChild(b);}
+    if(mazo==='general'){
+      // Etiqueta nombre en parte superior (oculta por defecto)
+      const nombreLabel=document.createElement('div');nombreLabel.className='carta-nombre-label';
+      nombreLabel.textContent=NOMBRES[n]||'';
+      nombreLabel.style.display='none';
+      div.appendChild(nombreLabel);
+      div._nombreLabel=nombreLabel;
+      // Franja verde inferior -> nota editable
+      // Nota label visible en mesa
+      const nl=document.createElement('div');nl.className='carta-nota-label';
+      div.appendChild(nl);div._notaLabel=nl;
+      // Etiqueta ON/OFF si aplica (solo desde despliegue de grupos)
+      div._onoffEtiqueta = onoffEtiquetas[n] || [];
+    } else if(mazo==='s'||mazo==='n'){
+      const nl2=document.createElement('div');nl2.className='carta-nota-label';
+      div.appendChild(nl2);div._notaLabel=nl2;
+    }
+  }else if(m.tipo==='pal'){
+    const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
+  }else if(m.tipo==='ic'){
+    const img=document.createElement('img');img.src=imgUrl(mazo,n);img.draggable=false;div.appendChild(img);
+    const fi=document.createElement('input');
+    const nl3=document.createElement('div');nl3.className='carta-nota-label';
+    div.appendChild(nl3);div._notaLabel=nl3;
+  }
+  addDel(div);addGestos(div,()=>verAmpliada(mazo,n,div));
+  document.getElementById('mesa').appendChild(div);
+  cartasMesa.push(div);actualizarContador();actualizarInfoSesion();
+  return div;
+}
+
+function crearNota(){
+  const wrap=document.getElementById('mesa-wrap');
+  const div=document.createElement('div');div.className='carta carta-nota';
+  div.style.cssText=`left:${20+Math.random()*18}px;top:${18+wrap.scrollTop+Math.random()*14}px;z-index:${++zMax}`;
+  const hdr=document.createElement('div');hdr.className='nota-hdr';
+  hdr.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="#54C999" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Nota</span>';
+  const ta=document.createElement('textarea');ta.className='nota-body';ta.placeholder='Escribe aqu\u00ed...';ta.autocomplete='off';
+  ta.onmousedown=e=>e.stopPropagation();ta.ontouchstart=e=>e.stopPropagation();
+  div.appendChild(hdr);div.appendChild(ta);
+  let sx,sy,sl,st;
+  hdr.addEventListener('mousedown',e=>{
+    e.preventDefault();e.stopPropagation();sel(div);div.style.zIndex=++zMax;
+    const w=document.getElementById('mesa-wrap');sx=e.clientX;sy=e.clientY+w.scrollTop;sl=parseInt(div.style.left)||0;st=parseInt(div.style.top)||0;div.classList.add('dragging');
+    function mv(e){const mesa=document.getElementById('mesa');div.style.left=Math.max(0,Math.min(sl+e.clientX-sx,mesa.offsetWidth-div.offsetWidth))+'px';div.style.top=Math.max(0,Math.min(st+(e.clientY+w.scrollTop)-sy,mesa.offsetHeight-div.offsetHeight))+'px';}
+    function up(){div.classList.remove('dragging');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+  });
+  let lt=0;
+  hdr.addEventListener('touchstart',e=>{
+    const now=Date.now();if(now-lt<280){e.preventDefault();mostrarMM(e.touches[0].clientX,e.touches[0].clientY,div);lt=0;return;}lt=now;
+    sel(div);div.style.zIndex=++zMax;const w=document.getElementById('mesa-wrap');const t=e.touches[0];
+    sx=t.clientX;sy=t.clientY+w.scrollTop;sl=parseInt(div.style.left)||0;st=parseInt(div.style.top)||0;div.classList.add('dragging');
+    function tm(e){e.preventDefault();const t=e.touches[0];const mesa=document.getElementById('mesa');div.style.left=Math.max(0,Math.min(sl+t.clientX-sx,mesa.offsetWidth-div.offsetWidth))+'px';div.style.top=Math.max(0,Math.min(st+(t.clientY+w.scrollTop)-sy,mesa.offsetHeight-div.offsetHeight))+'px';}
+    function tu(){div.classList.remove('dragging');hdr.removeEventListener('touchmove',tm);hdr.removeEventListener('touchend',tu);}
+    hdr.addEventListener('touchmove',tm,{passive:false});hdr.addEventListener('touchend',tu);
+  },{passive:true});
+  div.addEventListener('dblclick',e=>{if(e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON')return;e.preventDefault();mostrarMM(e.clientX,e.clientY,div);});
+  div.addEventListener('mousedown',()=>{sel(div);div.style.zIndex=++zMax;});
+  addDel(div);
+  document.getElementById('mesa').appendChild(div);cartasMesa.push(div);actualizarContador();actualizarInfoSesion();
+  document.getElementById('empty').classList.add('hidden');setTimeout(()=>ta.focus(),80);
+}
+
+function addDel(div){const d=document.createElement('button');d.className='btn-del';d.textContent='\u2715';d.onclick=e=>{e.stopPropagation();elimCarta(div);};div.appendChild(d);}
+function addGestos(div,onClic){
+  div.addEventListener('mousedown',()=>{sel(div);div.style.zIndex=++zMax;});
+  // Double click: on image -> fullscreen, on franja -> mini menu
+  div.addEventListener('dblclick',e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON') return;
+    e.preventDefault();
+    if(e.target.classList.contains('franja-edit')||e.target.classList.contains('franja-nombre')||e.target.classList.contains('fn-txt')){
+      // Double click on franja -> mini menu
+      mostrarMM(e.clientX,e.clientY,div);
+    } else {
+      // Double click on image -> fullscreen
+      if(onClic) onClic();
+    }
+  });
+  // Touch double tap
+  let lastTap2=0;
+  div.addEventListener('touchend',e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='BUTTON') return;
+    const now=Date.now();
+    if(now-lastTap2<280){
+      e.preventDefault();
+      if(e.target.classList.contains('franja-edit')||e.target.classList.contains('franja-nombre')){
+        mostrarMM(e.changedTouches[0].clientX,e.changedTouches[0].clientY,div);
+      } else {
+        if(onClic) onClic();
+      }
+      lastTap2=0;
+    } else {
+      lastTap2=now;
+    }
+  },{passive:false});
+  drag(div);
+}
+function drag(el){
+  let sx,sy,sl,st,mv2;
+  el.addEventListener('mousedown',e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON')return;
+    e.preventDefault();sel(el);el.style.zIndex=++zMax;const w=document.getElementById('mesa-wrap');
+    sx=e.clientX;sy=e.clientY+w.scrollTop;sl=parseInt(el.style.left)||0;st=parseInt(el.style.top)||0;mv2=false;el.classList.add('dragging');el._movida=true;
+    function mv(e){const dx=e.clientX-sx,dy=(e.clientY+w.scrollTop)-sy;if(Math.abs(dx)>3||Math.abs(dy)>3)mv2=true;if(!mv2)return;const mesa=document.getElementById('mesa');el.style.left=Math.max(0,Math.min(sl+dx,mesa.offsetWidth-el.offsetWidth))+'px';el.style.top=Math.max(0,Math.min(st+dy,mesa.offsetHeight-el.offsetHeight))+'px';}
+    function up(){el.classList.remove('dragging');document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+  });
+  let lt=0;
+  el.addEventListener('touchstart',e=>{
+    if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='BUTTON')return;
+    const now=Date.now();if(now-lt<280){e.preventDefault();mostrarMM(e.touches[0].clientX,e.touches[0].clientY,el);lt=0;return;}lt=now;
+    sel(el);el.style.zIndex=++zMax;const w=document.getElementById('mesa-wrap');const t=e.touches[0];
+    sx=t.clientX;sy=t.clientY+w.scrollTop;sl=parseInt(el.style.left)||0;st=parseInt(el.style.top)||0;mv2=false;el.classList.add('dragging');el._movida=true;
+    function tm(e){e.preventDefault();mv2=true;const t=e.touches[0];const mesa=document.getElementById('mesa');el.style.left=Math.max(0,Math.min(sl+(t.clientX-sx),mesa.offsetWidth-el.offsetWidth))+'px';el.style.top=Math.max(0,Math.min(st+(t.clientY+w.scrollTop-sy),mesa.offsetHeight-el.offsetHeight))+'px';}
+    function tu(){el.classList.remove('dragging');el.removeEventListener('touchmove',tm);el.removeEventListener('touchend',tu);}
+    el.addEventListener('touchmove',tm,{passive:false});el.addEventListener('touchend',tu);
+  },{passive:true});
+}
+
+// ── MINI MENU ──
+function mostrarMM(cx,cy,el){miniTarget=el;sel(el);const mm=document.getElementById('mini-menu');mm.style.left=Math.min(cx,window.innerWidth-160)+'px';mm.style.top=Math.max(8,cy-76)+'px';mm.classList.add('on');}
+function cerrarMiniMenu(){document.getElementById('mini-menu').classList.remove('on');miniTarget=null;}
+function eliminarSeleccionada(){if(miniTarget)elimCarta(miniTarget);cerrarMiniMenu();}
+let verCartaActual=null;
+function verAmpliada(mazo,n,cartaDiv){
+  document.getElementById('ver-img').src=imgUrl(mazo,n);
+  document.getElementById('ver-lbl').textContent='';
+  const btns=document.getElementById('ver-btns');
+  const verNombre=document.getElementById('ver-nombre');
+  if(mazo==='general'){
+    btns.style.display='flex';
+    document.getElementById('ver-btn-i').style.display='';
+    document.getElementById('ver-btn-prg').style.display='';
+    document.getElementById('ver-btn-nota').style.display='';
+    verNombre.textContent=NOMBRES[n]||'';
+    verNombre.style.display='none';
+    document.getElementById('ver-btn-i').classList.remove('on');
+    const bm=document.getElementById('ver-btn-mini');
+    if(bm){bm.classList.toggle('on',cartaDiv&&cartaDiv._mini===true);bm.textContent=cartaDiv&&cartaDiv._mini?'\u2199 Normal':'\u2197 Mini';}
+    verCartaActual={mazo,n,div:cartaDiv};
+    // Restaurar nota
+    const vni=document.getElementById('ver-nota-inp');
+    const vnw=document.getElementById('ver-nota-wrap');
+    const btnNota=document.getElementById('ver-btn-nota');
+    if(vni&&cartaDiv){vni.value=cartaDiv._nota||'';}
+    if(vnw) vnw.style.display='none';
+    if(btnNota) btnNota.classList.remove('on');
+  } else {
+    // Para S, N, IC, PAL: mostrar solo botón mini
+    btns.style.display='flex';
+    document.getElementById('ver-btn-i').style.display='none';
+    document.getElementById('ver-btn-prg').style.display='none';
+    document.getElementById('ver-btn-nota').style.display='';
+    const bm2=document.getElementById('ver-btn-mini');
+    if(bm2){bm2.style.display='';bm2.classList.toggle('on',cartaDiv&&cartaDiv._mini===true);bm2.textContent=cartaDiv&&cartaDiv._mini?'\u2199 Normal':'\u2197 Mini';}
+    verCartaActual={mazo,n,div:cartaDiv};
+    // Restaurar nota
+    const vni2=document.getElementById('ver-nota-inp');
+    const vnw2=document.getElementById('ver-nota-wrap');
+    const btnNota2=document.getElementById('ver-btn-nota');
+    if(vni2&&cartaDiv){vni2.value=cartaDiv._nota||'';}
+    if(vnw2) vnw2.style.display='none';
+    if(btnNota2) btnNota2.classList.remove('on');
+  }
+  document.getElementById('ver').classList.add('on');
+}
+function toggleVerNombre(e){
+  e.stopPropagation();
+  const btn=document.getElementById('ver-btn-i');
+  const label=document.getElementById('ver-nombre');
+  const on=!btn.classList.contains('on');
+  btn.classList.toggle('on',on);
+  label.style.display=on?'block':'none';
+  if(verCartaActual?.div?._nombreLabel){
+    verCartaActual.div._nombreLabel.style.display=on?'block':'none';
+  }
+}
+function toggleVerPRG(e){
+  e.stopPropagation();
+  if(!verCartaActual) return;
+  // Mostrar PRG encima de la carta ampliada
+  const prgView = document.getElementById('prg-view');
+  document.getElementById('prg-img').src = prgUrl(verCartaActual.n);
+  prgView.style.zIndex = '600';
+  prgView.classList.add('on');
+}
+function cerrarVer(){
+  document.getElementById('ver').classList.remove('on');
+  document.getElementById('ver-btns').style.display='none';
+  document.getElementById('ver-nombre').style.display='none';
+  document.getElementById('ver-btn-i').classList.remove('on');
+  const _bm=document.getElementById('ver-btn-mini');if(_bm)_bm.classList.remove('on');
+  document.getElementById('ver-nota-wrap').style.display='none';
+  document.getElementById('ver-btn-nota').classList.remove('on');
+}
+function sel(el){if(cartaSeleccionada)cartaSeleccionada.classList.remove('selected');cartaSeleccionada=el;el.classList.add('selected');}
+function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.style.opacity='0';el.style.transform='scale(.8)';setTimeout(()=>{el.remove();cartasMesa=cartasMesa.filter(c=>c!==el);if(cartaSeleccionada===el)cartaSeleccionada=null;actualizarContador();actualizarInfoSesion();if(cartasMesa.length===0)document.getElementById('empty').classList.remove('hidden');},180);}
+function pedirLimpiar(){if(cartasMesa.length===0){toast('La mesa ya est\u00e1 vac\u00eda');return;}document.getElementById('modal').classList.add('on');}
+function cerrarModal(){document.getElementById('modal').classList.remove('on');}
+function limpiarMesa(){cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');document.getElementById('proposito-headers').classList.remove('visible');document.querySelectorAll('.pdf-overlay').forEach(d=>{if(d.parentNode)d.parentNode.removeChild(d);});toast('Mesa limpiada');}
+
+// ── PANEL ──
+function abrirPanel(tab){const p=document.getElementById('panel');if(p.classList.contains('open')&&panelTab===tab){cerrarPanel();return;}p.classList.add('open');switchTab(tab);}
+function cerrarPanel(){document.getElementById('panel').classList.remove('open');}
+function switchTab(tab){
+  panelTab=tab;
+  ['sesion','historial','stats','ajustes'].forEach(t=>{document.getElementById(`tc-${t}`).style.display=t===tab?'block':'none';const el=document.getElementById(`ptab-${t}`);if(el)el.classList.toggle('on',t===tab);});
+  document.getElementById('panel-title').textContent=tab==='sesion'?'Sesi\u00f3n':tab==='historial'?'Historial':'Estad\u00edsticas';
+  if(tab==='historial')cargarHistorial();if(tab==='stats')cargarStats();
+}
+
+// ── HISTORIAL ──
 async function cargarHistorial(){
   const el=document.getElementById('historial-list');el.innerHTML='<div class="empty-p"><div class="ei">\u23f3</div>Cargando...</div>';
   try{
@@ -1356,7 +1838,6 @@ async function reproducirSesion(sesionId){
           div._notaLabel.dataset.value=c.nota_interior;
           div._notaLabel.style.display='block';
         }
-        if(c.nombre_visible&&div._nombreLabel) div._nombreLabel.style.display='block';
       });
     }
 
@@ -1703,7 +2184,6 @@ function crearFlecha(dir){
   const div=document.createElement('div');
   div.className='carta-flecha-wrap'+(isV?' vertical':'');
   div.style.cssText=`left:${x}px;top:${y}px;z-index:${++zMax}`;
-  div._direccion = dir;
 
   // Caja nota
   const box=document.createElement('div');box.className='flecha-box';
