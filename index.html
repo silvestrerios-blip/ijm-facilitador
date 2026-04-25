@@ -1257,6 +1257,7 @@ async function generarPDF(sesion, cartas, notas){
   const flechaTexts = [];
   const cartasScaleEstado = [];
   const cartasFlipEstado = [];
+  const cartasModificadas = [];
   const overlay = document.getElementById('mantel-overlay');
   const overlayWasHidden = overlay && !overlay.classList.contains('on');
 
@@ -1380,7 +1381,6 @@ async function generarPDF(sesion, cartas, notas){
     const s = escala / 100;
     const cwPx = Math.round(180*s);
     const chPx = Math.round(120*s);
-    const cartasModificadas = [];
     document.querySelectorAll('#mesa .carta').forEach(el=>{
       const img = el.querySelector('img');
       const prevW = el.style.width;
@@ -1388,7 +1388,10 @@ async function generarPDF(sesion, cartas, notas){
       const prevImgH = img ? img.style.height : '';
       el.style.setProperty('width', cwPx+'px', 'important');
       el.style.setProperty('height', chPx+'px', 'important');
-      if(img) img.style.setProperty('height', chPx+'px', 'important');
+      if(img){
+        img.style.setProperty('height', chPx+'px', 'important');
+        img.style.setProperty('min-height', chPx+'px', 'important');
+      }
       cartasModificadas.push({el, img, prevW, prevH, prevImgH});
     });
     await new Promise(r=>setTimeout(r,80));
@@ -1413,7 +1416,7 @@ async function generarPDF(sesion, cartas, notas){
     cartasModificadas.forEach(({el, img, prevW, prevH, prevImgH})=>{
       el.style.width = prevW;
       el.style.height = prevH;
-      if(img) img.style.height = prevImgH;
+      if(img){ img.style.height = prevImgH; img.style.minHeight = ''; }
     });
 
     // Recortar canvas si es portrait para que el PDF salga landscape
@@ -1480,6 +1483,13 @@ async function generarPDF(sesion, cartas, notas){
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
     cartasScaleEstado.forEach(({el, img})=>{ /* nada que restaurar */ });
+    // Restaurar cartas modificadas para PDF
+    if(typeof cartasModificadas !== 'undefined'){
+      cartasModificadas.forEach(({el, img, prevW, prevH, prevImgH})=>{
+        el.style.width = prevW; el.style.height = prevH;
+        if(img){ img.style.height = prevImgH; img.style.minHeight = ''; }
+      });
+    }
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
       const inner = c.querySelector('.carta-flip-inner');
