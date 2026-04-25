@@ -890,7 +890,7 @@ body{background:var(--mesa);color:#fff}
       <div class="pfield" style="margin-bottom:20px">
         <label>&#127183; Tama&#241;o de cartas</label>
         <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
-          <input id="scale-slider" type="range" min="25" max="150" value="75" oninput="setScale(this.value)" style="flex:1;accent-color:var(--v);height:4px;cursor:pointer">
+          <input id="scale-slider" type="range" min="25" max="150" value="50" oninput="setScale(this.value)" style="flex:1;accent-color:var(--v);height:4px;cursor:pointer">
           <span id="scale-val" style="font-size:13px;font-weight:700;color:var(--v);min-width:36px">75%</span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.3);margin-top:4px">
@@ -1068,7 +1068,9 @@ async function doLogin(){
     toast(`Bienvenido, ${usuario.nombre} \u{1F44B}`);
     cargarGrupos();
     actualizarBtnSesionToolbar();
-    aplicarEscala();
+    // Sincronizar escala con el slider al iniciar
+    const sliderVal = parseInt(document.getElementById('scale-slider').value) || 50;
+    setScale(sliderVal);
     iniciarRefreshJWT();
   }catch(e){errEl.textContent=e.message;}
   document.getElementById('btn-login').textContent='Entrar';
