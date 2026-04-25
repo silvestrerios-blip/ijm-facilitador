@@ -845,6 +845,11 @@ body{background:var(--mesa);color:#fff}
     <button id="chip-grupos" class="col-btn" onclick="toggleGruposRow(event)" style="font-size:11px;font-weight:800;letter-spacing:.4px;padding:3px 11px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">GRUPOS</button>
     <button class="col-btn" onclick="toggleMantelMenu(event)" id="btn-mantel" style="font-size:11px;font-weight:800;letter-spacing:.4px;padding:3px 11px;border-color:rgba(84,201,153,.3);color:rgba(255,255,255,.7)">DIN&#193;MICAS</button>
     <div style="flex:1"></div>
+    <div style="display:flex;align-items:center;gap:5px;margin-right:4px">
+      <span style="font-size:9px;color:rgba(255,255,255,.35);font-weight:700">&#128269;</span>
+      <input id="scale-slider" type="range" min="25" max="150" value="50" oninput="setScale(this.value)" style="width:70px;accent-color:var(--v);height:3px;cursor:pointer">
+      <span id="scale-val" style="font-size:9px;font-weight:700;color:var(--v);min-width:26px">50%</span>
+    </div>
     <button id="btn-sesion-tb" class="col-btn" onclick="abrirPanel('sesion')" style="font-size:11px;font-weight:800;padding:3px 11px;border-color:rgba(84,201,153,.4);color:rgba(255,255,255,.8)">&#9654; SESI&#211;N</button>
     <button id="btn-cerrar-sesion-tb" class="col-btn" onclick="cerrarSesion()" style="display:none;font-size:11px;font-weight:800;padding:3px 11px;border-color:rgba(255,80,80,.35);color:rgba(255,100,100,.75)">&#9632; CERRAR</button>
   </div><!-- end toolbar-row2 -->
@@ -900,24 +905,6 @@ body{background:var(--mesa);color:#fff}
     </div>
     <div id="tc-stats" style="display:none"><div id="stats-content"><div class="empty-p"><div class="ei">&#128202;</div>Cargando...</div></div></div>
     <div id="tc-ajustes" style="display:none">
-      <div class="pfield" style="margin-bottom:20px">
-        <label>&#127183; Tama&#241;o de cartas</label>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
-          <input id="scale-slider" type="range" min="25" max="150" value="50" oninput="setScale(this.value)" style="flex:1;accent-color:var(--v);height:4px;cursor:pointer">
-          <span id="scale-val" style="font-size:13px;font-weight:700;color:var(--v);min-width:36px">75%</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.3);margin-top:4px">
-          <span>25%</span><span>75%</span><span>150%</span>
-        </div>
-      </div>
-      <div class="pfield">
-        <label>&#128269; Zoom de mesa</label>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
-          <button onclick="zoomMesa(-1)" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);background:transparent;color:#fff;font-size:18px;cursor:pointer;font-family:'Outfit',sans-serif">&#8722;</button>
-          <span id="zoom-val" style="font-size:13px;font-weight:700;color:var(--v);min-width:36px;text-align:center">100%</span>
-          <button onclick="zoomMesa(1)" style="flex:1;padding:10px;border-radius:8px;border:1.5px solid rgba(255,255,255,.15);background:transparent;color:#fff;font-size:18px;cursor:pointer;font-family:'Outfit',sans-serif">&#43;</button>
-        </div>
-      </div>
     </div>
   </div>
 </div>
