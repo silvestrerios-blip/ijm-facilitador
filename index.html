@@ -1248,28 +1248,34 @@ async function confirmarCerrarSesion(){
 
 // ── PDF (captura completa de mesa) ──
 async function generarPDF(sesion, cartas, notas){
-  // Ocultar botones UI para impresión
   document.querySelectorAll('.btn-del').forEach(el=>{ el._prevDisplay=el.style.display; el.style.display='none'; });
 
-  // Cabecera de impresión
   const hdr = document.createElement('div');
   hdr.id = 'print-header';
-  hdr.innerHTML = '<div style="background:#54C999;color:#fff;padding:10px 16px;font-family:Outfit,sans-serif">'
-    + '<div style="font-size:13px;font-weight:800;letter-spacing:1px">INNER JOURNEY METHOD™</div>'
-    + '<div style="font-size:10px;margin-top:2px;opacity:.85">Participante: '+sesion.participante+' · Facilitador: '+(sesion.facilitador_nombre||usuario.nombre)+' · Fecha: '+fFecha(sesion.fecha)+(sesion.hora?' · '+sesion.hora:'')+'</div>'
-    + '</div>';
+  hdr.innerHTML = '<div style="background:#54C999;padding:10px 16px;display:flex;align-items:center;gap:12px;font-family:Outfit,sans-serif">'
+    + '<svg width="32" height="32" viewBox="0 0 32 32" fill="none">'
+    + '<path d="M16 4 C10 4 5 9 5 16 C5 22 9 27 16 28 C14 24 13 20 14 16 C15 12 18 9 22 8 C20 5.5 18 4 16 4Z" fill="white" opacity=".9"/>'
+    + '<path d="M22 8 C26 10 28 14 27 18 C26 22 23 25 19 26 C22 25 24 22 25 18 C26 14 24 10 22 8Z" fill="white" opacity=".7"/>'
+    + '<circle cx="9" cy="8" r="1.2" fill="white" opacity=".8"/>'
+    + '<circle cx="25" cy="6" r="0.8" fill="white" opacity=".6"/>'
+    + '<circle cx="27" cy="22" r="1" fill="white" opacity=".7"/>'
+    + '</svg>'
+    + '<div>'
+    + '<div style="color:#fff;font-size:13px;font-weight:800;letter-spacing:1.5px">INNER JOURNEY METHOD™</div>'
+    + '<div style="color:rgba(255,255,255,.85);font-size:9.5px;margin-top:2px">'
+    + sesion.participante+' · '+(sesion.facilitador_nombre||usuario.nombre)+' · '+fFecha(sesion.fecha)+(sesion.hora?' · '+sesion.hora:'')
+    + '</div>'
+    + '</div></div>';
   document.body.insertBefore(hdr, document.body.firstChild);
 
   await new Promise(r=>setTimeout(r,100));
   window.print();
 
-  // Limpiar tras imprimir
   setTimeout(()=>{
     hdr.remove();
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=el._prevDisplay||''; });
   }, 500);
 }
-
 
 function sacarCarta(mazo,el){
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));
