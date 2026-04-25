@@ -295,6 +295,10 @@ body{background:var(--mesa);color:#fff}
   #print-header{ display:block!important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
   .carta{ break-inside:avoid }
   * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; }
+  .carta-flip-inner { transform:rotateY(0deg)!important; transition:none!important; }
+  .carta-flip-front { backface-visibility:visible!important; -webkit-backface-visibility:visible!important; z-index:2!important; }
+  .carta-flip-back { display:none!important; }
+  #mantel-overlay { display:none!important; }
 }
 #print-header{ display:none }
 
@@ -1259,18 +1263,26 @@ async function generarPDF(sesion, cartas, notas){
     + '</div></div></div>';
     document.body.insertBefore(hdr, document.body.firstChild);
 
-  // Voltear cartas giradas para mostrar imagen en PDF
+  // Voltear cartas giradas y forzar carga de imágenes
   const cartasGiradas = [];
   document.querySelectorAll('.carta-flip.girada').forEach(c=>{
     const inner = c.querySelector('.carta-flip-inner');
+    const front = c.querySelector('.carta-flip-front');
+    const back = c.querySelector('.carta-flip-back');
     if(inner){
-      cartasGiradas.push({c, inner});
+      cartasGiradas.push({c, inner, front, back});
       inner.style.transition = 'none';
       inner.style.transform = 'rotateY(0deg)';
+      // Forzar visibilidad del frente
+      if(front){ front.style.setProperty('backface-visibility','visible','important'); front.style.setProperty('-webkit-backface-visibility','visible','important'); front.style.zIndex='2'; }
+      if(back){ back.style.display='none'; }
     }
   });
 
-  await new Promise(r=>setTimeout(r,100));
+  // Esperar a que carguen las imágenes
+  const imgs = document.querySelectorAll('.carta-flip-front img');
+  await Promise.all(Array.from(imgs).map(img=> img.complete ? Promise.resolve() : new Promise(r=>{ img.onload=r; img.onerror=r; })));
+  await new Promise(r=>setTimeout(r,150));
   window.print();
 
   setTimeout(()=>{
@@ -1278,9 +1290,11 @@ async function generarPDF(sesion, cartas, notas){
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=el._prevDisplay||''; });
     if(toastEl) toastEl.style.opacity=toastPrev;
     // Restaurar cartas giradas
-    cartasGiradas.forEach(({c, inner})=>{
+    cartasGiradas.forEach(({c, inner, front, back})=>{
       inner.style.transition = '';
       inner.style.transform = 'rotateY(180deg)';
+      if(front){ front.style.backfaceVisibility=''; front.style.webkitBackfaceVisibility=''; front.style.zIndex=''; }
+      if(back){ back.style.display=''; }
     });
   }, 500);
 }
