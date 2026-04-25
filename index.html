@@ -1377,9 +1377,6 @@ async function generarPDF(sesion, cartas, notas){
     // Todos los manteles usan el viewport visible (A4 landscape)
     const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
 
-    // Las cartas se modifican via onclone (no tocar el DOM real)
-    await new Promise(r=>setTimeout(r,50));
-
     const canvas = await html2canvas(wrap, {
       useCORS: true,
       allowTaint: false,
@@ -1393,30 +1390,7 @@ async function generarPDF(sesion, cartas, notas){
       scrollX: 0,
       scrollY: 0,
       x: 0,
-      y: 0,
-      onclone: (clonedDoc) => {
-        // Marcar cartas originales con data-pdfidx
-        cartasMesa.forEach((orig, idx) => { orig.setAttribute('data-pdfidx', idx); });
-
-        cartasMesa.forEach((orig, idx) => {
-          const cloned = clonedDoc.querySelector(`[data-pdfidx="${idx}"]`);
-          if(!cloned) return;
-          const tr = orig.style.transform || '';
-          const scMatch = tr.match(/scale\(([\d.]+)\)/);
-          const sc = scMatch ? parseFloat(scMatch[1]) : 1;
-          const s = escala / 100;
-          const visualW = Math.round(180 * s * sc);
-          const visualH = Math.round(120 * s * sc);
-          cloned.style.setProperty('width', visualW+'px', 'important');
-          cloned.style.setProperty('height', visualH+'px', 'important');
-          cloned.style.setProperty('transform', 'none', 'important');
-          const img = cloned.querySelector('img');
-          if(img){
-            img.style.setProperty('height', visualH+'px', 'important');
-            img.style.setProperty('min-height', visualH+'px', 'important');
-          }
-        });
-      }
+      y: 0
     });
 
     // Restaurar estilos
@@ -1489,7 +1463,6 @@ async function generarPDF(sesion, cartas, notas){
     if(overlayWasHidden && mantelActual) overlay.style.opacity='';
     wrap.scrollTop=scrollTop;
     // Restaurar scale transforms
-    cartasScaleEstado.forEach(({el, img})=>{ /* nada que restaurar */ });
     cartasMesa.forEach(el=>el.removeAttribute('data-pdfidx'));
     // Restaurar estado original de cartas flip
     cartasFlipEstado.forEach(({c, estabaGirada})=>{
