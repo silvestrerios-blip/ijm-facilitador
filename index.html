@@ -1379,8 +1379,7 @@ async function generarPDF(sesion, cartas, notas){
     const captureW = wrap.offsetWidth;
     const wrapH = wrap.offsetHeight;
     const a4H = Math.round(captureW / 1.414);
-    const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : Math.min(contentH, wrapH);
-    const captureY = mantelActual ? 0 : offsetY;
+    const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : wrapH;
 
     const canvas = await html2canvas(wrap, {
       useCORS: true,
@@ -1393,10 +1392,26 @@ async function generarPDF(sesion, cartas, notas){
       backgroundColor: '#606060',
       logging: false,
       scrollX: 0,
-      scrollY: -captureY,
+      scrollY: 0,
       x: 0,
-      y: captureY
+      y: 0
     });
+
+    // Sin mantel: recortar canvas para eliminar espacio vacío arriba/abajo
+    let finalCanvasRaw = canvas;
+    if(!mantelActual && contentH < wrapH && offsetY > 20){
+      const scale = 1.5;
+      const srcY = Math.round(offsetY * scale);
+      const srcH = Math.min(Math.round(contentH * scale), canvas.height - srcY);
+      if(srcH > 50){
+        const cropped = document.createElement('canvas');
+        cropped.width = canvas.width;
+        cropped.height = srcH;
+        const ctx = cropped.getContext('2d');
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+        finalCanvasRaw = cropped;
+      }
+    }
 
     // Restaurar estilos
     cartasModificadas.forEach(({el, img, prevW, prevH, prevImgH})=>{
@@ -1405,17 +1420,17 @@ async function generarPDF(sesion, cartas, notas){
       if(img){ img.style.height = prevImgH; img.style.minHeight = ''; }
     });
 
-    // Recortar canvas si es portrait para que el PDF salga landscape
-    let finalCanvas = canvas;
-    if(canvas.height > canvas.width * 0.8){
+    // Recortar a landscape si es portrait
+    let finalCanvas = finalCanvasRaw;
+    if(finalCanvasRaw.height > finalCanvasRaw.width * 0.8){
       // Canvas portrait o casi cuadrado — recortar a ratio A4 landscape
-      const targetH = Math.round(canvas.width / 1.414);
-      if(targetH < canvas.height){
+      const targetH = Math.round(finalCanvasRaw.width / 1.414);
+      if(targetH < finalCanvasRaw.height){
         const clipped = document.createElement('canvas');
-        clipped.width = canvas.width;
+        clipped.width = finalCanvasRaw.width;
         clipped.height = targetH;
         const ctx2 = clipped.getContext('2d');
-        ctx2.drawImage(canvas, 0, 0);
+        ctx2.drawImage(finalCanvasRaw, 0, 0);
         finalCanvas = clipped;
       }
     }
