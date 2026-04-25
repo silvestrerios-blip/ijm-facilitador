@@ -2036,6 +2036,13 @@ function cerrarPRG(){
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarVer();cerrarPRG();cerrarModal();cerrarMiniMenu();cerrarPanel();document.getElementById('modal-cerrar').classList.remove('on');}if(e.key==='Delete'&&e.target.tagName!=='INPUT'&&e.target.tagName!=='TEXTAREA'){if(cartaSeleccionada)elimCarta(cartaSeleccionada);}});
 document.getElementById('mesa').addEventListener('mousedown',e=>{if(!e.target.closest('.carta')){cerrarMiniMenu();if(cartaSeleccionada){cartaSeleccionada.classList.remove('selected');cartaSeleccionada=null;}}});
 function actualizarContador(){}
+function actualizarInfoSesion(){
+  if(!sesionActual) return;
+  const n = cartasMesa.filter(c=>c._mazo).length;
+  if(sesionActual.id){
+    sbAuth(`sesiones?id=eq.${sesionActual.id}`,{method:'PATCH',prefer:'return=minimal',body:{n_cartas:n}}).catch(()=>{});
+  }
+}
 function fFecha(f){if(!f)return '';const[y,m,d]=f.split('-');return `${d}/${m}/${y}`;}
 let _tt;function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.style.display='block';clearTimeout(_tt);_tt=setTimeout(()=>el.style.display='none',2600);}
 
