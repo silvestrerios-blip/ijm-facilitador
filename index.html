@@ -1374,14 +1374,13 @@ async function generarPDF(sesion, cartas, notas){
     // Todos los manteles usan el viewport visible (A4 landscape)
     const captureHFinal = mantelActual ? Math.min(wrapH, a4H) : (maxY===0 ? 400 : maxY+40);
 
-    // Capturar con scale proporcional a la escala actual
-    // Así html2canvas renderiza las cartas al tamaño visual correcto
-    const captureScale = (escala / 100) * 1.5;
+    // Capturar — usar onclone para forzar CSS vars en el clon
+    const s = escala / 100;
 
     const canvas = await html2canvas(wrap, {
       useCORS: true,
       allowTaint: false,
-      scale: captureScale,
+      scale: 1.5,
       width: captureW,
       height: captureHFinal,
       windowWidth: captureW,
@@ -1391,7 +1390,15 @@ async function generarPDF(sesion, cartas, notas){
       scrollX: 0,
       scrollY: 0,
       x: 0,
-      y: 0
+      y: 0,
+      onclone: (clonedDoc) => {
+        const root = clonedDoc.documentElement;
+        root.style.setProperty('--cw', Math.round(180*s)+'px');
+        root.style.setProperty('--ch', Math.round(120*s)+'px');
+        root.style.setProperty('--pw', Math.round(300*s)+'px');
+        root.style.setProperty('--ph', Math.round(44*s)+'px');
+        root.style.setProperty('--ich', Math.round(140*s)+'px');
+      }
     });
 
     // Recortar canvas si es portrait para que el PDF salga landscape
