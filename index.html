@@ -1300,9 +1300,16 @@ async function generarPDF(sesion, cartas, notas){
   const imgs = document.querySelectorAll('.carta-flip-front img');
   await Promise.all(Array.from(imgs).map(img=> img.complete ? Promise.resolve() : new Promise(r=>{ img.onload=r; img.onerror=r; })));
   await new Promise(r=>setTimeout(r,150));
+
+  // Nombre del archivo PDF
+  const titleOrig = document.title;
+  const fechaLimpia = fFecha(sesion.fecha).replace(/\//g,'-');
+  document.title = `IJM-${sesion.participante}-${fechaLimpia}`;
+
   window.print();
 
   setTimeout(()=>{
+    document.title = titleOrig;
     hdr.remove();
     document.querySelectorAll('.btn-del').forEach(el=>{ el.style.display=el._prevDisplay||''; });
     if(toastEl) toastEl.style.opacity=toastPrev;
