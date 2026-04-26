@@ -888,7 +888,7 @@ body{background:var(--mesa);color:#fff}
     <div class="ptab on" id="ptab-sesion" onclick="switchTab('sesion')">Sesi&#243;n</div>
     <div class="ptab" id="ptab-historial" onclick="switchTab('historial')">Historial</div>
     <div class="ptab" id="ptab-stats" style="display:none" onclick="switchTab('stats')">Estad&#237;sticas</div>
-    <div class="ptab" id="ptab-ajustes" onclick="switchTab('ajustes')">&#9881; Ajustes</div>
+    <div class="ptab" id="ptab-ajustes" onclick="imprimirDesdePanel()">&#128438; Imprimir</div>
   </div>
   <div id="panel-body">
     <div id="tc-sesion">
@@ -1192,7 +1192,7 @@ async function confirmarCerrarSesion(){
   try{
     const mantelGuardar = mantelActual||'';
     if(sesionActual.id){
-      await sbAuth(`sesiones?id=eq.${sesionActual.id}`,{method:'PATCH',prefer:'return=minimal',body:{n_cartas:cartasData.length, mantel:mantelGuardar}});
+      await sbAuth(`sesiones?id=eq.${sesionActual.id}`,{method:'PATCH',prefer:'return=minimal',body:{n_cartas:cartasData.length, mantel:mantelGuardar, escala_zoom:escala}});
       if(cartasData.length>0){
         const rows=cartasData.map(c=>({sesion_id:sesionActual.id,...c}));
         await sbAuth('cartas_sesion',{method:'POST',prefer:'return=minimal',body:rows});
@@ -1202,7 +1202,7 @@ async function confirmarCerrarSesion(){
         await sbAuth('elementos_sesion',{method:'POST',prefer:'return=minimal',body:erows});
       }
     } else {
-      const [row]=await sbAuth('sesiones',{method:'POST',body:{participante:sesionActual.participante,fecha:sesionActual.fecha,hora:sesionActual.hora||null,facilitador_id:usuario.id,facilitador_nombre:usuario.nombre,n_cartas:cartasData.length,mantel:mantelGuardar}});
+      const [row]=await sbAuth('sesiones',{method:'POST',body:{participante:sesionActual.participante,fecha:sesionActual.fecha,hora:sesionActual.hora||null,facilitador_id:usuario.id,facilitador_nombre:usuario.nombre,n_cartas:cartasData.length,mantel:mantelGuardar,escala_zoom:escala}});
       if(row){
         if(cartasData.length>0){
           const rows=cartasData.map(c=>({sesion_id:row.id,...c}));
@@ -1215,14 +1215,6 @@ async function confirmarCerrarSesion(){
       }
     }
   }catch(e){console.warn('Supabase error:',e);}
-
-  // Generar PDF (independiente del cierre — si falla, la sesión se cierra igual)
-  try{
-    await generarPDF(sesionActual, cartasData, notas);
-  }catch(e){
-    console.error('PDF error:',e);
-    toast('Error al generar PDF, pero la sesión se ha guardado');
-  }
 
   sesionActual=null;
   document.getElementById('sesion-form').style.display='block';
@@ -1378,6 +1370,7 @@ function crearCarta(mazo,n,x,y){
   addDel(div);addGestos(div,()=>verAmpliada(mazo,n,div));
   document.getElementById('mesa').appendChild(div);
   cartasMesa.push(div);actualizarContador();actualizarInfoSesion();
+  if(cartasMesa.filter(c=>c._mazo).length===1) mostrarZoomTip();
   return div;
 }
 
@@ -1598,7 +1591,8 @@ function sel(el){if(cartaSeleccionada)cartaSeleccionada.classList.remove('select
 function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.style.opacity='0';el.style.transform='scale(.8)';setTimeout(()=>{el.remove();cartasMesa=cartasMesa.filter(c=>c!==el);if(cartaSeleccionada===el)cartaSeleccionada=null;actualizarContador();actualizarInfoSesion();if(cartasMesa.length===0)document.getElementById('empty').classList.remove('hidden');},180);}
 function pedirLimpiar(){if(cartasMesa.length===0){toast('La mesa ya est\u00e1 vac\u00eda');return;}document.getElementById('modal').classList.add('on');}
 function cerrarModal(){document.getElementById('modal').classList.remove('on');}
-function limpiarMesa(){cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');document.getElementById('proposito-headers').classList.remove('visible');document.querySelectorAll('.pdf-overlay').forEach(d=>{if(d.parentNode)d.parentNode.removeChild(d);});toast('Mesa limpiada');}
+function limpiarMesa(){
+  zoomTipMostrado = false;cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');document.getElementById('proposito-headers').classList.remove('visible');document.querySelectorAll('.pdf-overlay').forEach(d=>{if(d.parentNode)d.parentNode.removeChild(d);});toast('Mesa limpiada');}
 
 // ── PANEL ──
 function abrirPanel(tab){const p=document.getElementById('panel');if(p.classList.contains('open')&&panelTab===tab){cerrarPanel();return;}p.classList.add('open');switchTab(tab);}
@@ -1673,6 +1667,11 @@ async function reproducirSesion(sesionId){
     document.querySelectorAll('.mantel-opt').forEach(o=>o.classList.remove('on'));
 
     cerrarPanel();
+    // Restaurar zoom de la sesión
+    if(ses?.escala_zoom && ses.escala_zoom !== escala){
+      setScale(ses.escala_zoom);
+      document.getElementById('scale-slider').value = ses.escala_zoom;
+    }
     await new Promise(r=>setTimeout(r,80));
 
     if(ses?.mantel){
@@ -1963,6 +1962,24 @@ window.addEventListener('resize', () => {
 // ═══════════════════════════════════════════
 let escala = 75; // % default
 let mesaZoom = 1;
+let zoomTipMostrado = false;
+
+function mostrarZoomTip(){
+  if(zoomTipMostrado) return;
+  zoomTipMostrado = true;
+  const tip = document.createElement('div');
+  tip.id = 'zoom-tip';
+  tip.innerHTML = '&#128269; Ajusta el tamaño de las cartas con el slider <b>Zoom</b> en el menú';
+  tip.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:85;'
+    + 'background:rgba(10,10,10,.88);border:1px solid rgba(84,201,153,.35);border-radius:12px;'
+    + 'padding:12px 20px;color:rgba(255,255,255,.85);font-size:11px;font-family:Outfit,sans-serif;'
+    + 'text-align:center;pointer-events:none;backdrop-filter:blur(8px);white-space:nowrap;';
+  document.getElementById('mesa').appendChild(tip);
+  // Desaparece al tocar la mesa
+  const hide = ()=>{ tip.remove(); document.getElementById('mesa-wrap').removeEventListener('click',hide); document.getElementById('mesa-wrap').removeEventListener('touchstart',hide); };
+  setTimeout(()=>document.getElementById('mesa-wrap').addEventListener('click',hide), 300);
+  setTimeout(()=>document.getElementById('mesa-wrap').addEventListener('touchstart',hide), 300);
+}
 
 function setScale(val){
   escala = parseInt(val);
@@ -2256,6 +2273,13 @@ async function mostrarSubgruposEnMenu(grupo){
 function updateToolbarHeight(){
   const h = document.getElementById('toolbar').offsetHeight;
   document.documentElement.style.setProperty('--tb', h+'px');
+}
+
+function imprimirDesdePanel(){
+  cerrarPanel();
+  // Usar sesionActual si existe, o datos mínimos
+  const ses = sesionActual || {participante:'—', facilitador_nombre:usuario?.nombre||'', fecha:new Date().toISOString().split('T')[0], hora:''};
+  generarPDF(ses, [], []);
 }
 
 function toggleGruposRow(e){
