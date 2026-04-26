@@ -939,9 +939,11 @@ body{background:var(--mesa);color:#fff}
   <div id="ver-btns">
     <button class="ver-btn" id="ver-btn-i" onclick="toggleVerNombre(event)">N &#8212; Nombre</button>
     <button class="ver-btn" id="ver-btn-prg" onclick="toggleVerPRG(event)">? &#8212; Preguntas</button>
+    <button class="ver-btn" id="ver-btn-g" onclick="toggleVerGrupos(event)">G &#8212; Grupos</button>
     <button class="ver-btn" id="ver-btn-mini" onclick="toggleVerMini(event)">&#8599; Mini</button>
     <button class="ver-btn" id="ver-btn-nota" onclick="toggleVerNota(event)">&#9998; Nota</button>
   </div>
+  <div id="ver-grupos" style="display:none;position:absolute;top:60px;left:50%;transform:translateX(-50%);width:min(420px,85vw);z-index:10;background:rgba(10,10,10,.92);border:1px solid rgba(84,201,153,.3);border-radius:12px;padding:12px 16px;backdrop-filter:blur(10px)"></div>
   <div id="ver-nombre"></div>
   <img id="ver-img" src="" alt=""><div id="ver-lbl"></div>
   <div id="ver-nota-wrap" style="display:none;position:absolute;bottom:80px;left:50%;transform:translateX(-50%);width:min(400px,80vw);z-index:10">
@@ -1482,7 +1484,10 @@ function verAmpliada(mazo,n,cartaDiv){
     btns.style.display='flex';
     document.getElementById('ver-btn-i').style.display='';
     document.getElementById('ver-btn-prg').style.display='';
+    document.getElementById('ver-btn-g').style.display='';
     document.getElementById('ver-btn-nota').style.display='';
+    document.getElementById('ver-grupos').style.display='none';
+    document.getElementById('ver-btn-g').classList.remove('on');
     verNombre.textContent=NOMBRES[n]||'';
     verNombre.style.display='none';
     document.getElementById('ver-btn-i').classList.remove('on');
@@ -1501,6 +1506,7 @@ function verAmpliada(mazo,n,cartaDiv){
     btns.style.display='flex';
     document.getElementById('ver-btn-i').style.display='none';
     document.getElementById('ver-btn-prg').style.display='none';
+    document.getElementById('ver-btn-g').style.display='none';
     document.getElementById('ver-btn-nota').style.display='';
     const bm2=document.getElementById('ver-btn-mini');
     if(bm2){bm2.style.display='';bm2.classList.toggle('on',cartaDiv&&cartaDiv._mini===true);bm2.textContent=cartaDiv&&cartaDiv._mini?'\u2199 Normal':'\u2197 Mini';}
@@ -1526,6 +1532,48 @@ function toggleVerNombre(e){
     verCartaActual.div._nombreLabel.style.display=on?'block':'none';
   }
 }
+async function toggleVerGrupos(e){
+  e.stopPropagation();
+  if(!verCartaActual || verCartaActual.mazo !== 'general') return;
+  const btn = document.getElementById('ver-btn-g');
+  const panel = document.getElementById('ver-grupos');
+  const isOn = btn.classList.contains('on');
+  if(isOn){ btn.classList.remove('on'); panel.style.display='none'; return; }
+  btn.classList.add('on');
+  panel.style.display='block';
+  panel.innerHTML = '<div style="color:rgba(255,255,255,.4);font-size:10px;text-align:center">Cargando...</div>';
+  try{
+    const n = verCartaActual.n;
+    // Cargar grupos de la carta
+    const gRows = await sbAuth(`grupos_cartas?select=grupo_id&carta_numero=eq.${n}`) || [];
+    const gIds = gRows.map(r=>r.grupo_id);
+    if(!gIds.length){ panel.innerHTML='<div style="color:rgba(255,255,255,.3);font-size:11px;text-align:center">Sin grupos asignados</div>'; return; }
+    // Cargar nombres de grupos
+    const grupos = await sbAuth(`grupos?select=id,nombre&id=in.(${gIds.join(',')})`) || [];
+    // Cargar subgrupos de la carta
+    const sRows = await sbAuth(`subgrupos_cartas?select=subgrupo_id&carta_numero=eq.${n}`) || [];
+    const sIds = sRows.map(r=>r.subgrupo_id);
+    const subgrupos = sIds.length ? await sbAuth(`subgrupos?select=id,nombre,tipo,grupo_id&id=in.(${sIds.join(',')})`) || [] : [];
+
+    let html = '';
+    grupos.forEach(g=>{
+      const subs = subgrupos.filter(s=>s.grupo_id===g.id);
+      html += `<div style="margin-bottom:8px">`;
+      html += `<div style="font-size:10px;font-weight:800;color:var(--v);letter-spacing:.6px;text-transform:uppercase;margin-bottom:3px">${g.nombre}</div>`;
+      if(subs.length){
+        subs.forEach(s=>{
+          const esEtiqueta = s.tipo==='etiqueta';
+          html += `<div style="font-size:10px;color:rgba(255,255,255,.7);padding:2px 8px;background:rgba(84,201,153,.08);border-radius:6px;display:inline-block;margin:1px 2px;${esEtiqueta?'border:1px solid rgba(255,210,60,.3);color:rgba(255,210,60,.85)':''}">${s.nombre}</div>`;
+        });
+      }
+      html += `</div>`;
+    });
+    panel.innerHTML = html;
+  }catch(err){
+    panel.innerHTML='<div style="color:rgba(255,80,80,.7);font-size:10px;text-align:center">Error al cargar grupos</div>';
+  }
+}
+
 function toggleVerPRG(e){
   e.stopPropagation();
   if(!verCartaActual) return;
@@ -1543,6 +1591,8 @@ function cerrarVer(){
   const _bm=document.getElementById('ver-btn-mini');if(_bm)_bm.classList.remove('on');
   document.getElementById('ver-nota-wrap').style.display='none';
   document.getElementById('ver-btn-nota').classList.remove('on');
+  document.getElementById('ver-grupos').style.display='none';
+  document.getElementById('ver-btn-g').classList.remove('on');
 }
 function sel(el){if(cartaSeleccionada)cartaSeleccionada.classList.remove('selected');cartaSeleccionada=el;el.classList.add('selected');}
 function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.style.opacity='0';el.style.transform='scale(.8)';setTimeout(()=>{el.remove();cartasMesa=cartasMesa.filter(c=>c!==el);if(cartaSeleccionada===el)cartaSeleccionada=null;actualizarContador();actualizarInfoSesion();if(cartasMesa.length===0)document.getElementById('empty').classList.remove('hidden');},180);}
