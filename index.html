@@ -1592,7 +1592,8 @@ function elimCarta(el){el.style.transition='opacity .18s,transform .18s';el.styl
 function pedirLimpiar(){if(cartasMesa.length===0){toast('La mesa ya est\u00e1 vac\u00eda');return;}document.getElementById('modal').classList.add('on');}
 function cerrarModal(){document.getElementById('modal').classList.remove('on');}
 function limpiarMesa(){
-  zoomTipMostrado = false;cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');document.getElementById('proposito-headers').classList.remove('visible');document.querySelectorAll('.pdf-overlay').forEach(d=>{if(d.parentNode)d.parentNode.removeChild(d);});toast('Mesa limpiada');}
+  zoomTipMostrado = false;
+  window._escalaAntesMantel = undefined;cartasMesa.forEach(c=>c.remove());cartasMesa=[];cartaSeleccionada=null;cartasFlip=[];cerrarModal();actualizarContador();actualizarInfoSesion();document.getElementById('empty').classList.remove('hidden');setMantel(null);document.getElementById('btn-girar-todas').classList.remove('visible');document.getElementById('proposito-headers').classList.remove('visible');document.querySelectorAll('.pdf-overlay').forEach(d=>{if(d.parentNode)d.parentNode.removeChild(d);});toast('Mesa limpiada');}
 
 // ── PANEL ──
 function abrirPanel(tab){const p=document.getElementById('panel');if(p.classList.contains('open')&&panelTab===tab){cerrarPanel();return;}p.classList.add('open');switchTab(tab);}
@@ -1970,15 +1971,14 @@ function mostrarZoomTip(){
   const tip = document.createElement('div');
   tip.id = 'zoom-tip';
   tip.innerHTML = '&#128269; Ajusta el tamaño de las cartas con el slider <b>Zoom</b> en el menú';
-  tip.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:85;'
-    + 'background:rgba(10,10,10,.88);border:1px solid rgba(84,201,153,.35);border-radius:12px;'
-    + 'padding:12px 20px;color:rgba(255,255,255,.85);font-size:11px;font-family:Outfit,sans-serif;'
-    + 'text-align:center;pointer-events:none;backdrop-filter:blur(8px);white-space:nowrap;';
-  document.getElementById('mesa').appendChild(tip);
-  // Desaparece al tocar la mesa
-  const hide = ()=>{ tip.remove(); document.getElementById('mesa-wrap').removeEventListener('click',hide); document.getElementById('mesa-wrap').removeEventListener('touchstart',hide); };
-  setTimeout(()=>document.getElementById('mesa-wrap').addEventListener('click',hide), 300);
-  setTimeout(()=>document.getElementById('mesa-wrap').addEventListener('touchstart',hide), 300);
+  tip.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;'
+    + 'background:rgba(10,10,10,.92);border:1px solid rgba(84,201,153,.4);border-radius:12px;'
+    + 'padding:14px 22px;color:rgba(255,255,255,.9);font-size:12px;font-family:Outfit,sans-serif;'
+    + 'text-align:center;backdrop-filter:blur(10px);max-width:300px;line-height:1.5;cursor:pointer;';
+  document.body.appendChild(tip);
+  const hide = ()=>{ tip.remove(); document.getElementById('mesa-wrap').removeEventListener('click',hide); document.getElementById('mesa-wrap').removeEventListener('touchstart',hide); tip.removeEventListener('click',hide); };
+  tip.addEventListener('click', hide);
+  setTimeout(()=>{ document.getElementById('mesa-wrap').addEventListener('click',hide); document.getElementById('mesa-wrap').addEventListener('touchstart',hide); }, 300);
 }
 
 function setScale(val){
