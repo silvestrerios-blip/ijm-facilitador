@@ -2288,14 +2288,24 @@ async function enviarResetPassword(){
   const msg = document.getElementById('reset-msg');
   msg.style.display='block';
   msg.textContent = 'Enviando...';
+  msg.style.color='rgba(255,255,255,.5)';
   try{
     const r = await fetch(SB_URL+'/auth/v1/recover',{
       method:'POST',
       headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
-      body: JSON.stringify({email: usuario.email})
+      body: JSON.stringify({
+        email: usuario.email,
+        redirectTo: 'https://silvestrerios-blip.github.io/ijm-facilitador/'
+      })
     });
-    if(r.ok){ msg.textContent = '\u2705 Email enviado a '+usuario.email; msg.style.color='rgba(84,201,153,.9)'; }
-    else { msg.textContent = 'Error al enviar el email'; msg.style.color='rgba(255,80,80,.8)'; }
+    if(r.ok){
+      msg.textContent = '\u2705 Email enviado a '+usuario.email;
+      msg.style.color='rgba(84,201,153,.9)';
+    } else {
+      const err = await r.json().catch(()=>({}));
+      msg.textContent = 'Error: '+(err.message||r.status);
+      msg.style.color='rgba(255,80,80,.8)';
+    }
   }catch(e){
     msg.textContent = 'Error de conexi\u00f3n';
     msg.style.color='rgba(255,80,80,.8)';
