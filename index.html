@@ -888,7 +888,8 @@ body{background:var(--mesa);color:#fff}
     <div class="ptab on" id="ptab-sesion" onclick="switchTab('sesion')">Sesi&#243;n</div>
     <div class="ptab" id="ptab-historial" onclick="switchTab('historial')">Historial</div>
     <div class="ptab" id="ptab-stats" style="display:none" onclick="switchTab('stats')">Estad&#237;sticas</div>
-    <div class="ptab" id="ptab-ajustes" onclick="imprimirDesdePanel()">&#128438; Imprimir</div>
+    <div class="ptab" id="ptab-ajustes" onclick="switchTab('ajustes')">&#9881; Ajustes</div>
+    <div class="ptab" id="ptab-imprimir" onclick="imprimirDesdePanel()">&#128438; Imprimir</div>
   </div>
   <div id="panel-body">
     <div id="tc-sesion">
@@ -911,6 +912,14 @@ body{background:var(--mesa);color:#fff}
     </div>
     <div id="tc-stats" style="display:none"><div id="stats-content"><div class="empty-p"><div class="ei">&#128202;</div>Cargando...</div></div></div>
     <div id="tc-ajustes" style="display:none">
+      <div class="pfield" style="margin-top:8px">
+        <label>&#128274; Cambiar contrase&#241;a</label>
+        <p style="font-size:10px;color:rgba(255,255,255,.4);margin:6px 0 10px">Te enviaremos un email con un enlace para cambiar tu contrase&#241;a.</p>
+        <button onclick="enviarResetPassword()" style="width:100%;padding:10px;border-radius:8px;border:1.5px solid rgba(84,201,153,.4);background:transparent;color:var(--v);font-size:11px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;text-transform:uppercase;letter-spacing:.5px">
+          &#128231; Enviar email de reset
+        </button>
+        <div id="reset-msg" style="display:none;margin-top:8px;font-size:10px;text-align:center;color:rgba(84,201,153,.8)"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2273,6 +2282,24 @@ async function mostrarSubgruposEnMenu(grupo){
 function updateToolbarHeight(){
   const h = document.getElementById('toolbar').offsetHeight;
   document.documentElement.style.setProperty('--tb', h+'px');
+}
+
+async function enviarResetPassword(){
+  const msg = document.getElementById('reset-msg');
+  msg.style.display='block';
+  msg.textContent = 'Enviando...';
+  try{
+    const r = await fetch(SB_URL+'/auth/v1/recover',{
+      method:'POST',
+      headers:{'apikey':SB_KEY,'Content-Type':'application/json'},
+      body: JSON.stringify({email: usuario.email})
+    });
+    if(r.ok){ msg.textContent = '\u2705 Email enviado a '+usuario.email; msg.style.color='rgba(84,201,153,.9)'; }
+    else { msg.textContent = 'Error al enviar el email'; msg.style.color='rgba(255,80,80,.8)'; }
+  }catch(e){
+    msg.textContent = 'Error de conexi\u00f3n';
+    msg.style.color='rgba(255,80,80,.8)';
+  }
 }
 
 function imprimirDesdePanel(){
